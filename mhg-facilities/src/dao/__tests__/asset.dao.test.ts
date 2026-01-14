@@ -13,21 +13,22 @@ describe('AssetDAO', () => {
     id: 'asset-1',
     tenant_id: 'test-tenant-id',
     name: 'Test Asset',
-    asset_tag: 'AST-001',
+    qr_code: 'AST-001',
     serial_number: 'SN123',
     model: 'Model X',
     manufacturer: 'Test Manufacturer',
     category_id: 'category-1',
     location_id: 'location-1',
     vendor_id: null,
-    status: 'operational',
+    status: 'active',
     purchase_date: '2024-01-01',
-    purchase_cost: 1000,
+    purchase_price: '1000',
     warranty_expiration: '2025-01-01',
-    lifespan_years: 5,
+    expected_lifespan_years: 5,
     notes: null,
-    qr_code: 'QR123',
-    metadata: null,
+    manual_url: null,
+    spec_sheet_path: null,
+    photo_path: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     deleted_at: null,
@@ -103,11 +104,11 @@ describe('AssetDAO', () => {
 
     it('should apply status filter', async () => {
       mockQuery.order.mockResolvedValueOnce({ data: [], error: null });
-      const filters: AssetFilters = { status: 'operational' };
+      const filters: AssetFilters = { status: 'active' };
 
       await dao.findWithRelations(filters);
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('status', 'operational');
+      expect(mockQuery.eq).toHaveBeenCalledWith('status', 'active');
     });
 
     it('should apply warranty expiration filter', async () => {
@@ -162,10 +163,10 @@ describe('AssetDAO', () => {
 
       const result = await dao.create({
         name: 'Test Asset',
-        asset_tag: 'AST-001',
+        qr_code: 'AST-001',
         category_id: 'category-1',
         location_id: 'location-1',
-        status: 'operational',
+        status: 'active',
       });
 
       expect(mockQuery.insert).toHaveBeenCalledWith(

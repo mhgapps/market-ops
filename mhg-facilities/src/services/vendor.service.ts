@@ -2,7 +2,11 @@ import {
   VendorDAO,
   type VendorWithStats,
   type VendorFilters,
+  type PaginatedResult,
 } from '@/dao/vendor.dao'
+
+// Re-export types for consumers
+export type { VendorFilters, PaginatedResult } from '@/dao/vendor.dao'
 import type { Database } from '@/types/database'
 
 type Vendor = Database['public']['Tables']['vendors']['Row']
@@ -60,6 +64,15 @@ export class VendorService {
       return this.vendorDAO.findWithFilters(filters)
     }
     return this.vendorDAO.findAll()
+  }
+
+  /**
+   * Get all vendors with pagination
+   * Returns paginated results with total count
+   * @param filters Optional filters including page and pageSize
+   */
+  async getAllVendorsPaginated(filters?: VendorFilters) {
+    return this.vendorDAO.findWithFiltersPaginated(filters)
   }
 
   /**

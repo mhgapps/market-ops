@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
       ? await locationService.getLocationsWithStats()
       : await locationService.getAllLocations()
 
+    console.log('[GET /api/locations] Found locations:', locations.length)
+
     return NextResponse.json({ locations })
   } catch (error) {
     console.error('Error in GET /api/locations:', error)

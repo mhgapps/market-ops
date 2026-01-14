@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api-client'
 import type { AssetFilterInput, CreateAssetInput, UpdateAssetInput } from '@/lib/validations/assets-vendors'
 
+// Cache settings for React Query
+const STALE_TIME = 30000 // Data fresh for 30 seconds
+const GC_TIME = 300000 // Keep in cache for 5 minutes
+
 // Type definitions
 interface Asset {
   id: string
@@ -15,10 +19,9 @@ interface Asset {
   purchase_price: number | null
   warranty_expiration: string | null
   expected_lifespan_years: number | null
-  condition_notes: string | null
   qr_code: string | null
   vendor_id: string | null
-  status: 'active' | 'maintenance' | 'retired' | 'disposed'
+  status: 'active' | 'under_maintenance' | 'retired' | 'transferred' | 'disposed'
   photo_path: string | null
   manual_url: string | null
   spec_sheet_path: string | null
@@ -42,7 +45,7 @@ interface AssetWithRelations extends Asset {
   } | null
   vendor?: {
     id: string
-    vendor_name: string
+    name: string
   } | null
 }
 
@@ -52,8 +55,16 @@ interface AssetStats {
   warranty_expiring_30_days: number
 }
 
+interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
 /**
- * Fetch all assets with optional filters
+ * Fetch all assets with optional filters and pagination
  */
 export function useAssets(filters?: AssetFilterInput) {
   return useQuery({
@@ -66,12 +77,16 @@ export function useAssets(filters?: AssetFilterInput) {
       if (filters?.status) params.set('status', filters.status)
       if (filters?.search) params.set('search', filters.search)
       if (filters?.warranty_expiring_days) params.set('warranty_expiring_days', filters.warranty_expiring_days.toString())
+      if (filters?.page) params.set('page', filters.page.toString())
+      if (filters?.pageSize) params.set('pageSize', filters.pageSize.toString())
 
-      const data = await api.get<{ assets: AssetWithRelations[]; total: number }>(
+      const data = await api.get<PaginatedResponse<AssetWithRelations>>(
         `/api/assets?${params.toString()}`
       )
       return data
     },
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -87,6 +102,8 @@ export function useAsset(id: string | null) {
       return data.asset
     },
     enabled: !!id,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -102,6 +119,8 @@ export function useAssetByQRCode(qrCode: string | null) {
       return data.asset
     },
     enabled: !!qrCode,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -121,6 +140,8 @@ export function useAssetTransferHistory(assetId: string | null) {
       return data
     },
     enabled: !!assetId,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -134,6 +155,8 @@ export function useAssetStats() {
       const data = await api.get<AssetStats>('/api/assets/stats')
       return data
     },
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 

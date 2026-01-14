@@ -1,16 +1,19 @@
 'use client'
 
+import { useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { VendorForm } from '@/components/vendors/vendor-form'
+import { VendorForm, type VendorFormHandle } from '@/components/vendors/vendor-form'
 import { useCreateVendor } from '@/hooks/use-vendors'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
 export default function NewVendorPage() {
   const router = useRouter()
   const createVendor = useCreateVendor()
+  const formRef = useRef<VendorFormHandle>(null)
 
   const handleSubmit = async (data: Parameters<typeof createVendor.mutateAsync>[0]) => {
     try {
@@ -23,22 +26,41 @@ export default function NewVendorPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/vendors">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Add New Vendor</h1>
-          <p className="text-muted-foreground">Register a new vendor in the system</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/vendors">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Add New Vendor</h1>
+            <p className="text-muted-foreground">Register a new vendor in the system</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push('/vendors')}
+            disabled={createVendor.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => formRef.current?.submit()}
+            disabled={createVendor.isPending}
+          >
+            {createVendor.isPending && <Spinner size="sm" className="mr-2" />}
+            Create Vendor
+          </Button>
         </div>
       </div>
 
       <VendorForm
+        ref={formRef}
         onSubmit={handleSubmit}
-        onCancel={() => router.push('/vendors')}
         isSubmitting={createVendor.isPending}
         mode="create"
       />

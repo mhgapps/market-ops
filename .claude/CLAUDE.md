@@ -56,6 +56,8 @@ claude --dangerously-skip-permissions
 | Phase 4 | `.claude/ralph-loops/phase-4-assets-vendors.md` | `PHASE_4_COMPLETE` |
 | Phase 5 | `.claude/ralph-loops/phase-5-compliance-pm.md` | `PHASE_5_COMPLETE` |
 | Phase 6 | `.claude/ralph-loops/phase-6-dashboard-reports.md` | `PHASE_6_COMPLETE` |
+| Phase 7 | `.claude/ralph-loops/phase-7-finish-all-gaps.md` | `PHASE_7_COMPLETE` |
+| **Phase 8** | `.claude/ralph-loops/phase-8-deep-review.md` | `PHASE_8_DEEP_REVIEW_COMPLETE` |
 | **ALL** | `.claude/ralph-loops/all-phases.md` | `ALL_PHASES_COMPLETE` |
 
 ### Run All Phases (Auto-Chain)

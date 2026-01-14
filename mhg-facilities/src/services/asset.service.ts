@@ -1,4 +1,7 @@
-import { AssetDAO, type AssetWithRelations, type AssetFilters } from '@/dao/asset.dao'
+import { AssetDAO, type AssetWithRelations, type AssetFilters, type PaginatedResult } from '@/dao/asset.dao'
+
+// Re-export types for consumers
+export type { AssetFilters, PaginatedResult } from '@/dao/asset.dao'
 import { AssetCategoryDAO } from '@/dao/asset-category.dao'
 import type { Database } from '@/types/database'
 import { nanoid } from 'nanoid'
@@ -61,6 +64,15 @@ export class AssetService {
    */
   async getAllAssets(filters?: AssetFilters): Promise<AssetWithRelations[]> {
     return this.assetDAO.findWithRelations(filters)
+  }
+
+  /**
+   * Get all assets with pagination
+   * Returns paginated results with total count
+   * @param filters Optional filters including page and pageSize
+   */
+  async getAllAssetsPaginated(filters?: AssetFilters) {
+    return this.assetDAO.findWithRelationsPaginated(filters)
   }
 
   /**

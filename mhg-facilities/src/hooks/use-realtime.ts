@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -9,10 +9,11 @@ interface UseRealtimeSubscriptionOptions {
   table: string
   event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*'
   filter?: string
+  enabled?: boolean
   onInsert?: (payload: unknown) => void
   onUpdate?: (payload: unknown) => void
   onDelete?: (payload: unknown) => void
-  invalidateQueries?: unknown[][]
+  invalidateQueries?: readonly (readonly unknown[])[]
 }
 
 /**
@@ -23,6 +24,7 @@ export function useRealtimeSubscription({
   table,
   event = '*',
   filter,
+  enabled = true,
   onInsert,
   onUpdate,
   onDelete,
@@ -31,7 +33,41 @@ export function useRealtimeSubscription({
   const queryClient = useQueryClient()
   const channelRef = useRef<RealtimeChannel | null>(null)
 
+  // Memoize invalidateQueries to prevent re-subscriptions
+  const stableInvalidateQueries = useMemo(
+    () => invalidateQueries,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(invalidateQueries)]
+  )
+
+  // Use useCallback for the subscription handler to fix stale closure issue
+  const handleChange = useCallback(
+    (payload: { eventType: string; new: unknown; old: unknown }) => {
+      console.log(`Realtime change detected on ${table}:`, payload)
+
+      // Call event-specific callbacks
+      if (payload.eventType === 'INSERT' && onInsert) {
+        onInsert(payload.new)
+      } else if (payload.eventType === 'UPDATE' && onUpdate) {
+        onUpdate(payload.new)
+      } else if (payload.eventType === 'DELETE' && onDelete) {
+        onDelete(payload.old)
+      }
+
+      // Invalidate React Query cache for affected queries
+      stableInvalidateQueries.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey: queryKey as unknown[] })
+      })
+    },
+    [table, onInsert, onUpdate, onDelete, stableInvalidateQueries, queryClient]
+  )
+
   useEffect(() => {
+    // Don't subscribe if disabled
+    if (!enabled) {
+      return
+    }
+
     const supabase = createClient()
 
     // Create a unique channel name
@@ -48,23 +84,7 @@ export function useRealtimeSubscription({
           table,
           filter,
         } as never,
-        (payload: any) => {
-          console.log(`Realtime change detected on ${table}:`, payload)
-
-          // Call event-specific callbacks
-          if (payload.eventType === 'INSERT' && onInsert) {
-            onInsert(payload.new)
-          } else if (payload.eventType === 'UPDATE' && onUpdate) {
-            onUpdate(payload.new)
-          } else if (payload.eventType === 'DELETE' && onDelete) {
-            onDelete(payload.old)
-          }
-
-          // Invalidate React Query cache for affected queries
-          invalidateQueries.forEach((queryKey) => {
-            queryClient.invalidateQueries({ queryKey })
-          })
-        }
+        handleChange
       )
       .subscribe()
 
@@ -77,21 +97,23 @@ export function useRealtimeSubscription({
         channelRef.current = null
       }
     }
-  }, [table, event, filter, queryClient, invalidateQueries, onInsert, onUpdate, onDelete])
+  }, [table, event, filter, enabled, handleChange])
 }
 
 /**
  * Hook to subscribe to ticket changes
+ * Only subscribes when viewing a specific ticket (not on list pages)
  * Automatically invalidates ticket queries when changes occur
  */
-export function useTicketRealtime() {
+export function useTicketRealtime(ticketId?: string) {
   useRealtimeSubscription({
     table: 'tickets',
     event: '*',
-    invalidateQueries: [
-      ['tickets'],
-      ['ticket-stats'],
-    ],
+    filter: ticketId ? `id=eq.${ticketId}` : undefined,
+    enabled: !!ticketId, // Only subscribe if viewing a specific ticket
+    invalidateQueries: ticketId
+      ? [['tickets', 'detail', ticketId], ['tickets']]
+      : [],
   })
 }
 

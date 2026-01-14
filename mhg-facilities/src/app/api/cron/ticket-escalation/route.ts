@@ -71,9 +71,9 @@ export async function GET(request: NextRequest) {
           const notifyUsers = [...new Set([...managers, ...admins])]; // Dedupe
 
           if (notifyUsers.length > 0) {
-            // Get the user who last updated the ticket (or system)
-            const updatedBy = ticket.updated_by
-              ? await userDAO.findById(ticket.updated_by)
+            // Get the user who submitted the ticket (or system)
+            const submittedBy = ticket.submitted_by
+              ? await userDAO.findById(ticket.submitted_by)
               : null;
 
             // Send escalation notifications
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
               ticket,
               oldStatus: ticket.status,
               newStatus: ticket.status, // Status doesn't change, just escalating
-              changedBy: updatedBy || { id: 'system', full_name: 'System', email: null } as any,
+              changedBy: submittedBy || { id: 'system', full_name: 'System', email: null } as any,
               notifyUsers,
             });
 

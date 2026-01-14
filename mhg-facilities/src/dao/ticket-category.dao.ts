@@ -13,7 +13,7 @@ interface TicketCategoryWithDefaults extends TicketCategory {
   } | null
   preferred_vendor?: {
     id: string
-    company_name: string
+    name: string
     contact_name: string
   } | null
 }
@@ -44,7 +44,7 @@ export class TicketCategoryDAO extends BaseDAO<'ticket_categories'> {
         ),
         preferred_vendor:vendors!preferred_vendor_id (
           id,
-          company_name,
+          name,
           contact_name
         )
       `)
@@ -73,7 +73,7 @@ export class TicketCategoryDAO extends BaseDAO<'ticket_categories'> {
         ),
         preferred_vendor:vendors!preferred_vendor_id (
           id,
-          company_name,
+          name,
           contact_name
         )
       `)

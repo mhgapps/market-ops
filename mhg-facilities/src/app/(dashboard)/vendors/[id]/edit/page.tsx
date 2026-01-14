@@ -4,7 +4,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { VendorForm } from '@/components/vendors/vendor-form'
 import { useVendor, useUpdateVendor } from '@/hooks/use-vendors'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -27,11 +28,7 @@ export default function EditVendorPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!vendor) {
@@ -53,7 +50,7 @@ export default function EditVendorPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href={`/vendors/${vendorId}`}>

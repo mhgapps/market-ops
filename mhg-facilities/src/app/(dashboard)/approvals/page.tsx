@@ -8,9 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ApprovalStatus } from '@/components/tickets/approval-status'
 import { useApprovalAction } from '@/hooks/use-tickets'
-import { Loader2, DollarSign, AlertCircle } from 'lucide-react'
+import { DollarSign, AlertCircle } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { format } from 'date-fns'
-import type { Database } from '@/types/database'
+import { useAuth } from '@/hooks/use-auth'
+
+// Cache settings
+const STALE_TIME = 30000 // 30 seconds
+const GC_TIME = 300000 // 5 minutes
 
 interface ApprovalWithTicket {
   id: string
@@ -33,17 +38,14 @@ interface ApprovalWithTicket {
 export default function ApprovalsPage() {
   const router = useRouter()
 
-  // Fetch current user
-  const { data: currentUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const response = await api.get<{ user: Database['public']['Tables']['users']['Row'] }>('/api/auth/me')
-      return response.user
-    },
-  })
+  // Use shared auth hook (already cached)
+  const { user: currentUser, isLoading: authLoading } = useAuth()
 
-  // Fetch pending approvals
-  const { data: approvalsData, isLoading } = useQuery({
+  const canApprove = currentUser?.role === 'manager' || currentUser?.role === 'admin'
+
+  // Fetch pending approvals - runs in parallel with auth since we fetch anyway
+  // The API will return empty if user doesn't have permission
+  const { data: approvalsData, isLoading: approvalsLoading } = useQuery({
     queryKey: ['pending-approvals'],
     queryFn: async () => {
       const response = await api.get<{ approvals: ApprovalWithTicket[] }>(
@@ -51,16 +53,18 @@ export default function ApprovalsPage() {
       )
       return response.approvals
     },
-    enabled: currentUser?.role === 'manager' || currentUser?.role === 'admin',
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
+    // Don't wait for auth - let API handle permission check
+    enabled: !authLoading,
   })
 
   const approvals = approvalsData || []
-
-  const canApprove = currentUser?.role === 'manager' || currentUser?.role === 'admin'
+  const isLoading = authLoading || approvalsLoading
 
   if (!canApprove) {
     return (
-      <div className="container mx-auto max-w-7xl py-8">
+      <div className="py-8">
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-gray-400" />
@@ -78,15 +82,11 @@ export default function ApprovalsPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (
-    <div className="container mx-auto max-w-5xl space-y-6 py-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Cost Approvals</h1>
@@ -95,17 +95,17 @@ export default function ApprovalsPage() {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      {/* Stats - Compact on mobile */}
+      <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-amber-100 p-3">
+          <CardContent className="p-3 md:pt-6 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="hidden md:flex rounded-full bg-amber-100 p-3">
                 <DollarSign className="h-6 w-6 text-amber-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm font-medium text-gray-600 truncate">Pending</p>
+                <p className="text-base md:text-2xl font-bold text-gray-900">
                   {approvals.filter((a) => a.status === 'pending').length}
                 </p>
               </div>
@@ -114,14 +114,14 @@ export default function ApprovalsPage() {
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-green-100 p-3">
+          <CardContent className="p-3 md:pt-6 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="hidden md:flex rounded-full bg-green-100 p-3">
                 <DollarSign className="h-6 w-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Amount</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm font-medium text-gray-600 truncate">Total Amt</p>
+                <p className="text-base md:text-2xl font-bold text-gray-900">
                   $
                   {approvals
                     .reduce((sum, a) => sum + a.estimated_cost, 0)
@@ -133,14 +133,14 @@ export default function ApprovalsPage() {
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-blue-100 p-3">
+          <CardContent className="p-3 md:pt-6 md:p-6">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="hidden md:flex rounded-full bg-blue-100 p-3">
                 <DollarSign className="h-6 w-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Avg. Cost</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm font-medium text-gray-600 truncate">Avg. Cost</p>
+                <p className="text-base md:text-2xl font-bold text-gray-900">
                   $
                   {approvals.length > 0
                     ? Math.round(
@@ -228,7 +228,7 @@ export default function ApprovalsPage() {
                 <div className="mt-6">
                   <ApprovalStatusCard
                     ticketId={approval.ticket_id}
-                    approvalId={approval.id}
+                    approval={approval}
                     userRole={currentUser?.role}
                   />
                 </div>
@@ -242,35 +242,17 @@ export default function ApprovalsPage() {
 }
 
 // Separate component to handle approval actions with proper query invalidation
+// PERFORMANCE: Receives approval data from parent - NO extra API call needed
 function ApprovalStatusCard({
   ticketId,
-  approvalId,
+  approval,
   userRole,
 }: {
   ticketId: string
-  approvalId: string
-  userRole: string
+  approval: ApprovalWithTicket
+  userRole?: string
 }) {
   const approvalAction = useApprovalAction(ticketId)
-
-  // Fetch full approval details
-  const { data: approval } = useQuery({
-    queryKey: ['approval', approvalId],
-    queryFn: async () => {
-      const response = await api.get<{ approval: Database['public']['Tables']['cost_approvals']['Row'] }>(
-        `/api/tickets/${ticketId}/approval`
-      )
-      return response.approval
-    },
-  })
-
-  if (!approval) {
-    return (
-      <div className="flex justify-center py-4">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    )
-  }
 
   const handleApprove = async () => {
     try {
@@ -288,10 +270,24 @@ function ApprovalStatusCard({
     }
   }
 
+  // ApprovalStatus component expects approval with requested_by as object
+  const approvalForStatus = {
+    id: approval.id,
+    estimated_cost: approval.estimated_cost,
+    status: approval.status,
+    requested_by: approval.requested_by, // Already { id, full_name }
+    requested_at: approval.created_at,
+    approved_by: null,
+    approved_at: null,
+    denial_reason: null,
+    vendor_quote_path: null,
+    notes: null,
+  }
+
   return (
     <ApprovalStatus
-      approval={approval as unknown as Parameters<typeof ApprovalStatus>[0]['approval']}
-      userRole={(userRole === 'super_admin' ? 'admin' : userRole) as 'admin' | 'manager' | 'staff' | 'user'}
+      approval={approvalForStatus}
+      userRole={(userRole === 'super_admin' ? 'admin' : userRole || 'user') as 'admin' | 'manager' | 'staff' | 'user'}
       onApprove={handleApprove}
       onDeny={handleDeny}
       loading={approvalAction.isPending}

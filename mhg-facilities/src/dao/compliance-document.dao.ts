@@ -152,4 +152,83 @@ export class ComplianceDocumentDAO extends BaseDAO<'compliance_documents'> {
 
     return data as ComplianceDocumentWithVersions;
   }
+
+  // ============================================================
+  // COUNT METHODS (for dashboard performance)
+  // ============================================================
+
+  /**
+   * Count documents expiring within specified days
+   */
+  async countExpiringSoon(daysAhead: number): Promise<number> {
+    const { supabase, tenantId } = await this.getClient();
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + daysAhead);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+
+    const { count, error } = await supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .gte('expiration_date', today)
+      .lte('expiration_date', futureDateStr)
+      .is('deleted_at', null);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
+
+  /**
+   * Count total documents
+   */
+  async countTotal(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient();
+
+    const { count, error } = await supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
+
+  /**
+   * Count documents by status
+   */
+  async countByStatus(status: ComplianceStatus): Promise<number> {
+    const { supabase, tenantId } = await this.getClient();
+
+    const { count, error } = await supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('status', status)
+      .is('deleted_at', null);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
+
+  /**
+   * Count expired documents
+   */
+  async countExpired(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient();
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const { count, error } = await supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .lt('expiration_date', today)
+      .is('deleted_at', null);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
 }

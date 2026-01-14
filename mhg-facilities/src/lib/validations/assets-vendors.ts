@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { uuid, optionalUuid, nullableUuid, optionalNullableUuid, uuidArray } from './shared'
 
 /**
  * Asset Category Validation Schemas
@@ -8,14 +9,14 @@ export const createAssetCategorySchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   description: z.string().max(500).optional(),
   default_lifespan_years: z.number().int().positive().optional(),
-  parent_category_id: z.string().uuid().nullable().optional(),
+  parent_category_id: nullableUuid().optional(),
 })
 
 export const updateAssetCategorySchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   default_lifespan_years: z.number().int().positive().optional(),
-  parent_category_id: z.string().uuid().nullable().optional(),
+  parent_category_id: nullableUuid().optional(),
 })
 
 /**
@@ -24,26 +25,26 @@ export const updateAssetCategorySchema = z.object({
 
 export const createAssetSchema = z.object({
   name: z.string().min(1, 'Asset name is required').max(200),
-  category_id: z.string().uuid('Invalid category').nullish(),
-  location_id: z.string().uuid('Invalid location').nullish(),
-  serial_number: z.string().max(100).nullish(),
-  model: z.string().max(100).nullish(),
-  manufacturer: z.string().max(100).nullish(),
-  purchase_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)').nullish(),
+  category_id: optionalUuid,
+  location_id: optionalUuid,
+  serial_number: z.string().max(100).nullish().transform((val) => val || undefined),
+  model: z.string().max(100).nullish().transform((val) => val || undefined),
+  manufacturer: z.string().max(100).nullish().transform((val) => val || undefined),
+  purchase_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)').nullish().or(z.literal('')).transform((val) => val || undefined),
   purchase_price: z.number().positive().nullish(),
-  warranty_expiration: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)').nullish(),
+  warranty_expiration: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)').nullish().or(z.literal('')).transform((val) => val || undefined),
   expected_lifespan_years: z.number().int().positive().nullish(),
-  condition_notes: z.string().max(1000).nullish(),
-  qr_code: z.string().max(50).nullish(),
-  vendor_id: z.string().uuid('Invalid vendor').nullish(),
-  status: z.enum(['active', 'maintenance', 'retired', 'disposed']).optional(),
-  photo_path: z.string().max(500).nullish(),
+  notes: z.string().max(1000).nullish().transform((val) => val || undefined),
+  qr_code: z.string().max(50).nullish().transform((val) => val || undefined),
+  vendor_id: optionalUuid,
+  status: z.enum(['active', 'under_maintenance', 'retired', 'transferred', 'disposed']).optional(),
+  photo_path: z.string().max(500).nullish().transform((val) => val || undefined),
 })
 
 export const updateAssetSchema = z.object({
   name: z.string().min(1).max(200).optional(),
-  category_id: z.string().uuid().nullish(),
-  location_id: z.string().uuid().nullish(),
+  category_id: nullableUuid().optional(),
+  location_id: nullableUuid().optional(),
   serial_number: z.string().max(100).nullish(),
   model: z.string().max(100).nullish(),
   manufacturer: z.string().max(100).nullish(),
@@ -51,19 +52,21 @@ export const updateAssetSchema = z.object({
   purchase_price: z.number().positive().nullish(),
   warranty_expiration: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   expected_lifespan_years: z.number().int().positive().nullish(),
-  condition_notes: z.string().max(1000).nullish(),
-  vendor_id: z.string().uuid().nullish(),
-  status: z.enum(['active', 'maintenance', 'retired', 'disposed']).optional(),
+  notes: z.string().max(1000).nullish(),
+  vendor_id: nullableUuid().optional(),
+  status: z.enum(['active', 'under_maintenance', 'retired', 'transferred', 'disposed']).optional(),
   photo_path: z.string().max(500).nullish(),
 })
 
 export const assetFilterSchema = z.object({
-  category_id: z.string().uuid().optional(),
-  location_id: z.string().uuid().optional(),
-  vendor_id: z.string().uuid().optional(),
-  status: z.enum(['active', 'maintenance', 'retired', 'disposed']).optional(),
+  category_id: uuid().optional(),
+  location_id: uuid().optional(),
+  vendor_id: uuid().optional(),
+  status: z.enum(['active', 'under_maintenance', 'retired', 'transferred', 'disposed']).optional(),
   warranty_expiring_days: z.coerce.number().int().positive().optional(),
   search: z.string().optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(50),
 })
 
 /**
@@ -71,16 +74,16 @@ export const assetFilterSchema = z.object({
  */
 
 export const transferAssetSchema = z.object({
-  to_location_id: z.string().uuid('Invalid location ID'),
-  transferred_by: z.string().uuid('Invalid user ID'),
+  to_location_id: uuid('Invalid location ID'),
+  transferred_by: uuid('Invalid user ID'),
   reason: z.string().max(200).optional(),
   notes: z.string().max(1000).optional(),
 })
 
 export const bulkTransferAssetSchema = z.object({
-  asset_ids: z.array(z.string().uuid()).min(1, 'At least one asset is required'),
-  to_location_id: z.string().uuid('Invalid location ID'),
-  transferred_by: z.string().uuid('Invalid user ID'),
+  asset_ids: uuidArray().min(1, 'At least one asset is required'),
+  to_location_id: uuid('Invalid location ID'),
+  transferred_by: uuid('Invalid user ID'),
   reason: z.string().max(200).optional(),
   notes: z.string().max(1000).optional(),
 })
@@ -143,6 +146,8 @@ export const vendorFilterSchema = z.object({
   insurance_expiring_days: z.coerce.number().int().positive().optional(),
   contract_expiring_days: z.coerce.number().int().positive().optional(),
   search: z.string().optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(50),
 })
 
 /**
@@ -150,8 +155,8 @@ export const vendorFilterSchema = z.object({
  */
 
 export const createVendorRatingSchema = z.object({
-  ticket_id: z.string().uuid('Invalid ticket ID'),
-  rated_by: z.string().uuid('Invalid user ID'),
+  ticket_id: uuid('Invalid ticket ID'),
+  rated_by: uuid('Invalid user ID'),
   rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
   response_time_rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
   quality_rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),

@@ -33,6 +33,7 @@ export class UserService {
 
   /**
    * Get the currently authenticated user
+   * Looks up user by auth_user_id directly (no tenant context needed)
    */
   async getCurrentUser(): Promise<User | null> {
     const supabase = await createClient()
@@ -44,19 +45,20 @@ export class UserService {
 
     if (!authUser) return null
 
-    // Get tenant_id from user metadata
-    const tenantId = authUser.user_metadata?.tenant_id
+    // Find user in our users table by auth_user_id directly
+    // This bypasses tenant context since we're looking up by auth ID
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', authUser.id)
+      .is('deleted_at', null)
+      .single()
 
-    if (!tenantId) return null
-
-    // Find user in our users table by email
-    try {
-      const user = await this.userDAO.findByEmail(authUser.email!)
-      return user
-    } catch {
-      // If tenant context is not available, return null
+    if (error || !user) {
       return null
     }
+
+    return user as User
   }
 
   /**

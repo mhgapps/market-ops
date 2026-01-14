@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,65 +28,29 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Building2, MapPin, Plus, Search } from 'lucide-react'
-
-interface Location {
-  id: string
-  name: string
-  address?: string
-  city?: string
-  state?: string
-  zip?: string
-  phone?: string
-  squareFootage?: number
-  managerId?: string
-  status: 'active' | 'temporarily_closed' | 'permanently_closed'
-  createdAt: string
-  updatedAt: string
-}
+import { useLocations } from '@/hooks/use-locations'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function LocationsPage() {
   const router = useRouter()
-  const [locations, setLocations] = useState<Location[]>([])
-  const [filteredLocations, setFilteredLocations] = useState<Location[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'name' | 'created'>('name')
-  const [userRole, setUserRole] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function loadLocations() {
-      try {
-        // Get user role
-        const meResponse = await fetch('/api/auth/me')
-        if (meResponse.ok) {
-          const meData = await meResponse.json()
-          setUserRole(meData.user?.role)
-        }
+  // Use React Query hooks for parallel data fetching with caching
+  const { data: locations = [], isLoading: locationsLoading } = useLocations()
+  const { user, isLoading: authLoading } = useAuth()
 
-        // Load locations
-        const response = await fetch('/api/locations')
-        if (!response.ok) throw new Error('Failed to load locations')
+  const loading = locationsLoading || authLoading
+  const userRole = user?.role ?? null
 
-        const data = await response.json()
-        setLocations(data.locations || [])
-        setFilteredLocations(data.locations || [])
-      } catch (error) {
-        console.error('Error loading locations:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadLocations()
-  }, [])
-
-  useEffect(() => {
-    let filtered = [...locations]
+  // Use useMemo for filtering and sorting instead of useEffect + state
+  const filteredLocations = useMemo(() => {
+    let result = [...locations]
 
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(
+      result = result.filter(
         (loc) =>
           loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           loc.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -94,39 +58,29 @@ export default function LocationsPage() {
       )
     }
 
-    // Apply status filter
+    // Apply status filter - map is_active to status concept
     if (statusFilter !== 'all') {
-      filtered = filtered.filter((loc) => loc.status === statusFilter)
+      if (statusFilter === 'active') {
+        result = result.filter((loc) => loc.is_active)
+      } else if (statusFilter === 'inactive') {
+        result = result.filter((loc) => !loc.is_active)
+      }
     }
 
     // Apply sorting
-    filtered.sort((a, b) => {
+    return result.sort((a, b) => {
       if (sortBy === 'name') {
         return a.name.localeCompare(b.name)
       } else {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       }
     })
-
-    setFilteredLocations(filtered)
   }, [locations, searchQuery, statusFilter, sortBy])
 
-  const getStatusBadge = (status: Location['status']) => {
-    const variants = {
-      active: 'default',
-      temporarily_closed: 'secondary',
-      permanently_closed: 'destructive',
-    } as const
-
-    const labels = {
-      active: 'Active',
-      temporarily_closed: 'Temporarily Closed',
-      permanently_closed: 'Permanently Closed',
-    }
-
+  const getStatusBadge = (isActive: boolean) => {
     return (
-      <Badge variant={variants[status]}>
-        {labels[status]}
+      <Badge variant={isActive ? 'default' : 'secondary'}>
+        {isActive ? 'Active' : 'Inactive'}
       </Badge>
     )
   }
@@ -183,8 +137,7 @@ export default function LocationsPage() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="temporarily_closed">Temporarily Closed</SelectItem>
-                <SelectItem value="permanently_closed">Permanently Closed</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
 
@@ -265,7 +218,7 @@ export default function LocationsPage() {
                       <TableCell className="hidden lg:table-cell">
                         {location.phone || <span className="text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell>{getStatusBadge(location.status)}</TableCell>
+                      <TableCell>{getStatusBadge(location.is_active)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

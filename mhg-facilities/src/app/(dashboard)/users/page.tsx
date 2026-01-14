@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -27,91 +27,38 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { UserPlus, Users, Search, Mail, Phone } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { InviteUserModal } from '@/components/users/invite-user-modal'
 import { EditUserModal } from '@/components/users/edit-user-modal'
-
-interface User {
-  id: string
-  email: string
-  fullName: string
-  role: string
-  phone?: string
-  locationId?: string
-  languagePreference: string
-  isActive: boolean
-  notificationPreferences: {
-    email: boolean
-    sms: boolean
-    push: boolean
-  }
-  createdAt: string
-  updatedAt: string
-}
+import { useAuth } from '@/hooks/use-auth'
+import { useUsers, useDeactivateUser, type User } from '@/hooks/use-users'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [userRole, setUserRole] = useState<string | null>(null)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
-  useEffect(() => {
-    async function loadUsers() {
-      try {
-        // Get user role
-        const meResponse = await fetch('/api/auth/me')
-        if (meResponse.ok) {
-          const meData = await meResponse.json()
-          setUserRole(meData.user?.role)
-        }
+  // Use cached auth hook
+  const { user: currentUser, isLoading: authLoading } = useAuth()
 
-        // Load users
-        const response = await fetch('/api/users')
-        if (!response.ok) throw new Error('Failed to load users')
+  // Debounce search to avoid API calls on every keystroke
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
 
-        const data = await response.json()
-        setUsers(data.users || [])
-        setFilteredUsers(data.users || [])
-      } catch (error) {
-        console.error('Error loading users:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Build filters with memoization
+  const filters = useMemo(() => ({
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(roleFilter !== 'all' && { role: roleFilter }),
+    ...(statusFilter !== 'all' && { status: statusFilter as 'active' | 'inactive' | 'all' }),
+  }), [debouncedSearch, roleFilter, statusFilter])
 
-    loadUsers()
-  }, [])
+  // Use React Query hook with caching
+  const { data: users = [], isLoading: usersLoading } = useUsers(filters)
 
-  useEffect(() => {
-    let filtered = [...users]
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (user) =>
-          user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-
-    // Apply role filter
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter((user) => user.role === roleFilter)
-    }
-
-    // Apply status filter
-    if (statusFilter === 'active') {
-      filtered = filtered.filter((user) => user.isActive)
-    } else if (statusFilter === 'inactive') {
-      filtered = filtered.filter((user) => !user.isActive)
-    }
-
-    setFilteredUsers(filtered)
-  }, [users, searchQuery, roleFilter, statusFilter])
+  // Deactivate user mutation
+  const deactivateUser = useDeactivateUser()
 
   const getRoleBadge = (role: string) => {
     const colors = {
@@ -139,27 +86,12 @@ export default function UsersPage() {
     )
   }
 
-  const canManageUsers = userRole === 'admin' || userRole === 'super_admin'
+  const canManageUsers = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
 
-  async function refreshUsers() {
-    try {
-      const response = await fetch('/api/users')
-      if (!response.ok) throw new Error('Failed to load users')
+  const isLoading = authLoading || usersLoading
 
-      const data = await response.json()
-      setUsers(data.users || [])
-      setFilteredUsers(data.users || [])
-    } catch (error) {
-      console.error('Error loading users:', error)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
-      </div>
-    )
+  if (isLoading) {
+    return <PageLoader />
   }
 
   return (
@@ -226,7 +158,7 @@ export default function UsersPage() {
       </Card>
 
       {/* Users List */}
-      {filteredUsers.length === 0 ? (
+      {users.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
@@ -262,7 +194,7 @@ export default function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
+                  {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">
                         <div>
@@ -307,12 +239,10 @@ export default function UsersPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    // TODO: Implement deactivate
-                                    console.log('Deactivate user:', user.id)
-                                  }}
+                                  onClick={() => deactivateUser.mutate(user.id)}
+                                  disabled={deactivateUser.isPending}
                                 >
-                                  Deactivate
+                                  {deactivateUser.isPending ? 'Deactivating...' : 'Deactivate'}
                                 </Button>
                               )}
                             </>
@@ -329,9 +259,9 @@ export default function UsersPage() {
       )}
 
       {/* Summary */}
-      {filteredUsers.length > 0 && (
+      {users.length > 0 && (
         <p className="text-sm text-muted-foreground text-center">
-          Showing {filteredUsers.length} of {users.length} user(s)
+          Showing {users.length} user(s)
         </p>
       )}
 
@@ -339,14 +269,12 @@ export default function UsersPage() {
       <InviteUserModal
         open={inviteModalOpen}
         onClose={() => setInviteModalOpen(false)}
-        onSuccess={refreshUsers}
       />
 
       <EditUserModal
         user={editingUser}
         open={!!editingUser}
         onClose={() => setEditingUser(null)}
-        onSuccess={refreshUsers}
       />
     </div>
   )

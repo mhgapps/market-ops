@@ -157,4 +157,24 @@ export class LocationDAO extends BaseDAO<'locations'> {
   async updateLocation(id: string, data: Partial<LocationUpdate>): Promise<Location> {
     return this.update(id, data)
   }
+
+  // ============================================================
+  // COUNT METHODS (for dashboard performance)
+  // ============================================================
+
+  /**
+   * Count total locations
+   */
+  async countTotal(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { count, error } = await supabase
+      .from('locations')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
+  }
 }

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { AssetService } from '@/services/asset.service'
 import { createAssetSchema, assetFilterSchema } from '@/lib/validations/assets-vendors'
+import { requireAuth } from '@/lib/auth/api-auth'
 
 // Helper to convert null to undefined
 function nullToUndefined<T extends Record<string, any>>(obj: T): T {
@@ -11,12 +12,19 @@ function nullToUndefined<T extends Record<string, any>>(obj: T): T {
 
 /**
  * GET /api/assets
- * Get all assets with optional filters
- * Query params: category_id, location_id, vendor_id, status, search, warranty_expiring_days
+ * Get all assets with optional filters and pagination
+ * Query params: category_id, location_id, vendor_id, status, search, warranty_expiring_days, page, pageSize
  */
 export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth()
+    if (error) return error
+
     const searchParams = request.nextUrl.searchParams
+
+    // Parse pagination params
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const pageSize = parseInt(searchParams.get('pageSize') || '50', 10)
 
     const rawFilters = {
       category_id: searchParams.get('category_id') || undefined,
@@ -25,6 +33,8 @@ export async function GET(request: NextRequest) {
       status: searchParams.get('status') || undefined,
       search: searchParams.get('search') || undefined,
       warranty_expiring_days: searchParams.get('warranty_expiring_days') || undefined,
+      page,
+      pageSize,
     }
 
     // Validate filters
@@ -37,12 +47,9 @@ export async function GET(request: NextRequest) {
     }
 
     const service = new AssetService()
-    const assets = await service.getAllAssets(validationResult.data)
+    const result = await service.getAllAssetsPaginated(validationResult.data)
 
-    return NextResponse.json({
-      assets,
-      total: assets.length,
-    })
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching assets:', error)
     return NextResponse.json({ error: 'Failed to fetch assets' }, { status: 500 })
@@ -55,6 +62,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth()
+    if (error) return error
+
     const body = await request.json()
 
     // Validate input

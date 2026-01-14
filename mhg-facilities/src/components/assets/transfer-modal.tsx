@@ -20,7 +20,8 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
-import { MapPin, Loader2 } from 'lucide-react'
+import { MapPin } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 
 interface Location {
   id: string
@@ -182,7 +183,7 @@ export function TransferModal({
             onClick={handleTransfer}
             disabled={!selectedLocationId || isSubmitting}
           >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting && <Spinner size="sm" className="mr-2" />}
             {isSubmitting ? 'Transferring...' : 'Transfer Asset'}
           </Button>
         </DialogFooter>

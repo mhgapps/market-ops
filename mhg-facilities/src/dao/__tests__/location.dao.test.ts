@@ -17,10 +17,13 @@ describe('LocationDAO', () => {
     city: 'Test City',
     state: 'TS',
     zip: '12345',
-    country: 'Test Country',
+    phone: null,
+    square_footage: null,
     manager_id: 'manager-1',
+    emergency_contact_phone: null,
     status: 'active',
-    metadata: null,
+    opened_date: null,
+    closed_date: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     deleted_at: null,
@@ -244,7 +247,6 @@ describe('LocationDAO', () => {
         city: 'Test City',
         state: 'TS',
         zip: '12345',
-        country: 'Test Country',
         status: 'active',
       });
 

@@ -6,7 +6,8 @@ import { useCreateTicket, useCheckDuplicates } from '@/hooks/use-tickets'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api-client'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -116,15 +117,11 @@ export default function NewTicketPage() {
   }
 
   if (categoriesLoading || locationsLoading || assetsLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 py-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Create New Ticket</h1>
         <p className="mt-2 text-gray-600">

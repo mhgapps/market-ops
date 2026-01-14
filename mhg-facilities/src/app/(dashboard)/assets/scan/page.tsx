@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import api from '@/lib/api-client'
-import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
+import { AlertCircle, ArrowLeft } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 import Link from 'next/link'
 
 interface Asset {
@@ -46,7 +47,7 @@ export default function AssetScanPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/assets">
@@ -80,7 +81,7 @@ export default function AssetScanPage() {
         <Card>
           <CardContent className="flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+              <Spinner size="lg" className="mx-auto text-primary" />
               <p className="text-muted-foreground">Looking up asset...</p>
             </div>
           </CardContent>

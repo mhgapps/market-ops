@@ -1,4 +1,4 @@
-import { TicketDAO } from '@/dao/ticket.dao'
+import { TicketDAO, type TicketFilters, type PaginatedResult } from '@/dao/ticket.dao'
 import { TicketCategoryDAO } from '@/dao/ticket-category.dao'
 import { UserDAO } from '@/dao/user.dao'
 import { LocationDAO } from '@/dao/location.dao'
@@ -10,10 +10,10 @@ type Ticket = Database['public']['Tables']['tickets']['Row']
 
 export interface CreateTicketInput {
   title: string
-  description?: string
-  category_id?: string
+  description?: string | null
+  category_id?: string | null
   location_id: string
-  asset_id?: string
+  asset_id?: string | null
   priority?: TicketPriority
   is_emergency?: boolean
   submitted_by: string
@@ -27,16 +27,8 @@ export interface UpdateTicketInput {
   due_date?: string
 }
 
-export interface TicketFilters {
-  status?: TicketStatus[]
-  priority?: TicketPriority[]
-  location_id?: string
-  assigned_to?: string
-  submitted_by?: string
-  date_from?: string
-  date_to?: string
-  search?: string
-}
+// Re-export TicketFilters and PaginatedResult for consumers
+export type { TicketFilters, PaginatedResult } from '@/dao/ticket.dao'
 
 export interface TicketStats {
   total: number
@@ -70,53 +62,21 @@ export class TicketService {
 
   /**
    * Get all tickets with optional filters
+   * PERFORMANCE: All filtering is done at the database level, not in memory
+   * @param filters Optional filters for status, priority, location, assignee, etc.
+   * @param limit Maximum number of records to return (default: 100)
    */
-  async getAllTickets(filters?: TicketFilters): Promise<Ticket[]> {
-    if (!filters) {
-      return this.ticketDAO.findAll()
-    }
+  async getAllTickets(filters?: TicketFilters, limit = 100): Promise<Ticket[]> {
+    return this.ticketDAO.findAllWithFilters(filters, limit)
+  }
 
-    // Start with all tickets
-    let tickets = await this.ticketDAO.findAll()
-
-    // Apply filters
-    if (filters.status && filters.status.length > 0) {
-      tickets = tickets.filter(t => filters.status!.includes(t.status))
-    }
-
-    if (filters.priority && filters.priority.length > 0) {
-      tickets = tickets.filter(t => filters.priority!.includes(t.priority))
-    }
-
-    if (filters.location_id) {
-      tickets = tickets.filter(t => t.location_id === filters.location_id)
-    }
-
-    if (filters.assigned_to) {
-      tickets = tickets.filter(t => t.assigned_to === filters.assigned_to)
-    }
-
-    if (filters.submitted_by) {
-      tickets = tickets.filter(t => t.submitted_by === filters.submitted_by)
-    }
-
-    if (filters.date_from) {
-      tickets = tickets.filter(t => t.created_at >= filters.date_from!)
-    }
-
-    if (filters.date_to) {
-      tickets = tickets.filter(t => t.created_at <= filters.date_to!)
-    }
-
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase()
-      tickets = tickets.filter(t =>
-        t.title.toLowerCase().includes(searchLower) ||
-        (t.description && t.description.toLowerCase().includes(searchLower))
-      )
-    }
-
-    return tickets
+  /**
+   * Get all tickets with pagination
+   * Returns paginated results with total count
+   * @param filters Optional filters including page and pageSize
+   */
+  async getAllTicketsPaginated(filters?: TicketFilters) {
+    return this.ticketDAO.findAllWithFiltersPaginated(filters)
   }
 
   /**
@@ -156,42 +116,45 @@ export class TicketService {
 
   /**
    * Get ticket statistics
+   * PERFORMANCE: Uses COUNT queries instead of loading all tickets into memory
    */
   async getTicketStats(): Promise<TicketStats> {
-    const allTickets = await this.ticketDAO.findAll()
-    const overdue = await this.ticketDAO.findOverdue()
+    // Fetch all counts in parallel using COUNT queries
+    const [
+      total,
+      statusCounts,
+      priorityCounts,
+      overdueCount,
+    ] = await Promise.all([
+      this.ticketDAO.countTotal(),
+      this.ticketDAO.getStatusCounts(),
+      this.ticketDAO.getPriorityCounts(),
+      this.ticketDAO.countOverdue(),
+    ])
 
     const stats: TicketStats = {
-      total: allTickets.length,
+      total,
       by_status: {
-        submitted: 0,
-        acknowledged: 0,
-        needs_approval: 0,
-        approved: 0,
-        in_progress: 0,
-        completed: 0,
-        verified: 0,
-        closed: 0,
-        rejected: 0,
-        on_hold: 0,
+        submitted: statusCounts['submitted'] || 0,
+        acknowledged: statusCounts['acknowledged'] || 0,
+        needs_approval: statusCounts['needs_approval'] || 0,
+        approved: statusCounts['approved'] || 0,
+        in_progress: statusCounts['in_progress'] || 0,
+        completed: statusCounts['completed'] || 0,
+        verified: statusCounts['verified'] || 0,
+        closed: statusCounts['closed'] || 0,
+        rejected: statusCounts['rejected'] || 0,
+        on_hold: statusCounts['on_hold'] || 0,
       },
       by_priority: {
-        low: 0,
-        medium: 0,
-        high: 0,
-        critical: 0,
+        low: priorityCounts['low'] || 0,
+        medium: priorityCounts['medium'] || 0,
+        high: priorityCounts['high'] || 0,
+        critical: priorityCounts['critical'] || 0,
       },
-      overdue: overdue.length,
-      pending_approval: 0,
+      overdue: overdueCount,
+      pending_approval: statusCounts['needs_approval'] || 0,
     }
-
-    allTickets.forEach(ticket => {
-      stats.by_status[ticket.status]++
-      stats.by_priority[ticket.priority]++
-      if (ticket.status === 'needs_approval') {
-        stats.pending_approval++
-      }
-    })
 
     return stats
   }

@@ -16,7 +16,6 @@ import {
   Calendar,
   Clock,
   ChevronLeft,
-  Loader2,
   Edit,
   Trash2,
   ArrowRightLeft,
@@ -24,6 +23,7 @@ import {
   Shield,
   AlertTriangle,
 } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { format } from 'date-fns'
 
 interface PageProps {
@@ -78,11 +78,7 @@ export default function AssetDetailPage({ params }: PageProps) {
   }
 
   if (assetLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!asset) {
@@ -97,10 +93,12 @@ export default function AssetDetailPage({ params }: PageProps) {
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800'
-      case 'maintenance':
+      case 'under_maintenance':
         return 'bg-yellow-100 text-yellow-800'
       case 'retired':
         return 'bg-gray-100 text-gray-800'
+      case 'transferred':
+        return 'bg-blue-100 text-blue-800'
       case 'disposed':
         return 'bg-red-100 text-red-800'
       default:
@@ -120,7 +118,7 @@ export default function AssetDetailPage({ params }: PageProps) {
   const isWarrantyExpiring = checkWarrantyExpiring(asset.warranty_expiration)
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-6 py-8 px-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex items-start gap-3">
@@ -235,7 +233,7 @@ export default function AssetDetailPage({ params }: PageProps) {
                 {asset.vendor && (
                   <div>
                     <div className="text-sm text-gray-600">Vendor/Supplier</div>
-                    <div className="font-medium">{asset.vendor.vendor_name}</div>
+                    <div className="font-medium">{asset.vendor.name}</div>
                   </div>
                 )}
               </div>
@@ -289,15 +287,15 @@ export default function AssetDetailPage({ params }: PageProps) {
             </CardContent>
           </Card>
 
-          {/* Condition Notes */}
-          {asset.condition_notes && (
+          {/* Notes */}
+          {asset.notes && (
             <Card>
               <CardHeader>
-                <CardTitle>Condition Notes</CardTitle>
+                <CardTitle>Notes</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="whitespace-pre-wrap text-sm text-gray-700">
-                  {asset.condition_notes}
+                  {asset.notes}
                 </p>
               </CardContent>
             </Card>

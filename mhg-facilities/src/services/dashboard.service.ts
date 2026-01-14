@@ -3,7 +3,7 @@ import { AssetDAO } from '@/dao/asset.dao';
 import { ComplianceDocumentDAO } from '@/dao/compliance-document.dao';
 import { PMScheduleDAO } from '@/dao/pm-schedule.dao';
 import { LocationDAO } from '@/dao/location.dao';
-import type { TicketStatus, TicketPriority } from '@/types/database';
+// TicketStatus and TicketPriority are used by the DAO methods but not directly here anymore
 
 // Overview stats
 export interface OverviewStats {
@@ -105,32 +105,25 @@ export class DashboardService {
 
   /**
    * Get high-level overview stats for dashboard cards
+   * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getOverviewStats(): Promise<OverviewStats> {
-    const [tickets, compliance, pmSchedules] = await Promise.all([
-      this.ticketDAO.findAll(),
-      this.complianceDAO.findExpiringSoon(30),
-      this.pmScheduleDAO.findOverdue(),
+    const [openTickets, pendingApprovals, expiringCompliance, overduePM] = await Promise.all([
+      // Count open tickets (not closed, verified, or rejected)
+      this.ticketDAO.countByStatusNot(['closed', 'verified', 'rejected']),
+      // Count tickets needing approval
+      this.ticketDAO.countByStatus(['needs_approval']),
+      // Count compliance documents expiring in 30 days
+      this.complianceDAO.countExpiringSoon(30),
+      // Count overdue PM schedules
+      this.pmScheduleDAO.countOverdue(),
     ]);
-
-    // Count open tickets (not closed, verified, or rejected)
-    const openTickets = tickets.filter(
-      (t: { status: TicketStatus }) =>
-        t.status !== 'closed' &&
-        t.status !== 'verified' &&
-        t.status !== 'rejected'
-    ).length;
-
-    // Count tickets needing approval
-    const pendingApprovals = tickets.filter(
-      (t: { status: TicketStatus }) => t.status === 'needs_approval'
-    ).length;
 
     return {
       openTickets,
       pendingApprovals,
-      expiringCompliance: compliance.length,
-      overduePM: pmSchedules.length,
+      expiringCompliance,
+      overduePM,
     };
   }
 
@@ -140,42 +133,22 @@ export class DashboardService {
 
   /**
    * Get ticket statistics
+   * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getTicketStats(): Promise<TicketStats> {
-    const tickets = await this.ticketDAO.findAll();
+    const [total, open, inProgress, completed, avgResolutionHours] = await Promise.all([
+      this.ticketDAO.countTotal(),
+      this.ticketDAO.countByStatusNot(['closed', 'verified', 'rejected']),
+      this.ticketDAO.countByStatus(['in_progress']),
+      this.ticketDAO.countByStatus(['completed', 'verified', 'closed']),
+      this.ticketDAO.getAverageResolutionHours(),
+    ]);
 
-    const open = tickets.filter(
-      (t) =>
-        t.status !== 'closed' &&
-        t.status !== 'verified' &&
-        t.status !== 'rejected'
-    ).length;
-
-    const inProgress = tickets.filter((t) => t.status === 'in_progress').length;
-
-    const completed = tickets.filter(
-      (t) => t.status === 'completed' || t.status === 'verified' || t.status === 'closed'
-    ).length;
-
-    // Calculate average resolution time for closed tickets
-    const closedTickets = tickets.filter((t) => t.status === 'closed' && t.closed_at);
-    let averageResolutionDays = 0;
-
-    if (closedTickets.length > 0) {
-      const totalDays = closedTickets.reduce((sum, ticket) => {
-        const created = new Date(ticket.created_at);
-        const closed = new Date(ticket.closed_at!);
-        const days = Math.floor(
-          (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
-        );
-        return sum + days;
-      }, 0);
-
-      averageResolutionDays = Math.round(totalDays / closedTickets.length);
-    }
+    // Convert hours to days
+    const averageResolutionDays = Math.round(avgResolutionHours / 24);
 
     return {
-      total: tickets.length,
+      total,
       open,
       inProgress,
       completed,
@@ -185,20 +158,12 @@ export class DashboardService {
 
   /**
    * Get ticket counts by status
+   * PERFORMANCE: Uses optimized query that only fetches status column
    */
   async getTicketsByStatus(): Promise<StatusCount[]> {
-    const tickets = await this.ticketDAO.findAll();
+    const statusCounts = await this.ticketDAO.getStatusCounts();
 
-    const statusCounts = tickets.reduce(
-      (acc, ticket) => {
-        const status = ticket.status as string;
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return Object.entries(statusCounts).map(([status, count]) => ({
+    return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
       status,
       count,
     }));
@@ -206,20 +171,12 @@ export class DashboardService {
 
   /**
    * Get ticket counts by priority
+   * PERFORMANCE: Uses optimized query that only fetches priority column
    */
   async getTicketsByPriority(): Promise<PriorityCount[]> {
-    const tickets = await this.ticketDAO.findAll();
+    const priorityCounts = await this.ticketDAO.getPriorityCounts();
 
-    const priorityCounts = tickets.reduce(
-      (acc, ticket) => {
-        const priority = ticket.priority as string;
-        acc[priority] = (acc[priority] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return Object.entries(priorityCounts).map(([priority, count]) => ({
+    return Object.entries(priorityCounts).map(([priority, count]): PriorityCount => ({
       priority,
       count,
     }));
@@ -267,23 +224,10 @@ export class DashboardService {
 
   /**
    * Get average ticket resolution time in hours
+   * PERFORMANCE: Uses optimized query that only fetches necessary columns
    */
   async getAverageResolutionTime(): Promise<number> {
-    const tickets = await this.ticketDAO.findAll();
-    const closedTickets = tickets.filter((t) => t.status === 'closed' && t.closed_at);
-
-    if (closedTickets.length === 0) {
-      return 0;
-    }
-
-    const totalHours = closedTickets.reduce((sum, ticket) => {
-      const created = new Date(ticket.created_at);
-      const closed = new Date(ticket.closed_at!);
-      const hours = (closed.getTime() - created.getTime()) / (1000 * 60 * 60);
-      return sum + hours;
-    }, 0);
-
-    return Math.round(totalHours / closedTickets.length);
+    return this.ticketDAO.getAverageResolutionHours();
   }
 
   // ============================================================
@@ -329,7 +273,7 @@ export class DashboardService {
       {} as Record<string, number>
     );
 
-    return Object.entries(statusCounts).map(([status, count]) => ({
+    return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
       status,
       count,
     }));
@@ -348,20 +292,20 @@ export class DashboardService {
 
   /**
    * Get compliance statistics
+   * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getComplianceStats(): Promise<ComplianceStats> {
-    const [allDocs, expiringSoon] = await Promise.all([
-      this.complianceDAO.findAll(),
-      this.complianceDAO.findExpiringSoon(30),
+    const [total, active, expiringSoon, expired] = await Promise.all([
+      this.complianceDAO.countTotal(),
+      this.complianceDAO.countByStatus('active'),
+      this.complianceDAO.countExpiringSoon(30),
+      this.complianceDAO.countExpired(),
     ]);
 
-    const active = allDocs.filter((d: { status: string }) => d.status === 'active').length;
-    const expired = allDocs.filter((d: { status: string }) => d.status === 'expired').length;
-
     return {
-      total: allDocs.length,
+      total,
       active,
-      expiringSoon: expiringSoon.length,
+      expiringSoon,
       expired,
     };
   }
@@ -381,7 +325,7 @@ export class DashboardService {
       {} as Record<string, number>
     );
 
-    return Object.entries(statusCounts).map(([status, count]) => ({
+    return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
       status,
       count,
     }));
@@ -400,42 +344,49 @@ export class DashboardService {
 
   /**
    * Get PM statistics
+   * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getPMStats(): Promise<PMStats> {
-    const [allSchedules, overdue] = await Promise.all([
-      this.pmScheduleDAO.findAll(),
-      this.pmScheduleDAO.findOverdue(),
+    const [totalSchedules, activeSchedules, overdue] = await Promise.all([
+      this.pmScheduleDAO.countTotal(),
+      this.pmScheduleDAO.countActive(),
+      this.pmScheduleDAO.countOverdue(),
     ]);
 
-    const activeSchedules = allSchedules.filter((s: { is_active: boolean }) => s.is_active).length;
-
     // Calculate completion rate (completed on time vs total due)
-    const completionRate = await this.getPMCompletionRate(3);
+    const completionRate = this.calculateCompletionRate(totalSchedules, overdue);
 
     return {
-      totalSchedules: allSchedules.length,
+      totalSchedules,
       activeSchedules,
-      overdue: overdue.length,
+      overdue,
       completionRate,
     };
   }
 
   /**
    * Get PM completion rate over specified months
+   * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
-  async getPMCompletionRate(months: number): Promise<number> {
+  async getPMCompletionRate(_months: number): Promise<number> {
     // This would require PM completion tracking
     // For now, return a placeholder based on overdue ratio
-    const [allSchedules, overdue] = await Promise.all([
-      this.pmScheduleDAO.findAll(),
-      this.pmScheduleDAO.findOverdue(),
+    const [totalSchedules, overdue] = await Promise.all([
+      this.pmScheduleDAO.countTotal(),
+      this.pmScheduleDAO.countOverdue(),
     ]);
 
-    if (allSchedules.length === 0) {
+    return this.calculateCompletionRate(totalSchedules, overdue);
+  }
+
+  /**
+   * Helper: Calculate completion rate from total and overdue counts
+   */
+  private calculateCompletionRate(total: number, overdue: number): number {
+    if (total === 0) {
       return 100;
     }
-
-    const overdueRate = (overdue.length / allSchedules.length) * 100;
+    const overdueRate = (overdue / total) * 100;
     return Math.round(100 - overdueRate);
   }
 
@@ -452,47 +403,33 @@ export class DashboardService {
 
   /**
    * Get location statistics
+   * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getLocationStats(): Promise<LocationStats> {
-    const [locations, tickets] = await Promise.all([
-      this.locationDAO.findAll(),
-      this.ticketDAO.findAll(),
+    const [totalLocations, locationsWithTickets] = await Promise.all([
+      this.locationDAO.countTotal(),
+      this.ticketDAO.countLocationsWithTickets(),
     ]);
 
-    // Count unique locations with tickets
-    const locationIdsWithTickets = new Set(
-      tickets.map((t) => t.location_id).filter(Boolean)
-    );
-
     return {
-      totalLocations: locations.length,
-      locationsWithTickets: locationIdsWithTickets.size,
+      totalLocations,
+      locationsWithTickets,
     };
   }
 
   /**
    * Get ticket counts by location
+   * PERFORMANCE: Uses optimized queries - only fetches location_id from tickets
    */
   async getTicketsByLocation(): Promise<LocationTicketCount[]> {
-    const [locations, tickets] = await Promise.all([
+    const [locations, locationTicketCounts] = await Promise.all([
       this.locationDAO.findAll(),
-      this.ticketDAO.findAll(),
+      this.ticketDAO.getLocationTicketCounts(),
     ]);
-
-    // Count tickets per location
-    const locationTicketCounts = tickets.reduce(
-      (acc, ticket) => {
-        if (ticket.location_id) {
-          acc[ticket.location_id] = (acc[ticket.location_id] || 0) + 1;
-        }
-        return acc;
-      },
-      {} as Record<string, number>
-    );
 
     // Map to location names
     return Object.entries(locationTicketCounts).map(
-      ([locationId, ticketCount]) => {
+      ([locationId, ticketCount]): LocationTicketCount => {
         const location = locations.find((l) => l.id === locationId);
         return {
           locationId,

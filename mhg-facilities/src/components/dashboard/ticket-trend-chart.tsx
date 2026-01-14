@@ -34,8 +34,8 @@ export function TicketTrendChart({ data, title = 'Ticket Trend' }: TicketTrendCh
             <YAxis className="text-xs text-muted-foreground" />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
+                backgroundColor: 'var(--card)',
+                border: '1px solid var(--border)',
                 borderRadius: '0.5rem',
               }}
               labelFormatter={(value) => {
@@ -46,9 +46,9 @@ export function TicketTrendChart({ data, title = 'Ticket Trend' }: TicketTrendCh
             <Line
               type="monotone"
               dataKey="count"
-              stroke="hsl(var(--primary))"
+              stroke="var(--primary)"
               strokeWidth={2}
-              dot={{ fill: 'hsl(var(--primary))' }}
+              dot={{ fill: 'var(--primary)' }}
             />
           </LineChart>
         </ResponsiveContainer>

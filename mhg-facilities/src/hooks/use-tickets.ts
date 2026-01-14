@@ -41,7 +41,7 @@ interface Ticket {
   }
   vendor?: {
     id: string
-    vendor_name: string
+    name: string
   }
   status_history?: Array<{
     id: string
@@ -61,6 +61,16 @@ interface TicketFilters {
   category_id?: string
   location_id?: string
   assignee_id?: string
+  page?: number
+  pageSize?: number
+}
+
+interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export interface CreateTicketData {
@@ -122,6 +132,10 @@ export const ticketKeys = {
   approval: (id: string) => [...ticketKeys.detail(id), 'approval'] as const,
 }
 
+// Cache settings for React Query
+const STALE_TIME = 30000 // Data fresh for 30 seconds
+const GC_TIME = 300000 // Keep in cache for 5 minutes
+
 // Queries
 export function useTickets(filters?: TicketFilters) {
   return useQuery({
@@ -133,12 +147,16 @@ export function useTickets(filters?: TicketFilters) {
       if (filters?.category_id) params.append('category_id', filters.category_id)
       if (filters?.location_id) params.append('location_id', filters.location_id)
       if (filters?.assignee_id) params.append('assignee_id', filters.assignee_id)
+      if (filters?.page) params.append('page', filters.page.toString())
+      if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString())
 
-      const response = await api.get<{ tickets: Ticket[] }>(
+      const response = await api.get<PaginatedResponse<Ticket>>(
         `/api/tickets?${params.toString()}`
       )
-      return response.tickets
+      return response
     },
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -150,6 +168,8 @@ export function useTicket(id: string) {
       return response.ticket
     },
     enabled: !!id,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -166,6 +186,8 @@ export function useTicketComments(id: string, includeInternal = false) {
       return response.comments
     },
     enabled: !!id,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -179,6 +201,8 @@ export function useTicketAttachments(id: string) {
       return response.attachments
     },
     enabled: !!id,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 
@@ -192,6 +216,8 @@ export function useTicketApproval(id: string) {
       return response.approval
     },
     enabled: !!id,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
   })
 }
 

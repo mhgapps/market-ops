@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,23 +23,25 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/loaders'
 
+// Schema for form - allows null/undefined/empty string for optional fields
+// Note: status values must match database enum asset_status
 const assetFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
-  category_id: z.string().uuid('Please select a category').nullish(),
-  location_id: z.string().uuid('Please select a location').nullish(),
-  serial_number: z.string().max(100).nullish(),
-  model: z.string().max(100).nullish(),
-  manufacturer: z.string().max(100).nullish(),
-  purchase_date: z.string().nullish(),
-  purchase_price: z.number().positive('Price must be positive').nullish(),
-  warranty_expiration: z.string().nullish(),
-  expected_lifespan_years: z.number().int().positive('Lifespan must be positive').nullish(),
-  condition_notes: z.string().max(1000).nullish(),
-  vendor_id: z.string().uuid().nullish(),
-  status: z.enum(['active', 'maintenance', 'retired', 'disposed']),
+  category_id: z.string().nullable().optional(),
+  location_id: z.string().nullable().optional(),
+  serial_number: z.string().max(100).nullable().optional(),
+  model: z.string().max(100).nullable().optional(),
+  manufacturer: z.string().max(100).nullable().optional(),
+  purchase_date: z.string().nullable().optional(),
+  purchase_price: z.number().positive('Price must be positive').nullable().optional(),
+  warranty_expiration: z.string().nullable().optional(),
+  expected_lifespan_years: z.number().int().positive('Lifespan must be positive').nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+  vendor_id: z.string().nullable().optional(),
+  status: z.enum(['active', 'under_maintenance', 'retired', 'transferred', 'disposed']),
 })
 
 type AssetFormValues = z.infer<typeof assetFormSchema>
@@ -96,7 +99,7 @@ export function AssetForm({
       purchase_price: null,
       warranty_expiration: null,
       expected_lifespan_years: null,
-      condition_notes: null,
+      notes: null,
       vendor_id: null,
       status: 'active',
       ...defaultValues,
@@ -107,113 +110,38 @@ export function AssetForm({
   const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId)
 
   // Auto-set lifespan from category default if not already set
-  if (selectedCategory?.default_lifespan_years && !form.getValues('expected_lifespan_years')) {
-    form.setValue('expected_lifespan_years', selectedCategory.default_lifespan_years)
-  }
+  useEffect(() => {
+    if (selectedCategory?.default_lifespan_years && !form.getValues('expected_lifespan_years')) {
+      form.setValue('expected_lifespan_years', selectedCategory.default_lifespan_years)
+    }
+  }, [selectedCategory?.default_lifespan_years, form])
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{mode === 'create' ? 'Add New Asset' : 'Edit Asset'}</CardTitle>
-        <CardDescription>
-          {mode === 'create'
-            ? 'Register a new asset in the system'
-            : 'Update asset information'}
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
+      <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Basic Information</h3>
-
-              {/* Name */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Asset Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., HVAC Unit - Building A"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Category */}
-              <FormField
-                control={form.control}
-                name="category_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+            {/* Row 1: Name + Status */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Asset Name *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category..." />
-                        </SelectTrigger>
+                        <Input
+                          placeholder="e.g., HVAC Unit - Building A"
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            <div>
-                              <div className="font-medium">{category.name}</div>
-                              {category.description && (
-                                <div className="text-xs text-gray-500">
-                                  {category.description}
-                                </div>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              {/* Location */}
-              <FormField
-                control={form.control}
-                name="location_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a location..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {locations.map((location) => (
-                          <SelectItem key={location.id} value={location.id}>
-                            <div>
-                              <div className="font-medium">{location.name}</div>
-                              {location.address && (
-                                <div className="text-xs text-gray-500">
-                                  {location.address}
-                                </div>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Status */}
               <FormField
                 control={form.control}
                 name="status"
@@ -233,16 +161,22 @@ export function AssetForm({
                             Active
                           </div>
                         </SelectItem>
-                        <SelectItem value="maintenance">
+                        <SelectItem value="under_maintenance">
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                            Maintenance
+                            Under Maintenance
                           </div>
                         </SelectItem>
                         <SelectItem value="retired">
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-2 rounded-full bg-gray-500" />
                             Retired
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="transferred">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-blue-500" />
+                            Transferred
                           </div>
                         </SelectItem>
                         <SelectItem value="disposed">
@@ -259,12 +193,66 @@ export function AssetForm({
               />
             </div>
 
-            {/* Equipment Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Equipment Details</h3>
+            {/* Row 2: Category + Location */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* Manufacturer */}
+              <FormField
+                control={form.control}
+                name="location_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a location..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {locations.map((location) => (
+                          <SelectItem key={location.id} value={location.id}>
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Equipment Details Section */}
+            <div className="space-y-4">
+              <div className="border-b pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Equipment Details</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="manufacturer"
@@ -279,7 +267,6 @@ export function AssetForm({
                   )}
                 />
 
-                {/* Model */}
                 <FormField
                   control={form.control}
                   name="model"
@@ -294,7 +281,6 @@ export function AssetForm({
                   )}
                 />
 
-                {/* Serial Number */}
                 <FormField
                   control={form.control}
                   name="serial_number"
@@ -308,8 +294,16 @@ export function AssetForm({
                     </FormItem>
                   )}
                 />
+              </div>
+            </div>
 
-                {/* Vendor */}
+            {/* Financial & Warranty Section */}
+            <div className="space-y-4">
+              <div className="border-b pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Financial & Warranty</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="vendor_id"
@@ -334,15 +328,7 @@ export function AssetForm({
                     </FormItem>
                   )}
                 />
-              </div>
-            </div>
 
-            {/* Purchase & Warranty */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Purchase & Warranty</h3>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* Purchase Date */}
                 <FormField
                   control={form.control}
                   name="purchase_date"
@@ -357,7 +343,6 @@ export function AssetForm({
                   )}
                 />
 
-                {/* Purchase Price */}
                 <FormField
                   control={form.control}
                   name="purchase_price"
@@ -379,7 +364,6 @@ export function AssetForm({
                   )}
                 />
 
-                {/* Warranty Expiration */}
                 <FormField
                   control={form.control}
                   name="warranty_expiration"
@@ -394,7 +378,6 @@ export function AssetForm({
                   )}
                 />
 
-                {/* Expected Lifespan */}
                 <FormField
                   control={form.control}
                   name="expected_lifespan_years"
@@ -412,7 +395,7 @@ export function AssetForm({
                       </FormControl>
                       {selectedCategory?.default_lifespan_years && (
                         <FormDescription>
-                          Category default: {selectedCategory.default_lifespan_years} years
+                          Default: {selectedCategory.default_lifespan_years} years
                         </FormDescription>
                       )}
                       <FormMessage />
@@ -422,17 +405,17 @@ export function AssetForm({
               </div>
             </div>
 
-            {/* Condition Notes */}
+            {/* Notes */}
             <FormField
               control={form.control}
-              name="condition_notes"
+              name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Condition Notes</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Any notes about the asset's condition, known issues, or maintenance history..."
-                      className="min-h-[100px] resize-y"
+                      className="min-h-[80px] resize-y"
                       {...field}
                       value={field.value || ''}
                     />
@@ -443,7 +426,7 @@ export function AssetForm({
             />
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-3 border-t pt-4">
               {onCancel && (
                 <Button
                   type="button"
@@ -455,8 +438,8 @@ export function AssetForm({
                 </Button>
               )}
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {mode === 'create' ? 'Create Asset' : 'Update Asset'}
+                {isSubmitting && <Spinner size="sm" className="mr-2" />}
+                {mode === 'create' ? 'Create Asset' : 'Save Changes'}
               </Button>
             </div>
           </form>

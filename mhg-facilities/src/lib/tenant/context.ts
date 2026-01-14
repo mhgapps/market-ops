@@ -73,15 +73,36 @@ export async function getTenantContext(): Promise<TenantContext | null> {
     }
   }
 
-  // Fallback: Get tenant from authenticated user's metadata
+  // Fallback: Get tenant from authenticated user
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  if (user?.user_metadata?.tenant_id) {
+  if (!authUser) {
+    return null
+  }
+
+  // First check the users table for tenant_id (primary source)
+  let tenantId: string | null = null
+
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('tenant_id')
+    .eq('auth_user_id', authUser.id)
+    .is('deleted_at', null)
+    .single<{ tenant_id: string | null }>()
+
+  if (dbUser?.tenant_id) {
+    tenantId = dbUser.tenant_id
+  } else if (authUser.user_metadata?.tenant_id) {
+    // Fallback to user_metadata if not in users table
+    tenantId = authUser.user_metadata.tenant_id
+  }
+
+  if (tenantId) {
     const { data: tenant } = await supabase
       .from('tenants')
       .select('id, slug, name, features, branding, max_users, max_locations, storage_limit_gb')
-      .eq('id', user.user_metadata.tenant_id)
+      .eq('id', tenantId)
       .eq('status', 'active')
       .is('deleted_at', null)
       .single<TenantSelectResult>()

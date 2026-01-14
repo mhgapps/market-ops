@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { uuid, optionalNullableUuid, uuidArray } from './shared'
 
 // Ticket status and priority enums
 const ticketStatuses = [
@@ -25,18 +26,18 @@ const attachmentTypes = ['initial', 'progress', 'completion', 'invoice', 'quote'
 export const createTicketSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(200, 'Title cannot exceed 200 characters'),
   description: z.string().max(5000, 'Description cannot exceed 5000 characters').optional(),
-  category_id: z.string().uuid('Invalid category ID').optional(),
-  location_id: z.string().uuid('Invalid location ID'),
-  asset_id: z.string().uuid('Invalid asset ID').optional(),
+  category_id: uuid('Invalid category ID').optional(),
+  location_id: uuid('Invalid location ID'),
+  asset_id: optionalNullableUuid('Invalid asset ID'),
   priority: z.enum(ticketPriorities).default('medium'),
   is_emergency: z.boolean().default(false),
-  submitted_by: z.string().uuid('Invalid user ID'),
+  submitted_by: uuid('Invalid user ID'),
 })
 
 export const updateTicketSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(200, 'Title cannot exceed 200 characters').optional(),
   description: z.string().max(5000, 'Description cannot exceed 5000 characters').optional(),
-  category_id: z.string().uuid('Invalid category ID').optional(),
+  category_id: uuid('Invalid category ID').optional(),
   priority: z.enum(ticketPriorities).optional(),
   due_date: z.string().datetime('Invalid date format').optional(),
 })
@@ -44,22 +45,24 @@ export const updateTicketSchema = z.object({
 export const ticketFiltersSchema = z.object({
   status: z.array(z.enum(ticketStatuses)).optional(),
   priority: z.array(z.enum(ticketPriorities)).optional(),
-  location_id: z.string().uuid('Invalid location ID').optional(),
-  assigned_to: z.string().uuid('Invalid user ID').optional(),
-  submitted_by: z.string().uuid('Invalid user ID').optional(),
+  location_id: uuid('Invalid location ID').optional(),
+  assigned_to: uuid('Invalid user ID').optional(),
+  submitted_by: uuid('Invalid user ID').optional(),
   date_from: z.string().datetime('Invalid date format').optional(),
   date_to: z.string().datetime('Invalid date format').optional(),
   search: z.string().max(200, 'Search query too long').optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(50),
 })
 
 export const assignTicketSchema = z.object({
-  assignee_id: z.string().uuid('Invalid assignee ID'),
-  assigner_id: z.string().uuid('Invalid assigner ID'),
+  assignee_id: uuid('Invalid assignee ID'),
+  assigner_id: uuid('Invalid assigner ID'),
 })
 
 export const assignVendorSchema = z.object({
-  vendor_id: z.string().uuid('Invalid vendor ID'),
-  assigner_id: z.string().uuid('Invalid assigner ID'),
+  vendor_id: uuid('Invalid vendor ID'),
+  assigner_id: uuid('Invalid assigner ID'),
 })
 
 export const completeTicketSchema = z.object({
@@ -75,18 +78,18 @@ export const holdTicketSchema = z.object({
 })
 
 export const checkDuplicateSchema = z.object({
-  location_id: z.string().uuid('Invalid location ID'),
-  asset_id: z.string().uuid('Invalid asset ID').optional().nullable(),
+  location_id: uuid('Invalid location ID'),
+  asset_id: optionalNullableUuid('Invalid asset ID'),
   title: z.string().min(5, 'Title must be at least 5 characters'),
 })
 
 export const markDuplicateSchema = z.object({
-  original_ticket_id: z.string().uuid('Invalid ticket ID'),
+  original_ticket_id: uuid('Invalid ticket ID'),
 })
 
 export const mergeTicketsSchema = z.object({
-  target_id: z.string().uuid('Invalid target ticket ID'),
-  source_ids: z.array(z.string().uuid('Invalid source ticket ID')).min(1, 'At least one source ticket required'),
+  target_id: uuid('Invalid target ticket ID'),
+  source_ids: uuidArray('Invalid source ticket ID').min(1, 'At least one source ticket required'),
 })
 
 // ============================================================
@@ -98,8 +101,8 @@ export const createCategorySchema = z.object({
   name_es: z.string().min(2).max(100).optional(),
   description: z.string().max(500, 'Description cannot exceed 500 characters').optional(),
   default_priority: z.enum(ticketPriorities).default('medium'),
-  default_assignee_id: z.string().uuid('Invalid assignee ID').optional(),
-  preferred_vendor_id: z.string().uuid('Invalid vendor ID').optional(),
+  default_assignee_id: uuid('Invalid assignee ID').optional(),
+  preferred_vendor_id: uuid('Invalid vendor ID').optional(),
   approval_threshold: z.number().min(0, 'Approval threshold must be non-negative').optional(),
   escalation_hours: z.number().int().min(1, 'Escalation hours must be at least 1').default(4),
 })
@@ -109,8 +112,8 @@ export const updateCategorySchema = z.object({
   name_es: z.string().min(2).max(100).optional(),
   description: z.string().max(500, 'Description cannot exceed 500 characters').optional(),
   default_priority: z.enum(ticketPriorities).optional(),
-  default_assignee_id: z.string().uuid('Invalid assignee ID').optional().nullable(),
-  preferred_vendor_id: z.string().uuid('Invalid vendor ID').optional().nullable(),
+  default_assignee_id: optionalNullableUuid('Invalid assignee ID'),
+  preferred_vendor_id: optionalNullableUuid('Invalid vendor ID'),
   approval_threshold: z.number().min(0, 'Approval threshold must be non-negative').optional().nullable(),
   escalation_hours: z.number().int().min(1, 'Escalation hours must be at least 1').optional(),
 })

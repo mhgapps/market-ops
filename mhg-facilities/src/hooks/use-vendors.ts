@@ -64,8 +64,16 @@ interface VendorRatingStats {
   }
 }
 
+interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
 /**
- * Fetch all vendors with optional filters
+ * Fetch all vendors with optional filters and pagination
  */
 export function useVendors(filters?: VendorFilterInput) {
   return useQuery({
@@ -78,8 +86,10 @@ export function useVendors(filters?: VendorFilterInput) {
       if (filters?.insurance_expiring_days) params.set('insurance_expiring_days', filters.insurance_expiring_days.toString())
       if (filters?.contract_expiring_days) params.set('contract_expiring_days', filters.contract_expiring_days.toString())
       if (filters?.search) params.set('search', filters.search)
+      if (filters?.page) params.set('page', filters.page.toString())
+      if (filters?.pageSize) params.set('pageSize', filters.pageSize.toString())
 
-      const data = await api.get<{ vendors: Vendor[]; total: number }>(
+      const data = await api.get<PaginatedResponse<Vendor>>(
         `/api/vendors?${params.toString()}`
       )
       return data

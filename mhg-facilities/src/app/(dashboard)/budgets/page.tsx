@@ -14,7 +14,7 @@ export default function BudgetsPage() {
   })
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
         <div>
@@ -29,41 +29,35 @@ export default function BudgetsPage() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
+      {/* Stats Cards - Compact on mobile */}
+      <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardContent className="p-3 md:pt-6 md:p-6">
+            <p className="text-[10px] md:text-sm font-medium text-muted-foreground truncate">
               Total Budget
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              <Skeleton className="h-8 w-32" />
+            </p>
+            <div className="text-base md:text-2xl font-bold mt-1">
+              <Skeleton className="h-5 md:h-8 w-16 md:w-32" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardContent className="p-3 md:pt-6 md:p-6">
+            <p className="text-[10px] md:text-sm font-medium text-muted-foreground truncate">
               Total Spent
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              <Skeleton className="h-8 w-32" />
+            </p>
+            <div className="text-base md:text-2xl font-bold mt-1">
+              <Skeleton className="h-5 md:h-8 w-16 md:w-32" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardContent className="p-3 md:pt-6 md:p-6">
+            <p className="text-[10px] md:text-sm font-medium text-muted-foreground truncate">
               Remaining
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              <Skeleton className="h-8 w-32" />
+            </p>
+            <div className="text-base md:text-2xl font-bold mt-1">
+              <Skeleton className="h-5 md:h-8 w-16 md:w-32" />
             </div>
           </CardContent>
         </Card>

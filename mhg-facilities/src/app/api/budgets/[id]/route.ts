@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BudgetService } from '@/services/budget.service'
 import { z, ZodError } from 'zod'
+import { optionalNullableUuid } from '@/lib/validations/shared'
 
 const updateBudgetSchema = z.object({
-  location_id: z.string().uuid().optional().nullable(),
+  location_id: optionalNullableUuid(),
   category: z.string().optional().nullable(),
   fiscal_year: z.number().int().optional(),
   annual_budget: z.number().positive().optional(),

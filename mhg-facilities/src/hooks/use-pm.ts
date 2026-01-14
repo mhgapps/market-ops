@@ -4,24 +4,26 @@ import api from '@/lib/api-client';
 // Types
 interface PMSchedule {
   id: string;
+  tenant_id: string;
   template_id: string | null;
-  task_name: string;
+  name: string;
   description: string | null;
   asset_id: string | null;
   asset_name?: string | null;
   location_id: string | null;
-  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
-  frequency_interval: number | null;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  location_name?: string | null;
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semi_annually' | 'annually';
+  day_of_week: number | null;
+  day_of_month: number | null;
+  month_of_year: number | null;
   assigned_to: string | null;
   assigned_to_name?: string | null;
-  estimated_duration_minutes: number | null;
+  vendor_id: string | null;
+  vendor_name?: string | null;
   estimated_cost: number | null;
-  instructions: string | null;
-  parts_needed: string | null;
   is_active: boolean;
-  next_due_date: string;
-  last_completed: string | null;
+  next_due_date: string | null;
+  last_completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,10 +48,11 @@ interface PMStats {
 
 interface PMCalendarItem {
   id: string;
-  task_name: string;
+  name: string;
   asset_name: string | null;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  next_due_date: string;
+  location_name: string | null;
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semi_annually' | 'annually';
+  next_due_date: string | null;
 }
 
 interface CreatePMScheduleInput {

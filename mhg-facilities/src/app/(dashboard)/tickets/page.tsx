@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTickets } from '@/hooks/use-tickets'
-import { useTicketRealtime } from '@/hooks/use-realtime'
 import { toast } from 'sonner'
 import api from '@/lib/api-client'
 import type { Database } from '@/types/database'
@@ -27,7 +26,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, LayoutList, LayoutGrid, Loader2 } from 'lucide-react'
+import { Plus, Search, LayoutList, LayoutGrid } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { format } from 'date-fns'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 
@@ -37,16 +38,25 @@ export default function TicketsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 50
 
-  // Enable realtime updates for tickets
-  useTicketRealtime()
+  // Debounce search query to prevent excessive filtering
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
+
+  // Note: Realtime updates are handled on individual ticket detail pages only
+  // to avoid excessive WebSocket subscriptions on list pages
 
   const filters = {
     ...(statusFilter !== 'all' && { status: statusFilter }),
     ...(priorityFilter !== 'all' && { priority: priorityFilter }),
+    page,
+    pageSize,
   }
 
-  const { data: tickets = [], isLoading } = useTickets(filters)
+  const { data: ticketResponse, isLoading } = useTickets(filters)
+  const tickets = ticketResponse?.data ?? []
+  const totalCount = ticketResponse?.total ?? 0
 
 
   type TicketWithRelations = Database['public']['Tables']['tickets']['Row'] & {
@@ -55,22 +65,25 @@ export default function TicketsPage() {
     assignee?: { full_name: string } | null
   }
 
-  // Filter tickets by search query
-  const filteredTickets = (tickets as unknown as TicketWithRelations[]).filter((ticket) =>
-    ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ticket.ticket_number.toString().includes(searchQuery.toLowerCase())
+  // Filter tickets by search query (memoized with debounced search)
+  const filteredTickets = useMemo(() =>
+    (tickets as unknown as TicketWithRelations[]).filter((ticket) =>
+      ticket.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      ticket.ticket_number.toString().includes(debouncedSearch.toLowerCase())
+    ),
+    [tickets, debouncedSearch]
   )
 
-  // Group tickets by status for Kanban view
-  const kanbanColumns = {
+  // Group tickets by status for Kanban view (memoized)
+  const kanbanColumns = useMemo(() => ({
     submitted: filteredTickets.filter((t) => t.status === 'submitted'),
     acknowledged: filteredTickets.filter((t) => t.status === 'acknowledged'),
     in_progress: filteredTickets.filter((t) => t.status === 'in_progress'),
     completed: filteredTickets.filter((t) => t.status === 'completed'),
     closed: filteredTickets.filter((t) => t.status === 'closed'),
-  }
+  }), [filteredTickets])
 
-  const handleDragEnd = async (result: { destination?: { droppableId: string } | null; draggableId: string }) => {
+  const handleDragEnd = useCallback(async (result: { destination?: { droppableId: string } | null; draggableId: string }) => {
     // If dropped outside a droppable area, do nothing
     if (!result.destination) {
       return
@@ -98,7 +111,7 @@ export default function TicketsPage() {
       console.error('Failed to update ticket status:', error)
       toast.error('Failed to update ticket status')
     }
-  }
+  }, [filteredTickets])
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -116,15 +129,11 @@ export default function TicketsPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 py-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -259,6 +268,33 @@ export default function TicketsPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {totalCount > 0 && (
+            <div className="flex items-center justify-between border-t px-4 py-4">
+              <span className="text-sm text-muted-foreground">
+                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, totalCount)} of {totalCount}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page * pageSize >= totalCount}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 

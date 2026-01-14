@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { UserService } from '@/services/user.service'
 import { TenantService } from '@/services/tenant.service'
+import type { Database } from '@/types/database'
+
+type UserRow = Database['public']['Tables']['users']['Row']
 
 /**
  * GET /api/auth/me
@@ -24,12 +26,39 @@ export async function GET() {
       )
     }
 
-    // Get tenant_id from user metadata
-    const tenantId = authUser.user_metadata?.tenant_id
+    // Try to get user from our users table first
+    let user: UserRow | null = null
+    // Look up user by auth ID directly from users table
+    const { data: dbUser, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', authUser.id)
+      .is('deleted_at', null)
+      .single()
+
+    if (!userError && dbUser) {
+      user = dbUser as UserRow
+    } else if (userError) {
+      console.error('Error fetching user from users table:', userError.message, 'authUser.id:', authUser.id)
+    }
+
+    // Get tenant_id from user record or user metadata
+    const tenantId = user?.tenant_id ?? authUser.user_metadata?.tenant_id
 
     if (!tenantId) {
+      // Debug info to help diagnose
       return NextResponse.json(
-        { error: 'No tenant associated with user' },
+        {
+          error: 'No tenant associated with user. Please contact support.',
+          debug: {
+            authUserId: authUser.id,
+            authUserEmail: authUser.email,
+            userFound: !!user,
+            userTenantId: user?.tenant_id ?? null,
+            userMetadataTenantId: authUser.user_metadata?.tenant_id ?? null,
+            userError: userError?.message ?? null,
+          }
+        },
         { status: 400 }
       )
     }
@@ -44,10 +73,6 @@ export async function GET() {
         { status: 404 }
       )
     }
-
-    // Try to get user from our users table
-    const userService = new UserService()
-    const user = await userService.getCurrentUser()
 
     // Build response with user and tenant context
     return NextResponse.json({

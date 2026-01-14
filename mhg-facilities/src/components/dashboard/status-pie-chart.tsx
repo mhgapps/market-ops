@@ -14,16 +14,16 @@ interface StatusPieChartProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: '#3b82f6',
-  acknowledged: '#8b5cf6',
-  in_progress: '#eab308',
-  completed: '#10b981',
-  verified: '#06b6d4',
-  closed: '#6b7280',
-  rejected: '#ef4444',
-  on_hold: '#f97316',
-  needs_approval: '#f59e0b',
-  approved: '#22c55e',
+  submitted: 'var(--primary)',
+  acknowledged: 'var(--chart-1)',
+  in_progress: 'var(--chart-4)',
+  completed: 'var(--chart-2)',
+  verified: 'var(--chart-2)',
+  closed: 'var(--muted-foreground)',
+  rejected: 'var(--destructive)',
+  on_hold: 'var(--chart-5)',
+  needs_approval: 'var(--chart-4)',
+  approved: 'var(--chart-2)',
 };
 
 export function StatusPieChart({ data, title = 'Status Distribution' }: StatusPieChartProps) {
@@ -49,7 +49,7 @@ export function StatusPieChart({ data, title = 'Status Distribution' }: StatusPi
                 `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`
               }
               outerRadius={80}
-              fill="#8884d8"
+              fill="var(--chart-3)"
               dataKey="value"
             >
               {chartData.map((entry, index) => {
@@ -57,15 +57,15 @@ export function StatusPieChart({ data, title = 'Status Distribution' }: StatusPi
                 return (
                   <Cell
                     key={`cell-${index}`}
-                    fill={STATUS_COLORS[originalStatus] || '#94a3b8'}
+                    fill={STATUS_COLORS[originalStatus] || 'var(--muted-foreground)'}
                   />
                 );
               })}
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
+                backgroundColor: 'var(--card)',
+                border: '1px solid var(--border)',
                 borderRadius: '0.5rem',
               }}
             />

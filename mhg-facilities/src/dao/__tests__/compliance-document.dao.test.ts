@@ -13,17 +13,26 @@ describe('ComplianceDocumentDAO', () => {
   const mockDocument: ComplianceDocument = {
     id: 'doc-1',
     tenant_id: 'test-tenant-id',
+    name: 'Test Certificate',
     document_type_id: 'type-1',
     location_id: 'location-1',
     location_ids: null,
-    title: 'Test Certificate',
-    description: null,
-    file_path: '/path/to/file.pdf',
+    issue_date: '2024-01-01',
     expiration_date: '2025-01-01',
+    issuing_authority: 'Test Authority',
+    document_number: 'DOC-123',
+    file_path: '/path/to/file.pdf',
     status: 'active' as ComplianceStatus,
-    reminder_days_before: 30,
-    uploaded_by: 'user-1',
-    metadata: null,
+    is_conditional: false,
+    conditional_requirements: null,
+    conditional_deadline: null,
+    renewal_submitted_date: null,
+    renewal_cost: null,
+    renewal_assigned_to: null,
+    failed_inspection_date: null,
+    corrective_action_required: null,
+    reinspection_date: null,
+    notes: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     deleted_at: null,
@@ -119,11 +128,10 @@ describe('ComplianceDocumentDAO', () => {
       mockQuery.single.mockResolvedValueOnce({ data: mockDocument, error: null });
 
       const result = await dao.create({
+        name: 'Test Certificate',
         document_type_id: 'type-1',
-        title: 'Test Certificate',
         file_path: '/path/to/file.pdf',
         expiration_date: '2025-01-01',
-        uploaded_by: 'user-1',
       });
 
       expect(mockQuery.insert).toHaveBeenCalledWith(

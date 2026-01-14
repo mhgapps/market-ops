@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { useEffect, useState, useRef } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useAuth, useIsAdmin } from '@/hooks/use-auth'
@@ -23,6 +23,12 @@ import {
   Settings,
   Building2,
   X,
+  LogOut,
+  User,
+  AlertTriangle,
+  Calendar,
+  CheckCircle,
+  DollarSign,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -43,19 +49,30 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: 'Locations',
-    href: '/locations',
-    icon: MapPin,
-  },
-  {
     title: 'Tickets',
     href: '/tickets',
     icon: Ticket,
   },
   {
+    title: 'Approvals',
+    href: '/approvals',
+    icon: CheckCircle,
+    managerOnly: true,
+  },
+  {
+    title: 'Locations',
+    href: '/locations',
+    icon: MapPin,
+  },
+  {
     title: 'Assets',
     href: '/assets',
     icon: Wrench,
+  },
+  {
+    title: 'PM Schedules',
+    href: '/pm',
+    icon: Calendar,
   },
   {
     title: 'Vendors',
@@ -70,6 +87,17 @@ const navItems: NavItem[] = [
     managerOnly: true,
   },
   {
+    title: 'Emergencies',
+    href: '/emergencies',
+    icon: AlertTriangle,
+  },
+  {
+    title: 'Budgets',
+    href: '/budgets',
+    icon: DollarSign,
+    managerOnly: true,
+  },
+  {
     title: 'Reports',
     href: '/reports',
     icon: BarChart3,
@@ -77,7 +105,7 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Users',
-    href: '/settings/users',
+    href: '/users',
     icon: Users,
     adminOnly: true,
   },
@@ -96,13 +124,31 @@ interface MobileNavProps {
 
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname()
-  const { user, tenant } = useAuth()
+  const router = useRouter()
+  const { user, tenant, logout } = useAuth()
   const isAdmin = useIsAdmin()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const prevPathname = useRef(pathname)
 
-  // Close on route change
+  // Close on route change (only when pathname actually changes)
   useEffect(() => {
-    onClose()
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname
+      onClose()
+    }
   }, [pathname, onClose])
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   // Filter nav items based on user role
   const filteredNavItems = navItems.filter((item) => {
@@ -114,7 +160,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   })
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="left" className="w-72 p-0">
         <SheetHeader className="flex flex-row items-center justify-between h-16 px-6 border-b border-border">
           <SheetTitle className="flex items-center gap-2">
@@ -161,11 +207,12 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
           })}
         </nav>
 
-        {/* User info at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-card">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-sm font-medium text-muted-foreground">
+        {/* User section at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card">
+          {/* User info */}
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-sm font-semibold text-primary">
                 {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
               </span>
             </div>
@@ -174,9 +221,28 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 {user?.fullName ?? 'User'}
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                {user?.role ?? 'staff'}
+                {user?.email ?? user?.role ?? 'staff'}
               </p>
             </div>
+          </div>
+
+          {/* User actions */}
+          <div className="p-2 space-y-1">
+            <Link
+              href="/settings/profile"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <User className="w-5 h-5" />
+              <span>Profile</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full disabled:opacity-50"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+            </button>
           </div>
         </div>
       </SheetContent>

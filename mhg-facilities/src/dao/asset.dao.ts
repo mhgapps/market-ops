@@ -18,7 +18,7 @@ export interface AssetWithRelations extends Asset {
   } | null
   vendor?: {
     id: string
-    vendor_name: string
+    name: string
   } | null
 }
 
@@ -29,6 +29,16 @@ export interface AssetFilters {
   status?: string
   warranty_expiring_days?: number // Assets with warranty expiring within X days
   search?: string // Search by name, serial number, model
+  page?: number
+  pageSize?: number
+}
+
+export interface PaginatedResult<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export class AssetDAO extends BaseDAO<'assets'> {
@@ -49,7 +59,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         location:locations(id, name, address),
-        vendor:vendors(id, vendor_name)
+        vendor:vendors(id, name)
       `
       )
       .eq('tenant_id', tenantId)
@@ -92,6 +102,99 @@ export class AssetDAO extends BaseDAO<'assets'> {
   }
 
   /**
+   * Find all assets with pagination and filters
+   * Returns paginated results with total count
+   */
+  async findWithRelationsPaginated(filters?: AssetFilters): Promise<PaginatedResult<AssetWithRelations>> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const page = filters?.page ?? 1
+    const pageSize = filters?.pageSize ?? 50
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    // Build base query conditions for both count and data queries
+    let countQuery = supabase
+      .from('assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+
+    let dataQuery = supabase
+      .from('assets')
+      .select(
+        `
+        *,
+        category:asset_categories(id, name, default_lifespan_years),
+        location:locations(id, name, address),
+        vendor:vendors(id, name)
+      `
+      )
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+
+    // Apply filters to both queries
+    if (filters?.category_id) {
+      countQuery = countQuery.eq('category_id', filters.category_id)
+      dataQuery = dataQuery.eq('category_id', filters.category_id)
+    }
+    if (filters?.location_id) {
+      countQuery = countQuery.eq('location_id', filters.location_id)
+      dataQuery = dataQuery.eq('location_id', filters.location_id)
+    }
+    if (filters?.vendor_id) {
+      countQuery = countQuery.eq('vendor_id', filters.vendor_id)
+      dataQuery = dataQuery.eq('vendor_id', filters.vendor_id)
+    }
+    if (filters?.status) {
+      countQuery = countQuery.eq('status', filters.status)
+      dataQuery = dataQuery.eq('status', filters.status)
+    }
+    if (filters?.warranty_expiring_days !== undefined) {
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + filters.warranty_expiring_days)
+      const futureDateStr = futureDate.toISOString().split('T')[0]
+      const todayStr = new Date().toISOString().split('T')[0]
+      countQuery = countQuery
+        .lte('warranty_expiration', futureDateStr)
+        .gte('warranty_expiration', todayStr)
+      dataQuery = dataQuery
+        .lte('warranty_expiration', futureDateStr)
+        .gte('warranty_expiration', todayStr)
+    }
+    if (filters?.search) {
+      const searchPattern = `name.ilike.%${filters.search}%,serial_number.ilike.%${filters.search}%,model.ilike.%${filters.search}%`
+      countQuery = countQuery.or(searchPattern)
+      dataQuery = dataQuery.or(searchPattern)
+    }
+
+    // Apply ordering and pagination to data query
+    dataQuery = dataQuery
+      .order('name', { ascending: true })
+      .range(from, to)
+
+    // Execute both queries in parallel
+    const [countResult, dataResult] = await Promise.all([
+      countQuery,
+      dataQuery,
+    ])
+
+    if (countResult.error) throw new Error(countResult.error.message)
+    if (dataResult.error) throw new Error(dataResult.error.message)
+
+    const total = countResult.count ?? 0
+    const totalPages = Math.ceil(total / pageSize)
+
+    return {
+      data: (dataResult.data ?? []) as AssetWithRelations[],
+      total,
+      page,
+      pageSize,
+      totalPages,
+    }
+  }
+
+  /**
    * Find asset by ID with relations
    */
   async findByIdWithRelations(id: string): Promise<AssetWithRelations | null> {
@@ -104,7 +207,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         location:locations(id, name, address),
-        vendor:vendors(id, vendor_name)
+        vendor:vendors(id, name)
       `
       )
       .eq('id', id)
@@ -172,7 +275,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         location:locations(id, name, address),
-        vendor:vendors(id, vendor_name)
+        vendor:vendors(id, name)
       `
       )
       .eq('tenant_id', tenantId)
@@ -198,7 +301,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         location:locations(id, name, address),
-        vendor:vendors(id, vendor_name)
+        vendor:vendors(id, name)
       `
       )
       .eq('tenant_id', tenantId)
@@ -247,7 +350,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         location:locations(id, name, address),
-        vendor:vendors(id, vendor_name)
+        vendor:vendors(id, name)
       `
       )
       .eq('tenant_id', tenantId)

@@ -6,7 +6,7 @@ import type { Database } from '@/types/database'
 
 /**
  * GET /api/tickets
- * Get all tickets with optional filters
+ * Get all tickets with optional filters and pagination
  */
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +14,10 @@ export async function GET(request: NextRequest) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
+
+    // Parse pagination params
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const pageSize = parseInt(searchParams.get('pageSize') || '50', 10)
 
     // Parse filters from query params
     const filters = {
@@ -25,15 +29,17 @@ export async function GET(request: NextRequest) {
       date_from: searchParams.get('date_from') || undefined,
       date_to: searchParams.get('date_to') || undefined,
       search: searchParams.get('search') || undefined,
+      page,
+      pageSize,
     }
 
     // Validate filters
     const validatedFilters = ticketFiltersSchema.parse(filters)
 
     const service = new TicketService()
-    const tickets = await service.getAllTickets(validatedFilters)
+    const result = await service.getAllTicketsPaginated(validatedFilters)
 
-    return NextResponse.json({ tickets })
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching tickets:', error)
     return NextResponse.json(

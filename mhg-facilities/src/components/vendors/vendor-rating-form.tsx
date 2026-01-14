@@ -15,7 +15,8 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Star } from 'lucide-react'
+import { Star } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 import { cn } from '@/lib/utils'
 
 const vendorRatingSchema = z.object({
@@ -262,7 +263,7 @@ export function VendorRatingForm({
                 </Button>
               )}
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 Submit Rating
               </Button>
             </div>

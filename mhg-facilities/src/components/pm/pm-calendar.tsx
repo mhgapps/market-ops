@@ -19,10 +19,11 @@ export function PMCalendar({ assetId: _assetId }: PMCalendarProps) {
 
   // Create a map of dates with PM tasks
   const pmDates = new Set<string>();
-  const dateDetails: Record<string, Array<{ task_name: string; asset_name: string; priority: string }>> = {};
+  const dateDetails: Record<string, Array<{ name: string; target: string; frequency: string }>> = {};
 
   if (calendarData) {
     calendarData.forEach((schedule) => {
+      if (!schedule.next_due_date) return;
       const dateKey = new Date(schedule.next_due_date).toISOString().split('T')[0];
       pmDates.add(dateKey);
 
@@ -30,9 +31,9 @@ export function PMCalendar({ assetId: _assetId }: PMCalendarProps) {
         dateDetails[dateKey] = [];
       }
       dateDetails[dateKey].push({
-        task_name: schedule.task_name,
-        asset_name: schedule.asset_name || 'Unknown Asset',
-        priority: schedule.priority,
+        name: schedule.name,
+        target: schedule.asset_name || schedule.location_name || 'Unknown',
+        frequency: schedule.frequency,
       });
     });
   }
@@ -51,19 +52,8 @@ export function PMCalendar({ assetId: _assetId }: PMCalendarProps) {
   const selectedDateKey = selectedDate.toISOString().split('T')[0];
   const selectedDateTasks = dateDetails[selectedDateKey] || [];
 
-  const getPriorityVariant = (priority: string): 'default' | 'secondary' | 'destructive' | 'warning' => {
-    switch (priority) {
-      case 'critical':
-        return 'destructive';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'default';
-      case 'low':
-        return 'secondary';
-      default:
-        return 'default';
-    }
+  const formatFrequency = (frequency: string) => {
+    return frequency.replace(/_/g, ' ').replace(/ly$/, '');
   };
 
   return (
@@ -106,11 +96,11 @@ export function PMCalendar({ assetId: _assetId }: PMCalendarProps) {
                 <div key={index} className="rounded-lg border p-3 space-y-2">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{task.task_name}</p>
-                      <p className="text-xs text-muted-foreground">{task.asset_name}</p>
+                      <p className="text-sm font-medium">{task.name}</p>
+                      <p className="text-xs text-muted-foreground">{task.target}</p>
                     </div>
-                    <Badge variant={getPriorityVariant(task.priority)}>
-                      {task.priority}
+                    <Badge variant="secondary" className="capitalize">
+                      {formatFrequency(task.frequency)}
                     </Badge>
                   </div>
                 </div>

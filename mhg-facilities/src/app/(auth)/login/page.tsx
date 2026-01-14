@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -158,7 +159,7 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
+                <Spinner size="sm" />
                 {STRINGS.SIGNING_IN}
               </>
             ) : (

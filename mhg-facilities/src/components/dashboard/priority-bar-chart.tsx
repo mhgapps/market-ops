@@ -14,10 +14,10 @@ interface PriorityBarChartProps {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  low: '#10b981',
-  medium: '#eab308',
-  high: '#f97316',
-  critical: '#ef4444',
+  low: 'var(--chart-2)',
+  medium: 'var(--chart-4)',
+  high: 'var(--chart-5)',
+  critical: 'var(--destructive)',
 };
 
 const PRIORITY_ORDER = ['low', 'medium', 'high', 'critical'];
@@ -31,7 +31,7 @@ export function PriorityBarChart({ data, title = 'Priority Distribution' }: Prio
   const chartData = sortedData.map((item) => ({
     priority: item.priority.charAt(0).toUpperCase() + item.priority.slice(1),
     count: item.count,
-    fill: PRIORITY_COLORS[item.priority] || '#94a3b8',
+    fill: PRIORITY_COLORS[item.priority] || 'var(--muted-foreground)',
   }));
 
   return (
@@ -47,12 +47,12 @@ export function PriorityBarChart({ data, title = 'Priority Distribution' }: Prio
             <YAxis className="text-xs text-muted-foreground" />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
+                backgroundColor: 'var(--card)',
+                border: '1px solid var(--border)',
                 borderRadius: '0.5rem',
               }}
             />
-            <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

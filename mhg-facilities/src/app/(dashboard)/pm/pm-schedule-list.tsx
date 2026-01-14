@@ -25,10 +25,12 @@ import { usePMSchedules } from '@/hooks/use-pm';
 
 export function PMScheduleList() {
   const [search, setSearch] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState<string | undefined>();
+  const [frequencyFilter, setFrequencyFilter] = useState<string | undefined>();
+  const [statusFilter, setStatusFilter] = useState<string | undefined>();
 
   const { data: schedules, isLoading, error } = usePMSchedules({
-    priority: priorityFilter as 'low' | 'medium' | 'high' | 'critical' | undefined,
+    frequency: frequencyFilter !== 'all' ? frequencyFilter : undefined,
+    is_active: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined,
   });
 
   if (isLoading) {
@@ -44,26 +46,13 @@ export function PMScheduleList() {
   }
 
   const filteredSchedules = schedules?.filter((schedule) =>
-    schedule.task_name.toLowerCase().includes(search.toLowerCase()) ||
-    schedule.asset_name?.toLowerCase().includes(search.toLowerCase())
+    schedule.name.toLowerCase().includes(search.toLowerCase()) ||
+    schedule.asset_name?.toLowerCase().includes(search.toLowerCase()) ||
+    schedule.location_name?.toLowerCase().includes(search.toLowerCase())
   ) || [];
 
-  const getPriorityVariant = (priority: string): 'default' | 'secondary' | 'destructive' | 'warning' => {
-    switch (priority) {
-      case 'critical':
-        return 'destructive';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'default';
-      case 'low':
-        return 'secondary';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusColor = (dueDate: string) => {
+  const getStatusColor = (dueDate: string | null) => {
+    if (!dueDate) return 'text-muted-foreground';
     const due = new Date(dueDate);
     const today = new Date();
     const daysUntil = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -73,7 +62,8 @@ export function PMScheduleList() {
     return 'text-muted-foreground';
   };
 
-  const formatDueDate = (dueDate: string) => {
+  const formatDueDate = (dueDate: string | null) => {
+    if (!dueDate) return 'Not scheduled';
     const due = new Date(dueDate);
     const today = new Date();
     const daysUntil = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -83,6 +73,10 @@ export function PMScheduleList() {
     if (daysUntil === 1) return 'Due tomorrow';
     if (daysUntil <= 7) return `Due in ${daysUntil} days`;
     return due.toLocaleDateString();
+  };
+
+  const formatFrequency = (frequency: string) => {
+    return frequency.replace(/_/g, ' ').replace(/ly$/, '');
   };
 
   return (
@@ -96,16 +90,29 @@ export function PMScheduleList() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Filter by priority" />
+        <Select value={frequencyFilter} onValueChange={setFrequencyFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Frequency" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Priorities</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="all">All Frequencies</SelectItem>
+            <SelectItem value="daily">Daily</SelectItem>
+            <SelectItem value="weekly">Weekly</SelectItem>
+            <SelectItem value="biweekly">Bi-Weekly</SelectItem>
+            <SelectItem value="monthly">Monthly</SelectItem>
+            <SelectItem value="quarterly">Quarterly</SelectItem>
+            <SelectItem value="semi_annually">Semi-Annually</SelectItem>
+            <SelectItem value="annually">Annually</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -116,11 +123,11 @@ export function PMScheduleList() {
           <TableHeader>
             <TableRow>
               <TableHead>Task Name</TableHead>
-              <TableHead>Asset</TableHead>
+              <TableHead>Target</TableHead>
               <TableHead>Frequency</TableHead>
-              <TableHead>Priority</TableHead>
               <TableHead>Next Due</TableHead>
               <TableHead>Assigned To</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -134,26 +141,30 @@ export function PMScheduleList() {
             ) : (
               filteredSchedules.map((schedule) => (
                 <TableRow key={schedule.id}>
-                  <TableCell className="font-medium">{schedule.task_name}</TableCell>
-                  <TableCell>{schedule.asset_name || 'N/A'}</TableCell>
-                  <TableCell className="capitalize">
-                    {schedule.frequency.replace('_', ' ')}
-                  </TableCell>
+                  <TableCell className="font-medium">{schedule.name}</TableCell>
                   <TableCell>
-                    <Badge variant={getPriorityVariant(schedule.priority)}>
-                      {schedule.priority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {schedule.next_due_date ? (
-                      <span className={`text-sm font-medium ${getStatusColor(schedule.next_due_date)}`}>
-                        {formatDueDate(schedule.next_due_date)}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Not scheduled</span>
+                    {schedule.asset_name || schedule.location_name || 'N/A'}
+                    {schedule.asset_name && (
+                      <span className="text-xs text-muted-foreground ml-1">(Asset)</span>
+                    )}
+                    {schedule.location_name && !schedule.asset_name && (
+                      <span className="text-xs text-muted-foreground ml-1">(Location)</span>
                     )}
                   </TableCell>
+                  <TableCell className="capitalize">
+                    {formatFrequency(schedule.frequency)}
+                  </TableCell>
+                  <TableCell>
+                    <span className={`text-sm font-medium ${getStatusColor(schedule.next_due_date)}`}>
+                      {formatDueDate(schedule.next_due_date)}
+                    </span>
+                  </TableCell>
                   <TableCell>{schedule.assigned_to_name || 'Unassigned'}</TableCell>
+                  <TableCell>
+                    <Badge variant={schedule.is_active ? 'default' : 'secondary'}>
+                      {schedule.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/pm/${schedule.id}`}>

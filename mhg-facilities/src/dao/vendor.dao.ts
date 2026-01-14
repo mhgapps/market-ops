@@ -18,6 +18,17 @@ export interface VendorFilters {
   service_category?: string
   insurance_expiring_days?: number
   contract_expiring_days?: number
+  search?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface PaginatedResult<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export class VendorDAO extends BaseDAO<'vendors'> {
@@ -69,6 +80,100 @@ export class VendorDAO extends BaseDAO<'vendors'> {
 
     if (error) throw new Error(error.message)
     return (data as Vendor[]) ?? []
+  }
+
+  /**
+   * Find all vendors with pagination and filters
+   * Returns paginated results with total count
+   */
+  async findWithFiltersPaginated(filters?: VendorFilters): Promise<PaginatedResult<Vendor>> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const page = filters?.page ?? 1
+    const pageSize = filters?.pageSize ?? 50
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    // Build base query conditions for both count and data queries
+    let countQuery = supabase
+      .from('vendors')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+
+    let dataQuery = supabase
+      .from('vendors')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+
+    // Apply filters to both queries
+    if (filters?.is_active !== undefined) {
+      countQuery = countQuery.eq('is_active', filters.is_active)
+      dataQuery = dataQuery.eq('is_active', filters.is_active)
+    }
+    if (filters?.is_preferred !== undefined) {
+      countQuery = countQuery.eq('is_preferred', filters.is_preferred)
+      dataQuery = dataQuery.eq('is_preferred', filters.is_preferred)
+    }
+    if (filters?.service_category) {
+      countQuery = countQuery.contains('service_categories', [filters.service_category])
+      dataQuery = dataQuery.contains('service_categories', [filters.service_category])
+    }
+    if (filters?.insurance_expiring_days !== undefined) {
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + filters.insurance_expiring_days)
+      const futureDateStr = futureDate.toISOString().split('T')[0]
+      const todayStr = new Date().toISOString().split('T')[0]
+      countQuery = countQuery
+        .lte('insurance_expiration', futureDateStr)
+        .gte('insurance_expiration', todayStr)
+      dataQuery = dataQuery
+        .lte('insurance_expiration', futureDateStr)
+        .gte('insurance_expiration', todayStr)
+    }
+    if (filters?.contract_expiring_days !== undefined) {
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + filters.contract_expiring_days)
+      const futureDateStr = futureDate.toISOString().split('T')[0]
+      const todayStr = new Date().toISOString().split('T')[0]
+      countQuery = countQuery
+        .lte('contract_expiration', futureDateStr)
+        .gte('contract_expiration', todayStr)
+      dataQuery = dataQuery
+        .lte('contract_expiration', futureDateStr)
+        .gte('contract_expiration', todayStr)
+    }
+    if (filters?.search) {
+      const searchPattern = `name.ilike.%${filters.search}%,contact_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
+      countQuery = countQuery.or(searchPattern)
+      dataQuery = dataQuery.or(searchPattern)
+    }
+
+    // Apply ordering and pagination to data query
+    dataQuery = dataQuery
+      .order('name', { ascending: true })
+      .range(from, to)
+
+    // Execute both queries in parallel
+    const [countResult, dataResult] = await Promise.all([
+      countQuery,
+      dataQuery,
+    ])
+
+    if (countResult.error) throw new Error(countResult.error.message)
+    if (dataResult.error) throw new Error(dataResult.error.message)
+
+    const total = countResult.count ?? 0
+    const totalPages = Math.ceil(total / pageSize)
+
+    return {
+      data: (dataResult.data ?? []) as Vendor[],
+      total,
+      page,
+      pageSize,
+      totalPages,
+    }
   }
 
   /**

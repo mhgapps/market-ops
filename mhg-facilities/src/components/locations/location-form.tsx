@@ -224,15 +224,15 @@ export function LocationForm({
         <div className="space-y-2">
           <Label htmlFor="manager_id">Manager</Label>
           <Select
-            value={selectedManagerId}
-            onValueChange={(value) => setValue('manager_id', value)}
+            value={selectedManagerId || 'none'}
+            onValueChange={(value) => setValue('manager_id', value === 'none' ? '' : value)}
             disabled={loadingManagers}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a manager" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No Manager</SelectItem>
+              <SelectItem value="none">No Manager</SelectItem>
               {managers.map((manager) => (
                 <SelectItem key={manager.id} value={manager.id}>
                   {manager.fullName} ({manager.role})

@@ -1,9 +1,18 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useAuth, useIsAdmin } from '@/hooks/use-auth'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   LayoutDashboard,
   MapPin,
@@ -14,6 +23,13 @@ import {
   BarChart3,
   Settings,
   Building2,
+  AlertTriangle,
+  Calendar,
+  CheckCircle,
+  DollarSign,
+  LogOut,
+  User,
+  ChevronUp,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -34,19 +50,30 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: 'Locations',
-    href: '/locations',
-    icon: MapPin,
-  },
-  {
     title: 'Tickets',
     href: '/tickets',
     icon: Ticket,
   },
   {
+    title: 'Approvals',
+    href: '/approvals',
+    icon: CheckCircle,
+    managerOnly: true,
+  },
+  {
+    title: 'Locations',
+    href: '/locations',
+    icon: MapPin,
+  },
+  {
     title: 'Assets',
     href: '/assets',
     icon: Wrench,
+  },
+  {
+    title: 'PM Schedules',
+    href: '/pm',
+    icon: Calendar,
   },
   {
     title: 'Vendors',
@@ -61,6 +88,17 @@ const navItems: NavItem[] = [
     managerOnly: true,
   },
   {
+    title: 'Emergencies',
+    href: '/emergencies',
+    icon: AlertTriangle,
+  },
+  {
+    title: 'Budgets',
+    href: '/budgets',
+    icon: DollarSign,
+    managerOnly: true,
+  },
+  {
     title: 'Reports',
     href: '/reports',
     icon: BarChart3,
@@ -68,7 +106,7 @@ const navItems: NavItem[] = [
   },
   {
     title: 'Users',
-    href: '/settings/users',
+    href: '/users',
     icon: Users,
     adminOnly: true,
   },
@@ -82,15 +120,40 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, tenant } = useAuth()
+  const router = useRouter()
+  const { user, logout } = useAuth()
   const isAdmin = useIsAdmin()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   // Filter nav items based on user role
+  // Admin and super_admin can see everything
+  // Manager can see managerOnly items
+  // Staff/vendor/readonly only see items without restrictions
   const filteredNavItems = navItems.filter((item) => {
-    if (item.adminOnly && !isAdmin) return false
+    // Admins see everything
+    if (isAdmin) return true
+
+    // Admin-only items are hidden for non-admins
+    if (item.adminOnly) return false
+
+    // Manager-only items: managers and above can see them
     if (item.managerOnly) {
-      return isAdmin || user?.role === 'manager'
+      return user?.role === 'manager'
     }
+
+    // No restrictions - everyone can see
     return true
   })
 
@@ -103,7 +166,7 @@ export function Sidebar() {
             <Building2 className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-semibold text-foreground truncate">
-            {tenant?.name ?? 'MHG Facilities'}
+            MarketOps
           </span>
         </Link>
       </div>
@@ -133,23 +196,60 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User info at bottom */}
+      {/* User menu at bottom */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-sm font-medium text-muted-foreground">
-              {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {user?.fullName ?? 'User'}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {user?.role ?? 'staff'}
-            </p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-accent transition-colors text-left">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-sm font-semibold text-primary">
+                  {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {user?.fullName ?? 'User'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user?.email ?? user?.role ?? 'staff'}
+                </p>
+              </div>
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="start" side="top" sideOffset={8}>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.fullName ?? 'User'}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email ?? ''}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/settings/profile" className="flex items-center cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="flex items-center cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   )

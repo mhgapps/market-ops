@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useCreateAsset } from '@/hooks/use-assets'
 import { AssetForm } from '@/components/assets/asset-form'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { toast } from 'sonner'
 import api from '@/lib/api-client'
 
@@ -49,13 +50,13 @@ export default function NewAssetPage() {
     queryKey: ['vendors'],
     queryFn: async () => {
       const response = await api.get<{
-        vendors: Array<{
+        data: Array<{
           id: string
           name: string
           service_categories: string[] | null
         }>
       }>('/api/vendors')
-      return response.vendors
+      return response.data ?? []
     },
   })
 
@@ -72,9 +73,9 @@ export default function NewAssetPage() {
     purchase_price?: number | null
     warranty_expiration?: string | null
     expected_lifespan_years?: number | null
-    condition_notes?: string | null
+    notes?: string | null
     vendor_id?: string | null
-    status: 'active' | 'maintenance' | 'retired' | 'disposed'
+    status: 'active' | 'under_maintenance' | 'retired' | 'transferred' | 'disposed'
   }) => {
     try {
       // Transform null values to undefined for API
@@ -90,11 +91,11 @@ export default function NewAssetPage() {
         ...(formData.purchase_price && { purchase_price: formData.purchase_price }),
         ...(formData.warranty_expiration && { warranty_expiration: formData.warranty_expiration }),
         ...(formData.expected_lifespan_years && { expected_lifespan_years: formData.expected_lifespan_years }),
-        ...(formData.condition_notes && { condition_notes: formData.condition_notes }),
+        ...(formData.notes && { notes: formData.notes }),
         ...(formData.vendor_id && { vendor_id: formData.vendor_id }),
       }
 
-      const asset = await createAsset.mutateAsync(apiData)
+      const asset = await createAsset.mutateAsync(apiData as Parameters<typeof createAsset.mutateAsync>[0])
       toast.success('Asset created successfully')
       router.push(`/assets/${asset.id}`)
     } catch (error) {
@@ -107,15 +108,11 @@ export default function NewAssetPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (
-    <div className="container mx-auto max-w-3xl space-y-6 py-8 px-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button

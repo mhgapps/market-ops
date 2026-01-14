@@ -7,7 +7,8 @@ import { useAssetCategories } from '@/hooks/use-asset-categories'
 import { useLocations } from '@/hooks/use-locations'
 import { useVendors } from '@/hooks/use-vendors'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -24,7 +25,7 @@ export default function EditAssetPage() {
 
   const categories = categoriesData?.categories ?? []
   const locations = locationsData ?? []
-  const vendors = vendorsData?.vendors?.map((v: { id: string; name: string; service_categories?: string[] | null }) => ({
+  const vendors = vendorsData?.data?.map((v: { id: string; name: string; service_categories?: string[] | null }) => ({
     id: v.id,
     name: v.name,
     service_categories: v.service_categories,
@@ -41,11 +42,7 @@ export default function EditAssetPage() {
   }
 
   if (assetLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!asset) {
@@ -67,7 +64,7 @@ export default function EditAssetPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href={`/assets/${assetId}`}>
@@ -95,7 +92,7 @@ export default function EditAssetPage() {
           purchase_price: asset.purchase_price,
           warranty_expiration: asset.warranty_expiration,
           expected_lifespan_years: asset.expected_lifespan_years,
-          condition_notes: asset.condition_notes,
+          notes: asset.notes,
           vendor_id: asset.vendor_id,
           status: asset.status,
         }}

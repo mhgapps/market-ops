@@ -11,12 +11,16 @@ function nullToUndefined<T extends Record<string, any>>(obj: T): T {
 
 /**
  * GET /api/vendors
- * Get all vendors with optional filters
- * Query params: is_active, is_preferred, service_category, insurance_expiring_days, contract_expiring_days
+ * Get all vendors with optional filters and pagination
+ * Query params: is_active, is_preferred, service_category, insurance_expiring_days, contract_expiring_days, page, pageSize
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
+
+    // Parse pagination params
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const pageSize = parseInt(searchParams.get('pageSize') || '50', 10)
 
     const rawFilters = {
       is_active: searchParams.get('is_active') || undefined,
@@ -25,6 +29,8 @@ export async function GET(request: NextRequest) {
       insurance_expiring_days: searchParams.get('insurance_expiring_days') || undefined,
       contract_expiring_days: searchParams.get('contract_expiring_days') || undefined,
       search: searchParams.get('search') || undefined,
+      page,
+      pageSize,
     }
 
     // Validate filters
@@ -37,12 +43,9 @@ export async function GET(request: NextRequest) {
     }
 
     const service = new VendorService()
-    const vendors = await service.getAllVendors(validationResult.data)
+    const result = await service.getAllVendorsPaginated(validationResult.data)
 
-    return NextResponse.json({
-      vendors,
-      total: vendors.length,
-    })
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching vendors:', error)
     return NextResponse.json({ error: 'Failed to fetch vendors' }, { status: 500 })

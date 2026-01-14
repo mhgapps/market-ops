@@ -10,8 +10,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, FileSpreadsheet } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  exportTicketsToPDF,
+  exportAssetsToPDF,
+  exportComplianceToPDF,
+  exportPMSchedulesToPDF,
+  exportTicketsToExcel,
+  exportAssetsToExcel,
+  exportComplianceToExcel,
+  exportPMSchedulesToExcel,
+} from '@/lib/export';
+
+// Helper to get array data from report response
+function getReportDataArray(report: Record<string, unknown>): Record<string, unknown>[] {
+  // Report data is typically in a property like 'tickets', 'assets', or similar
+  if (Array.isArray(report.tickets)) return report.tickets as Record<string, unknown>[];
+  if (Array.isArray(report.assets)) return report.assets as Record<string, unknown>[];
+  if (Array.isArray(report.documents)) return report.documents as Record<string, unknown>[];
+  if (Array.isArray(report.schedules)) return report.schedules as Record<string, unknown>[];
+  if (Array.isArray(report.data)) return report.data as Record<string, unknown>[];
+  // If it's already an array at root level
+  if (Array.isArray(report)) return report as unknown as Record<string, unknown>[];
+  return [];
+}
 
 export default function ReportsPage() {
   const [reportType, setReportType] = useState<string>('tickets');
@@ -27,7 +50,7 @@ export default function ReportsPage() {
     }
   };
 
-  const handleExport = async () => {
+  const handleExportCSV = async () => {
     if (!generatedReport) return;
 
     try {
@@ -51,6 +74,52 @@ export default function ReportsPage() {
       }
     } catch (error) {
       console.error('Failed to export report:', error);
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (!generatedReport) return;
+
+    const data = getReportDataArray(generatedReport);
+
+    switch (reportType) {
+      case 'tickets':
+        exportTicketsToPDF(data);
+        break;
+      case 'assets':
+        exportAssetsToPDF(data);
+        break;
+      case 'compliance':
+        exportComplianceToPDF(data);
+        break;
+      case 'pm':
+        exportPMSchedulesToPDF(data);
+        break;
+      default:
+        console.error('Unknown report type for PDF export');
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (!generatedReport) return;
+
+    const data = getReportDataArray(generatedReport);
+
+    switch (reportType) {
+      case 'tickets':
+        exportTicketsToExcel(data);
+        break;
+      case 'assets':
+        exportAssetsToExcel(data);
+        break;
+      case 'compliance':
+        exportComplianceToExcel(data);
+        break;
+      case 'pm':
+        exportPMSchedulesToExcel(data);
+        break;
+      default:
+        console.error('Unknown report type for Excel export');
     }
   };
 
@@ -87,10 +156,20 @@ export default function ReportsPage() {
             </Button>
 
             {generatedReport && (
-              <Button onClick={handleExport} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export CSV
-              </Button>
+              <>
+                <Button onClick={handleExportCSV} variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export CSV
+                </Button>
+                <Button onClick={handleExportPDF} variant="outline">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+                <Button onClick={handleExportExcel} variant="outline">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Export Excel
+                </Button>
+              </>
             )}
           </div>
 

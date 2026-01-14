@@ -29,9 +29,9 @@ function DashboardOverview() {
   if (overviewLoading || ticketsLoading || activityLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
+            <div key={i} className="h-16 md:h-32 rounded-lg bg-muted animate-pulse" />
           ))}
         </div>
         <div className="grid gap-6 md:grid-cols-2">
@@ -62,7 +62,7 @@ function DashboardOverview() {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
         <StatCard
           title="Open Tickets"
           value={overview?.openTickets ?? 0}
@@ -142,9 +142,9 @@ export default function DashboardPage() {
     <Suspense
       fallback={
         <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
+              <div key={i} className="h-16 md:h-32 rounded-lg bg-muted animate-pulse" />
             ))}
           </div>
         </div>

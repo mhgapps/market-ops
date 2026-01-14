@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useAssets } from '@/hooks/use-assets'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,30 +23,41 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, QrCode, MapPin } from 'lucide-react'
+import { Plus, Search, QrCode, MapPin } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import type { Database } from '@/types/database'
 
 export default function AssetsPage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 50
 
-  const filters = {
-    ...(statusFilter !== 'all' && { status: statusFilter as 'active' | 'maintenance' | 'retired' | 'disposed' }),
-    ...(searchQuery && { search: searchQuery }),
-  }
+  // Debounce search to avoid API calls on every keystroke
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
+
+  const filters = useMemo(() => ({
+    ...(statusFilter !== 'all' && { status: statusFilter as 'active' | 'under_maintenance' | 'retired' | 'transferred' | 'disposed' }),
+    ...(debouncedSearch && { search: debouncedSearch }),
+    page,
+    pageSize,
+  }), [statusFilter, debouncedSearch, page, pageSize])
 
   const { data, isLoading } = useAssets(filters)
-  const assets = data?.assets || []
+  const assets = data?.data || []
+  const totalCount = data?.total ?? 0
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800'
-      case 'maintenance':
+      case 'under_maintenance':
         return 'bg-yellow-100 text-yellow-800'
       case 'retired':
         return 'bg-gray-100 text-gray-800'
+      case 'transferred':
+        return 'bg-blue-100 text-blue-800'
       case 'disposed':
         return 'bg-red-100 text-red-800'
       default:
@@ -54,15 +66,11 @@ export default function AssetsPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 py-8 px-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -112,8 +120,9 @@ export default function AssetsPage() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
                 <SelectItem value="retired">Retired</SelectItem>
+                <SelectItem value="transferred">Transferred</SelectItem>
                 <SelectItem value="disposed">Disposed</SelectItem>
               </SelectContent>
             </Select>
@@ -126,7 +135,7 @@ export default function AssetsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              Assets ({assets.length})
+              Assets ({totalCount})
             </CardTitle>
           </div>
         </CardHeader>
@@ -217,6 +226,33 @@ export default function AssetsPage() {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination */}
+              {totalCount > 0 && (
+                <div className="flex items-center justify-between border-t px-4 py-4">
+                  <span className="text-sm text-muted-foreground">
+                    Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, totalCount)} of {totalCount}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page * pageSize >= totalCount}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Loader2, Trash2, Save } from 'lucide-react'
+import { ArrowLeft, Trash2, Save } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
@@ -65,11 +66,7 @@ export default function PMTemplateDetailPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!template) {
@@ -88,7 +85,7 @@ export default function PMTemplateDetailPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>

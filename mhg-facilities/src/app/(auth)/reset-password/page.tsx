@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -234,7 +235,7 @@ function ResetPasswordForm() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
+                <Spinner size="sm" />
                 {STRINGS.RESETTING}
               </>
             ) : (
@@ -259,7 +260,7 @@ export default function ResetPasswordPage() {
     <Suspense fallback={
       <Card>
         <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          <Spinner size="md" />
         </CardContent>
       </Card>
     }>

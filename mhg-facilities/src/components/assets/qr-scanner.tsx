@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Camera, CameraOff, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Camera, CameraOff, CheckCircle, XCircle } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 
 interface QRScannerProps {
   onScan: (qrCode: string) => void | Promise<void>
@@ -161,7 +162,7 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
 
         {isProcessing && (
           <div className="flex items-center gap-2 rounded-md bg-blue-50 border border-blue-200 p-3">
-            <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+            <Spinner size="sm" className="text-blue-600" />
             <p className="text-sm text-blue-700">Processing QR code...</p>
           </div>
         )}

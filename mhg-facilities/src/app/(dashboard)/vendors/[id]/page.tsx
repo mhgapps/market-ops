@@ -25,7 +25,6 @@ import {
   Calendar,
   Clock,
   ChevronLeft,
-  Loader2,
   Edit,
   Trash2,
   Star,
@@ -35,6 +34,7 @@ import {
   AlertTriangle,
   TrendingUp,
 } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { format } from 'date-fns'
 
 interface PageProps {
@@ -90,11 +90,7 @@ export default function VendorDetailPage({ params }: PageProps) {
   }
 
   if (vendorLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!vendor) {
@@ -121,7 +117,7 @@ export default function VendorDetailPage({ params }: PageProps) {
   const stats = ratingsData?.stats
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-6 py-8 px-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex items-start gap-3">

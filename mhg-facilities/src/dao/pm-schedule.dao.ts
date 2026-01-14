@@ -146,4 +146,61 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
       completions: result.pm_completions || []
     } as PMScheduleWithCompletions;
   }
+
+  // ============================================================
+  // COUNT METHODS (for dashboard performance)
+  // ============================================================
+
+  /**
+   * Count overdue PM schedules
+   */
+  async countOverdue(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient();
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const { count, error } = await supabase
+      .from('pm_schedules')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .lt('next_due_date', today)
+      .is('deleted_at', null);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
+
+  /**
+   * Count total PM schedules
+   */
+  async countTotal(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient();
+
+    const { count, error } = await supabase
+      .from('pm_schedules')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
+
+  /**
+   * Count active PM schedules
+   */
+  async countActive(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient();
+
+    const { count, error } = await supabase
+      .from('pm_schedules')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .is('deleted_at', null);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
 }

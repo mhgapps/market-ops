@@ -5,7 +5,8 @@ import { ComplianceForm } from '@/components/compliance/compliance-form'
 import { useComplianceDocument, useUpdateComplianceDocument } from '@/hooks/use-compliance'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -51,11 +52,7 @@ export default function EditCompliancePage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!document) {
@@ -77,7 +74,7 @@ export default function EditCompliancePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href={`/compliance/${documentId}`}>

@@ -23,7 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, Star, Phone, Mail, Calendar } from 'lucide-react'
+import { Plus, Search, Star, Phone, Mail, Calendar } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { format } from 'date-fns'
 
 export default function VendorsPage() {
@@ -31,23 +32,24 @@ export default function VendorsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [preferredFilter, setPreferredFilter] = useState<string>('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 50
 
   const filters = {
     ...(searchQuery && { search: searchQuery }),
     ...(activeFilter === 'active' && { is_active: true }),
     ...(activeFilter === 'inactive' && { is_active: false }),
     ...(preferredFilter === 'preferred' && { is_preferred: true }),
+    page,
+    pageSize,
   }
 
   const { data, isLoading } = useVendors(filters)
-  const vendors = data?.vendors || []
+  const vendors = data?.data || []
+  const totalCount = data?.total ?? 0
 
   if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   const isInsuranceExpiring = (expiration: string | null) => {
@@ -59,7 +61,7 @@ export default function VendorsPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 py-8 px-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -123,7 +125,7 @@ export default function VendorsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              Vendors ({vendors.length})
+              Vendors ({totalCount})
             </CardTitle>
           </div>
         </CardHeader>
@@ -248,6 +250,33 @@ export default function VendorsPage() {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination */}
+              {totalCount > 0 && (
+                <div className="flex items-center justify-between border-t px-4 py-4">
+                  <span className="text-sm text-muted-foreground">
+                    Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, totalCount)} of {totalCount}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page * pageSize >= totalCount}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

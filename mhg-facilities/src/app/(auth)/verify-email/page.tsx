@@ -3,7 +3,8 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Mail, CheckCircle, XCircle } from 'lucide-react'
+import { Mail, CheckCircle, XCircle } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -91,7 +92,7 @@ function VerifyEmailContent() {
       <Card>
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Loader2 className="size-6 text-primary animate-spin" />
+            <Spinner size="md" className="text-primary" />
           </div>
           <CardTitle className="text-2xl">{STRINGS.VERIFYING_TITLE}</CardTitle>
           <CardDescription>{STRINGS.VERIFYING_DESCRIPTION}</CardDescription>
@@ -185,7 +186,7 @@ export default function VerifyEmailPage() {
     <Suspense fallback={
       <Card>
         <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          <Spinner size="md" />
         </CardContent>
       </Card>
     }>

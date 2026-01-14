@@ -15,6 +15,7 @@ import {
   useRequestApproval,
   useApprovalAction,
 } from '@/hooks/use-tickets'
+import { useTicketRealtime } from '@/hooks/use-realtime'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api-client'
 import type { Database } from '@/types/database'
@@ -41,11 +42,11 @@ import {
   Calendar,
   Clock,
   ChevronLeft,
-  Loader2,
   Users,
   Building2,
   AlertCircle,
 } from 'lucide-react'
+import { PageLoader } from '@/components/ui/loaders'
 import { format } from 'date-fns'
 import { useState } from 'react'
 
@@ -59,6 +60,9 @@ export default function TicketDetailPage({ params }: PageProps) {
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [showVendorModal, setShowVendorModal] = useState(false)
   const [showApprovalForm, setShowApprovalForm] = useState(false)
+
+  // Subscribe to realtime updates for this specific ticket
+  useTicketRealtime(id)
 
   // Fetch ticket data
   const { data: ticket, isLoading: ticketLoading } = useTicket(id)
@@ -179,16 +183,12 @@ export default function TicketDetailPage({ params }: PageProps) {
   }
 
   if (ticketLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!ticket) {
     return (
-      <div className="container mx-auto max-w-7xl py-8">
+      <div className="py-8">
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-gray-400" />
@@ -211,7 +211,7 @@ export default function TicketDetailPage({ params }: PageProps) {
   const isAssignedToCurrentUser = currentUser?.id === ticket.assignee_id
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 py-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <Button
@@ -426,7 +426,7 @@ export default function TicketDetailPage({ params }: PageProps) {
                   <div className="flex items-center gap-2 text-sm">
                     <Building2 className="h-4 w-4 text-gray-500" />
                     <span className="text-gray-700">
-                      Vendor: {ticket.vendor.vendor_name}
+                      Vendor: {ticket.vendor.name}
                     </span>
                   </div>
                 )}

@@ -29,7 +29,9 @@ class ApiClient {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
-      const message = error.message || error.error || `API Error: ${response.status}`
+      const message = error.details
+        ? `${error.error}: ${JSON.stringify(error.details)}`
+        : error.message || error.error || `API Error: ${response.status}`
       throw new Error(message)
     }
 

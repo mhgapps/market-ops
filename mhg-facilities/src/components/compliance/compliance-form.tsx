@@ -22,11 +22,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useComplianceTypes } from '@/hooks/use-compliance';
+import { useLocations } from '@/hooks/use-locations';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
   document_type_id: z.string().optional(),
-  location_id: z.string().optional(),
+  location_id: z.string().min(1, 'Location is required'),
   issue_date: z.string().optional(),
   expiration_date: z.string().min(1, 'Expiration date is required'),
   issuing_authority: z.string().max(200).optional(),
@@ -45,6 +46,7 @@ interface ComplianceFormProps {
 
 export function ComplianceForm({ initialData, onSubmit, isSubmitting }: ComplianceFormProps) {
   const { data: types } = useComplianceTypes();
+  const { data: locations, isLoading: locationsLoading } = useLocations();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -64,36 +66,69 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Document Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Business License" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Document Name and Type - 2 columns */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Document Name *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Business License" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
+          <FormField
+            control={form.control}
+            name="document_type_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Document Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {types?.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Location - full width */}
         <FormField
           control={form.control}
-          name="document_type_id"
+          name="location_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Document Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormLabel>Location *</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={locationsLoading}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder={locationsLoading ? "Loading locations..." : "Select location"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {types?.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
+                  {locations?.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -103,6 +138,7 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
           )}
         />
 
+        {/* Dates - 2 columns */}
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -133,6 +169,7 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
           />
         </div>
 
+        {/* Authority and Document Number - 2 columns */}
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -163,20 +200,24 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="renewal_cost"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Renewal Cost</FormLabel>
-              <FormControl>
-                <Input type="number" step="0.01" placeholder="0.00" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Renewal Cost - half width */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="renewal_cost"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Renewal Cost ($)</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
+        {/* Notes - full width */}
         <FormField
           control={form.control}
           name="notes"
@@ -184,16 +225,18 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea placeholder="Additional information..." {...field} />
+                <Textarea placeholder="Additional information..." className="min-h-[100px]" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : 'Save Document'}
-        </Button>
+        <div className="flex justify-end pt-4">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Document'}
+          </Button>
+        </div>
       </form>
     </Form>
   );

@@ -4,7 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, ArrowLeft, Mail } from 'lucide-react'
+import { ArrowLeft, Mail } from 'lucide-react'
+import { Spinner } from '@/components/ui/loaders'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -137,7 +138,7 @@ export default function ForgotPasswordPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
+                <Spinner size="sm" />
                 {STRINGS.SENDING}
               </>
             ) : (
