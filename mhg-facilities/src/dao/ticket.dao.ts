@@ -40,7 +40,7 @@ export interface TicketWithRelations extends Ticket {
   asset?: {
     id: string
     name: string
-    asset_tag: string | null
+    qr_code: string | null
   } | null
   submitted_by_user?: {
     id: string
@@ -192,7 +192,7 @@ export class TicketDAO extends BaseDAO<'tickets'> {
         asset:assets (
           id,
           name,
-          asset_tag
+          qr_code
         ),
         assignee:users!assigned_to (
           id,
@@ -355,7 +355,7 @@ export class TicketDAO extends BaseDAO<'tickets'> {
         asset:assets (
           id,
           name,
-          asset_tag
+          qr_code
         ),
         submitted_by_user:users!submitted_by (
           id,

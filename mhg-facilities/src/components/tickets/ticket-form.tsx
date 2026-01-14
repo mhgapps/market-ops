@@ -51,7 +51,7 @@ interface Location {
 
 interface Asset {
   id: string
-  asset_name: string
+  name: string
   serial_number?: string | null
   location_id: string
 }
@@ -272,7 +272,7 @@ export function TicketForm({
                         {filteredAssets.map((asset) => (
                           <SelectItem key={asset.id} value={asset.id}>
                             <div>
-                              <div className="font-medium">{asset.asset_name}</div>
+                              <div className="font-medium">{asset.name}</div>
                               {asset.serial_number && (
                                 <div className="text-xs text-gray-500">
                                   SN: {asset.serial_number}

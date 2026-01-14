@@ -56,7 +56,7 @@ export default function NewTicketPage() {
       // Transform to match expected type
       return response.assets.map(asset => ({
         id: asset.id,
-        asset_name: asset.name,
+        name: asset.name,
         serial_number: asset.serial_number,
         location_id: asset.location_id ?? '',
       }))

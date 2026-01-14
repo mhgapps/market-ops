@@ -402,7 +402,7 @@ export default function TicketDetailPage({ params }: PageProps) {
                 {ticket.asset && (
                   <div className="flex items-center gap-2 text-sm">
                     <Package className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-700">{ticket.asset.asset_name}</span>
+                    <span className="text-gray-700">{ticket.asset.name}</span>
                   </div>
                 )}
 

@@ -28,8 +28,8 @@ interface Ticket {
   }
   asset?: {
     id: string
-    asset_name: string
-    asset_tag?: string | null
+    name: string
+    qr_code?: string | null
   }
   submitted_by_user?: {
     id: string

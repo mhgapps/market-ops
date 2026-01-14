@@ -7,15 +7,36 @@
 
 ## Issue Summary
 
-- **CRITICAL**: 0
+- **CRITICAL**: 2 (Schema mismatches in DAO and Form)
 - **HIGH**: 8 (Test files using hallucinated columns)
 - **MEDIUM**: 3 (Component prop mismatches)
 - **LOW**: 0
-- **TOTAL**: 11
+- **TOTAL**: 13
 
 ---
 
 ## Issues Found
+
+### DAO-001 - CRITICAL: ticket.dao.ts uses hallucinated 'asset_tag' field
+**File**: `src/dao/ticket.dao.ts`
+**Lines**: 43, 195, 358
+**Issue**: TicketWithRelations interface uses `asset_tag` which doesn't exist in assets table
+**Schema Reference**: assets has `qr_code` field, not `asset_tag`
+**Impact**: All ticket queries with asset relations return wrong field
+**Fix**: Change all `asset_tag` to `qr_code` in TicketWithRelations interface and all .select() queries
+**Status**: [x] Found [x] Fixed [x] Verified
+
+### FORM-001 - CRITICAL: ticket-form.tsx uses hallucinated 'asset_name' field (+ 3 other files)
+**Files**:
+  - `src/components/tickets/ticket-form.tsx` (lines 54, 275)
+  - `src/app/(dashboard)/tickets/new/page.tsx` (line 59)
+  - `src/app/(dashboard)/tickets/[id]/page.tsx` (line 405)
+  - `src/hooks/use-tickets.ts` (lines 31-32)
+**Issue**: Asset interface uses `asset_name` which doesn't exist in assets table
+**Schema Reference**: assets has `name` field, not `asset_name`
+**Impact**: Ticket form won't display asset names correctly when loading assets
+**Fix**: Change `asset_name` to `name` in all interfaces and components
+**Status**: [x] Found [x] Fixed [x] Verified
 
 ### TEST-001 - HIGH: asset.dao.test.ts uses invalid status 'operational'
 **File**: `src/dao/__tests__/asset.dao.test.ts`
