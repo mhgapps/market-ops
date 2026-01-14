@@ -1,0 +1,11 @@
+# OS
+.DS_Store
+
+# Supabase temp files
+supabase/.temp/
+
+# Local claude files
+.claude/ralph-loop.local.md
+
+# Environment files
+.env*

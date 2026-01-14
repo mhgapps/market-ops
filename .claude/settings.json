@@ -1,0 +1,9 @@
+{
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": true,
+    "ralph-wiggum@claude-code-plugins": true,
+    "code-review@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "pr-review-toolkit@claude-code-plugins": true
+  }
+}
