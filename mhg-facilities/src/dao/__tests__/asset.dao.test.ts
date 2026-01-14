@@ -22,7 +22,7 @@ describe('AssetDAO', () => {
     vendor_id: null,
     status: 'active',
     purchase_date: '2024-01-01',
-    purchase_price: '1000',
+    purchase_price: 1000,
     warranty_expiration: '2025-01-01',
     expected_lifespan_years: 5,
     notes: null,
