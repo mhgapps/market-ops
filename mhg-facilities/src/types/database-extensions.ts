@@ -172,7 +172,7 @@ export interface BudgetRow {
   category: string | null
   fiscal_year: number
   annual_budget: number
-  spent_amount: number | null
+  spent_amount: number
   notes: string | null
   created_at: string
   updated_at: string
@@ -186,7 +186,7 @@ export interface BudgetInsert {
   category?: string | null
   fiscal_year: number
   annual_budget: number
-  spent_amount?: number | null
+  spent_amount?: number
   notes?: string | null
   created_at?: string
   updated_at?: string
@@ -198,7 +198,7 @@ export interface BudgetUpdate {
   category?: string | null
   fiscal_year?: number
   annual_budget?: number
-  spent_amount?: number | null
+  spent_amount?: number
   notes?: string | null
   updated_at?: string
   deleted_at?: string | null
@@ -264,55 +264,6 @@ export interface OnCallScheduleUpdate {
   deleted_at?: string | null
 }
 
-export interface EmergencyIncidentRow {
-  id: string
-  tenant_id: string
-  location_id: string
-  title: string
-  description: string | null
-  severity: string
-  status: string | null
-  reported_by: string | null
-  reported_at: string
-  contained_at: string | null
-  resolved_at: string | null
-  resolution_notes: string | null
-  created_at: string
-  updated_at: string
-  deleted_at: string | null
-}
-
-export interface EmergencyIncidentInsert {
-  id?: string
-  tenant_id: string
-  location_id: string
-  title: string
-  description?: string | null
-  severity: string
-  status?: string | null
-  reported_by?: string | null
-  reported_at?: string
-  contained_at?: string | null
-  resolved_at?: string | null
-  resolution_notes?: string | null
-  created_at?: string
-  updated_at?: string
-  deleted_at?: string | null
-}
-
-export interface EmergencyIncidentUpdate {
-  location_id?: string
-  title?: string
-  description?: string | null
-  severity?: string
-  status?: string | null
-  contained_at?: string | null
-  resolved_at?: string | null
-  resolution_notes?: string | null
-  updated_at?: string
-  deleted_at?: string | null
-}
-
 // Extended Database type with additional tables
 export type Database = BaseDatabase & {
   public: {
@@ -366,11 +317,6 @@ export type Database = BaseDatabase & {
         Row: OnCallScheduleRow
         Insert: OnCallScheduleInsert
         Update: OnCallScheduleUpdate
-      }
-      emergency_incidents: {
-        Row: EmergencyIncidentRow
-        Insert: EmergencyIncidentInsert
-        Update: EmergencyIncidentUpdate
       }
     }
   }

@@ -8,7 +8,6 @@ import { ActivityFeed } from '@/components/dashboard/activity-feed';
 import { DashboardService } from '@/services/dashboard.service';
 import {
   FileText,
-  AlertCircle,
   FileCheck,
   Wrench,
   Plus,
@@ -71,13 +70,6 @@ function DashboardStats({ overview }: { overview: OverviewStats }) {
         icon={<FileText className="h-4 w-4" />}
         href="/tickets"
         description="Active tickets"
-      />
-      <StatCard
-        title="Pending Approvals"
-        value={overview.pendingApprovals}
-        icon={<AlertCircle className="h-4 w-4" />}
-        href="/approvals"
-        description="Awaiting approval"
       />
       <StatCard
         title="Expiring Compliance"

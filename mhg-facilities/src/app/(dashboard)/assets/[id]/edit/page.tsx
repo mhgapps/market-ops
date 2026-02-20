@@ -36,7 +36,7 @@ export default function EditAssetPage() {
       await updateAsset.mutateAsync({ id: assetId, data })
       toast.success('Asset updated successfully')
       router.push(`/assets/${assetId}`)
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to update asset')
     }
   }

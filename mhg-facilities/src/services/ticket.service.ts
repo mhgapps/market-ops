@@ -1,8 +1,7 @@
-import { TicketDAO, type TicketFilters, type PaginatedResult } from '@/dao/ticket.dao'
+import { TicketDAO, type TicketFilters } from '@/dao/ticket.dao'
 import { TicketCategoryDAO } from '@/dao/ticket-category.dao'
 import { UserDAO } from '@/dao/user.dao'
 import { LocationDAO } from '@/dao/location.dao'
-import { CostApprovalService } from './cost-approval.service'
 import { NotificationService } from './notification.service'
 import type { Database, TicketStatus, TicketPriority } from '@/types/database'
 
@@ -35,7 +34,12 @@ export interface TicketStats {
   by_status: Record<TicketStatus, number>
   by_priority: Record<TicketPriority, number>
   overdue: number
-  pending_approval: number
+}
+
+export interface EmergencyStats {
+  active: number
+  resolved_30_days: number
+  total_30_days: number
 }
 
 /**
@@ -43,8 +47,10 @@ export interface TicketStats {
  * Handles business logic for ticket lifecycle management
  *
  * Status Flow:
- * submitted → acknowledged → [needs_approval → approved] → in_progress → completed → verified → closed
+ * submitted → in_progress → completed → closed
  * Any status can go to: rejected, on_hold
+ *
+ * Note: verified_at is a flag, not a status. Tickets can be verified before closing.
  */
 export class TicketService {
   constructor(
@@ -52,7 +58,6 @@ export class TicketService {
     private categoryDAO = new TicketCategoryDAO(),
     private userDAO = new UserDAO(),
     private locationDAO = new LocationDAO(),
-    private costApprovalService = new CostApprovalService(),
     private notificationService = new NotificationService()
   ) {}
 
@@ -136,12 +141,8 @@ export class TicketService {
       total,
       by_status: {
         submitted: statusCounts['submitted'] || 0,
-        acknowledged: statusCounts['acknowledged'] || 0,
-        needs_approval: statusCounts['needs_approval'] || 0,
-        approved: statusCounts['approved'] || 0,
         in_progress: statusCounts['in_progress'] || 0,
         completed: statusCounts['completed'] || 0,
-        verified: statusCounts['verified'] || 0,
         closed: statusCounts['closed'] || 0,
         rejected: statusCounts['rejected'] || 0,
         on_hold: statusCounts['on_hold'] || 0,
@@ -153,7 +154,6 @@ export class TicketService {
         critical: priorityCounts['critical'] || 0,
       },
       overdue: overdueCount,
-      pending_approval: statusCounts['needs_approval'] || 0,
     }
 
     return stats
@@ -230,22 +230,6 @@ export class TicketService {
   // ============================================================
 
   /**
-   * Acknowledge ticket (submitted → acknowledged)
-   */
-  async acknowledgeTicket(id: string, userId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
-
-    if (ticket.status !== 'submitted') {
-      throw new Error('Only submitted tickets can be acknowledged')
-    }
-
-    return this.ticketDAO.updateTicket(id, {
-      status: 'acknowledged',
-      acknowledged_at: new Date().toISOString(),
-    })
-  }
-
-  /**
    * Assign ticket to staff member
    */
   async assignTicket(id: string, assigneeId: string, assignerId: string): Promise<Ticket> {
@@ -262,7 +246,7 @@ export class TicketService {
     }
 
     // Valid states for assignment
-    const validStates: TicketStatus[] = ['acknowledged', 'approved']
+    const validStates: TicketStatus[] = ['submitted', 'in_progress']
     if (!validStates.includes(ticket.status)) {
       throw new Error(`Cannot assign ticket in ${ticket.status} status`)
     }
@@ -288,24 +272,25 @@ export class TicketService {
 
   /**
    * Assign ticket to vendor
+   * Note: A ticket can have both a staff assignee AND a vendor
+   * Staff member can oversee vendor work
    */
-  async assignToVendor(id: string, vendorId: string, assignerId: string): Promise<Ticket> {
+  async assignToVendor(id: string, vendorId: string, _assignerId: string): Promise<Ticket> {
     const ticket = await this.getTicketById(id)
 
     // Valid states for vendor assignment
-    const validStates: TicketStatus[] = ['acknowledged', 'approved']
+    const validStates: TicketStatus[] = ['submitted', 'in_progress']
     if (!validStates.includes(ticket.status)) {
       throw new Error(`Cannot assign ticket to vendor in ${ticket.status} status`)
     }
 
     return this.ticketDAO.updateTicket(id, {
       vendor_id: vendorId,
-      assigned_to: null, // Clear staff assignment when assigning to vendor
     })
   }
 
   /**
-   * Start work on ticket (acknowledged/approved → in_progress)
+   * Start work on ticket (submitted → in_progress)
    */
   async startWork(id: string, userId: string): Promise<Ticket> {
     const ticket = await this.getTicketById(id)
@@ -324,7 +309,7 @@ export class TicketService {
     }
 
     // Valid states for starting work
-    const validStates: TicketStatus[] = ['acknowledged', 'approved']
+    const validStates: TicketStatus[] = ['submitted']
     if (!validStates.includes(ticket.status)) {
       throw new Error(`Cannot start work on ticket in ${ticket.status} status`)
     }
@@ -366,8 +351,9 @@ export class TicketService {
   }
 
   /**
-   * Verify completion (completed → verified)
+   * Mark ticket as verified (sets verified_at flag)
    * Only managers/admins can verify
+   * Note: This does not change status, just sets the verified_at timestamp
    */
   async verifyCompletion(id: string, userId: string): Promise<Ticket> {
     const ticket = await this.getTicketById(id)
@@ -387,31 +373,38 @@ export class TicketService {
     }
 
     return this.ticketDAO.updateTicket(id, {
-      status: 'verified',
       verified_at: new Date().toISOString(),
     })
   }
 
   /**
-   * Close ticket (verified → closed)
+   * Close ticket (in_progress or completed → closed)
    * Final state - ticket is archived
+   * Simplified flow: work is done, attach cost and invoice, close
    */
-  async closeTicket(id: string, userId: string): Promise<Ticket> {
+  async closeTicket(
+    id: string,
+    _userId: string,
+    options?: { cost?: number; notes?: string }
+  ): Promise<Ticket> {
     const ticket = await this.getTicketById(id)
 
-    if (ticket.status !== 'verified') {
-      throw new Error('Only verified tickets can be closed')
+    // Allow closing from in_progress or completed
+    if (ticket.status !== 'in_progress' && ticket.status !== 'completed') {
+      throw new Error('Only in-progress or completed tickets can be closed')
     }
 
     return this.ticketDAO.updateTicket(id, {
       status: 'closed',
       closed_at: new Date().toISOString(),
+      actual_cost: options?.cost,
+      resolution_notes: options?.notes,
     })
   }
 
   /**
    * Reject ticket
-   * Can reject from submitted or acknowledged
+   * Can reject from submitted or in_progress
    */
   async rejectTicket(id: string, userId: string, reason: string): Promise<Ticket> {
     if (!reason || reason.trim().length === 0) {
@@ -421,7 +414,7 @@ export class TicketService {
     const ticket = await this.getTicketById(id)
 
     // Can only reject from early stages
-    const validStates: TicketStatus[] = ['submitted', 'acknowledged']
+    const validStates: TicketStatus[] = ['submitted', 'in_progress']
     if (!validStates.includes(ticket.status)) {
       throw new Error(`Cannot reject ticket in ${ticket.status} status`)
     }
@@ -453,7 +446,7 @@ export class TicketService {
     const ticket = await this.getTicketById(id)
 
     // Can put on hold from most active states
-    const validStates: TicketStatus[] = ['acknowledged', 'in_progress']
+    const validStates: TicketStatus[] = ['submitted', 'in_progress']
     if (!validStates.includes(ticket.status)) {
       throw new Error(`Cannot put ticket on hold in ${ticket.status} status`)
     }
@@ -467,7 +460,7 @@ export class TicketService {
    * Resume ticket from hold
    * Returns to previous appropriate state
    */
-  async resumeFromHold(id: string, userId: string): Promise<Ticket> {
+  async resumeFromHold(id: string, _userId: string): Promise<Ticket> {
     const ticket = await this.getTicketById(id)
 
     if (ticket.status !== 'on_hold') {
@@ -475,14 +468,47 @@ export class TicketService {
     }
 
     // Determine appropriate status to return to
-    // If was in_progress and still assigned, return to in_progress
-    // Otherwise return to acknowledged
+    // If was in_progress (has started_at), return to in_progress
+    // Otherwise return to submitted
     const newStatus: TicketStatus =
-      ticket.started_at && ticket.assigned_to ? 'in_progress' : 'acknowledged'
+      ticket.started_at ? 'in_progress' : 'submitted'
 
     return this.ticketDAO.updateTicket(id, {
       status: newStatus,
     })
+  }
+
+  /**
+   * Set ticket status directly (admin/manager only)
+   * Allows moving tickets to any status for flexibility
+   */
+  async setStatus(id: string, userId: string, newStatus: TicketStatus): Promise<Ticket> {
+    const ticket = await this.getTicketById(id)
+
+    // Verify user is manager or admin
+    const user = await this.userDAO.findById(userId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    if (user.role !== 'manager' && user.role !== 'admin') {
+      throw new Error('Only managers and admins can directly change ticket status')
+    }
+
+    // Build update object with appropriate timestamps
+    const now = new Date().toISOString()
+    const updates: Partial<Ticket> = { status: newStatus }
+
+    // Set relevant timestamps based on new status
+    if (newStatus === 'in_progress' && !ticket.started_at) {
+      updates.started_at = now
+    } else if (newStatus === 'completed' && !ticket.completed_at) {
+      updates.completed_at = now
+    } else if (newStatus === 'closed' && !ticket.closed_at) {
+      updates.closed_at = now
+    }
+
+    return this.ticketDAO.updateTicket(id, updates)
   }
 
   // ============================================================
@@ -531,5 +557,109 @@ export class TicketService {
     )
 
     return target
+  }
+
+  // ============================================================
+  // EMERGENCY TICKET METHODS
+  // ============================================================
+
+  /**
+   * Create emergency ticket with elevated priority
+   * Emergencies skip the approval workflow and are immediately actionable
+   */
+  async createEmergencyTicket(data: Omit<CreateTicketInput, 'is_emergency' | 'priority'> & { priority?: 'high' | 'critical' }): Promise<Ticket> {
+    return this.createTicket({
+      ...data,
+      is_emergency: true,
+      priority: data.priority ?? 'critical',
+    })
+  }
+
+  /**
+   * Get active emergency tickets (not closed/rejected)
+   */
+  async getActiveEmergencies(): Promise<Ticket[]> {
+    return this.ticketDAO.findActiveEmergencies()
+  }
+
+  /**
+   * Get emergency statistics for dashboard
+   */
+  async getEmergencyStats(): Promise<EmergencyStats> {
+    const [active, resolved30Days, total30Days] = await Promise.all([
+      this.ticketDAO.countActiveEmergencies(),
+      this.ticketDAO.countResolvedEmergencies(30),
+      this.ticketDAO.countTotalEmergencies(30),
+    ])
+
+    return {
+      active,
+      resolved_30_days: resolved30Days,
+      total_30_days: total30Days,
+    }
+  }
+
+  /**
+   * Mark emergency as contained
+   * Sets status to in_progress with contained_at timestamp
+   */
+  async containEmergency(id: string, userId: string): Promise<Ticket> {
+    const ticket = await this.getTicketById(id)
+
+    if (!ticket.is_emergency) {
+      throw new Error('Only emergency tickets can be contained')
+    }
+
+    // Emergencies can only be contained from active states
+    const validStates: TicketStatus[] = ['submitted']
+    if (!validStates.includes(ticket.status)) {
+      throw new Error(`Cannot contain emergency in ${ticket.status} status`)
+    }
+
+    // Verify user has permission (manager or admin)
+    const user = await this.userDAO.findById(userId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    if (user.role !== 'manager' && user.role !== 'admin' && user.role !== 'staff') {
+      throw new Error('You do not have permission to contain emergencies')
+    }
+
+    return this.ticketDAO.markContained(id)
+  }
+
+  /**
+   * Mark emergency as resolved
+   * Sets status to closed with resolution notes
+   */
+  async resolveEmergency(id: string, userId: string, resolutionNotes: string): Promise<Ticket> {
+    if (!resolutionNotes || resolutionNotes.trim().length === 0) {
+      throw new Error('Resolution notes are required')
+    }
+
+    const ticket = await this.getTicketById(id)
+
+    if (!ticket.is_emergency) {
+      throw new Error('Only emergency tickets can be resolved this way')
+    }
+
+    // Emergencies can be resolved from contained or in_progress status
+    const validStates: TicketStatus[] = ['in_progress', 'completed']
+    if (!validStates.includes(ticket.status)) {
+      throw new Error(`Cannot resolve emergency in ${ticket.status} status. Must be contained first.`)
+    }
+
+    // Verify user has permission (manager or admin)
+    const user = await this.userDAO.findById(userId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    if (user.role !== 'manager' && user.role !== 'admin' && user.role !== 'staff') {
+      throw new Error('You do not have permission to resolve emergencies')
+    }
+
+    return this.ticketDAO.markResolved(id, resolutionNotes)
   }
 }

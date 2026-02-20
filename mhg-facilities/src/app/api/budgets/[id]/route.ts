@@ -1,24 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BudgetService } from '@/services/budget.service'
-import { z, ZodError } from 'zod'
-import { optionalNullableUuid } from '@/lib/validations/shared'
-
-const updateBudgetSchema = z.object({
-  location_id: optionalNullableUuid(),
-  category: z.string().optional().nullable(),
-  fiscal_year: z.number().int().optional(),
-  annual_budget: z.number().positive().optional(),
-  spent_amount: z.number().min(0).optional(),
-  notes: z.string().optional().nullable(),
-})
+import { ZodError } from 'zod'
+import { updateBudgetSchema } from '@/lib/validations/budget'
+import { requireAuth } from '@/lib/auth/api-auth'
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const service = new BudgetService()
+
+    // Check if with_spend param is requested
+    const { searchParams } = new URL(request.url)
+    const withSpend = searchParams.get('with_spend') === 'true'
+
+    if (withSpend) {
+      const budget = await service.getBudgetWithSpend(id)
+      if (!budget) {
+        return NextResponse.json({ error: 'Budget not found' }, { status: 404 })
+      }
+      return NextResponse.json({ budget })
+    }
+
     const budget = await service.getBudgetById(id)
 
     if (!budget) {
@@ -40,6 +48,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
     const validated = updateBudgetSchema.parse(body)
@@ -75,6 +86,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const service = new BudgetService()
     await service.deleteBudget(id)

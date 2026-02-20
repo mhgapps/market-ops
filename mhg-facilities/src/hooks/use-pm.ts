@@ -2,6 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 
 // Types
+interface PMCompletion {
+  id: string;
+  scheduled_date: string;
+  completed_date: string | null;
+  completed_by: string | null;
+}
+
 interface PMSchedule {
   id: string;
   tenant_id: string;
@@ -23,9 +30,10 @@ interface PMSchedule {
   estimated_cost: number | null;
   is_active: boolean;
   next_due_date: string | null;
-  last_completed_at: string | null;
+  last_generated_at: string | null;
   created_at: string;
   updated_at: string;
+  completions?: PMCompletion[];
 }
 
 interface PMTemplate {

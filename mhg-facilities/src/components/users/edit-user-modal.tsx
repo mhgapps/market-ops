@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Switch } from '@/components/ui/switch'
+import api from '@/lib/api-client'
 
 const editUserSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(100),
@@ -104,16 +105,7 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
         notification_preferences: data.notification_preferences,
       }
 
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update user')
-      }
+      await api.patch(`/api/users/${user.id}`, payload)
 
       handleClose()
       onSuccess?.()

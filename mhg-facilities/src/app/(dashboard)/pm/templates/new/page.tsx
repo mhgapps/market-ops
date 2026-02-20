@@ -36,7 +36,7 @@ export default function PMTemplateNewPage() {
       })
       toast.success('Template created successfully')
       router.push(`/pm/templates/${template.id}`)
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create template')
     }
   }
@@ -50,10 +50,7 @@ export default function PMTemplateNewPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Create PM Template</h1>
-            <p className="text-muted-foreground">Create a new preventive maintenance template</p>
-          </div>
+          <h1 className="text-2xl font-bold">Create PM Template</h1>
         </div>
         <Button
           onClick={handleCreate}

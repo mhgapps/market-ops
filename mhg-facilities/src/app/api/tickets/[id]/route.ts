@@ -43,16 +43,33 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error } = await requireAuth()
+    const { user, error } = await requireAuth()
     if (error) return error
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { id } = await params
+
+    const service = new TicketService()
+
+    // Verify ownership: submitter, assignee, or manager/admin
+    const existingTicket = await service.getTicketById(id)
+    const isSubmitter = existingTicket.submitted_by === user.id
+    const isAssignee = existingTicket.assigned_to === user.id
+    const isManagerOrAdmin = user.role === 'manager' || user.role === 'admin'
+    if (!isSubmitter && !isAssignee && !isManagerOrAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: you do not have permission to update this ticket' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
 
     // Validate request body
     const validatedData = updateTicketSchema.parse(body)
 
-    const service = new TicketService()
     const ticket = await service.updateTicket(id, validatedData)
 
     return NextResponse.json({ ticket })

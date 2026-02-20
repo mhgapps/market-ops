@@ -1,8 +1,6 @@
 import {
   VendorDAO,
-  type VendorWithStats,
   type VendorFilters,
-  type PaginatedResult,
 } from '@/dao/vendor.dao'
 
 // Re-export types for consumers

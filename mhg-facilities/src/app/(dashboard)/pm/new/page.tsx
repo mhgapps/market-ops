@@ -37,7 +37,7 @@ export default function NewPMSchedulePage() {
   const assets = assetsData?.data?.map((a: { id: string; name: string; qr_code?: string | null; serial_number?: string | null }) => ({
     id: a.id,
     name: a.name,
-    asset_tag: a.qr_code || a.serial_number || 'N/A',
+    qr_code: a.qr_code || a.serial_number || 'N/A',
   })) ?? []
 
   const locations = locationsData?.map((l) => ({
@@ -68,7 +68,7 @@ export default function NewPMSchedulePage() {
   }) => {
     try {
       // Remove target_type as it's only used for form UX
-      const { target_type, ...submitData } = data
+      const { target_type: _target_type, ...submitData } = data
 
       const schedule = await createSchedule.mutateAsync({
         name: submitData.name,
@@ -86,7 +86,7 @@ export default function NewPMSchedulePage() {
       })
       toast.success('PM Schedule created successfully')
       router.push(`/pm/${schedule.id}`)
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create PM schedule')
     }
   }
@@ -99,10 +99,7 @@ export default function NewPMSchedulePage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Add PM Schedule</h1>
-          <p className="text-muted-foreground">Create a new preventive maintenance schedule</p>
-        </div>
+        <h1 className="text-2xl font-bold">Add PM Schedule</h1>
       </div>
 
       <Card>

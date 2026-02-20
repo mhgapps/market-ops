@@ -14,9 +14,6 @@ import { VendorRatingForm } from '@/components/vendors/vendor-rating-form'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog'
 import {
   Phone,
@@ -30,9 +27,7 @@ import {
   Star,
   DollarSign,
   Shield,
-  FileText,
   AlertTriangle,
-  TrendingUp,
 } from 'lucide-react'
 import { PageLoader } from '@/components/ui/loaders'
 import { format } from 'date-fns'

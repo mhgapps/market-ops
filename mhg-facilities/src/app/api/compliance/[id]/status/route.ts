@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { ComplianceDocumentService } from '@/services/compliance-document.service';
 import { markAsRenewedSchema, markAsConditionalSchema, markAsFailedInspectionSchema } from '@/lib/validations/compliance';
 
@@ -12,6 +13,9 @@ interface RouteContext {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params;
 
     const body = await request.json();

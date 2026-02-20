@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/api-auth'
 import { VendorRatingService } from '@/services/vendor-rating.service'
 import { createVendorRatingSchema } from '@/lib/validations/assets-vendors'
 
@@ -12,6 +13,9 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
 
     const service = new VendorRatingService()
@@ -45,6 +49,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const { user, error: authError } = await requireAuth()
+    if (authError) return authError
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 401 })
+
     const { id } = await params
     const body = await request.json()
 
@@ -61,6 +69,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const rating = await service.createRating({
       vendor_id: id,
       ...validationResult.data,
+      rated_by: user.id,
     })
 
     return NextResponse.json({ rating }, { status: 201 })

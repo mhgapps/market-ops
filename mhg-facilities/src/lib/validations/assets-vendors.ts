@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { uuid, optionalUuid, nullableUuid, optionalNullableUuid, uuidArray } from './shared'
+import { uuid, optionalUuid, nullableUuid, uuidArray } from './shared'
 
 /**
  * Asset Category Validation Schemas

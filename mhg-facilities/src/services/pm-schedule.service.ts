@@ -1,4 +1,4 @@
-import { PMScheduleDAO } from '@/dao/pm-schedule.dao';
+import { PMScheduleDAO, type PMScheduleFilters, type PMScheduleWithRelations } from '@/dao/pm-schedule.dao';
 import { PMTemplateDAO } from '@/dao/pm-template.dao';
 import { PMCompletionDAO } from '@/dao/pm-completion.dao';
 import { TicketService } from './ticket.service';
@@ -6,6 +6,9 @@ import type { Database } from '@/types/database';
 
 type PMSchedule = Database['public']['Tables']['pm_schedules']['Row'];
 type PMFrequency = Database['public']['Enums']['pm_frequency'];
+
+// Re-export enriched type for API consumers
+export type { PMScheduleWithRelations };
 
 interface CreatePMScheduleInput {
   template_id?: string | null;
@@ -36,13 +39,8 @@ interface UpdatePMScheduleInput {
   vendor_id?: string | null;
   estimated_cost?: number | null;
   is_active?: boolean;
-}
-
-interface PMFilters {
-  asset_id?: string;
-  location_id?: string;
-  frequency?: PMFrequency;
-  is_active?: boolean;
+  next_due_date?: string;
+  last_generated_at?: string | null;
 }
 
 interface PMStats {
@@ -54,12 +52,12 @@ interface PMStats {
 }
 
 interface PMCalendarItem {
-  date: string;
-  schedules: Array<{
-    id: string;
-    name: string;
-    frequency: PMFrequency;
-  }>;
+  id: string;
+  name: string;
+  asset_name: string | null;
+  location_name: string | null;
+  frequency: PMFrequency;
+  next_due_date: string | null;
 }
 
 export class PMScheduleService {
@@ -70,29 +68,43 @@ export class PMScheduleService {
     private completionDAO = new PMCompletionDAO()
   ) {}
 
-  async getAllSchedules(filters?: PMFilters): Promise<PMSchedule[]> {
-    if (filters?.asset_id) {
-      return await this.scheduleDAO.findByAsset(filters.asset_id);
+  /**
+   * Get all PM schedules with enriched relation data.
+   * Returns flat objects with asset_name, location_name, assigned_to_name, vendor_name, last_completed_at.
+   */
+  async getAllSchedules(filters?: PMScheduleFilters): Promise<PMScheduleWithRelations[]> {
+    // If no filters provided, return all schedules with relations
+    if (!filters) {
+      return await this.scheduleDAO.findAllWithRelations();
     }
 
-    if (filters?.location_id) {
-      return await this.scheduleDAO.findByLocation(filters.location_id);
+    // Check if any filters are actually set
+    const hasFilters =
+      filters.asset_id !== undefined ||
+      filters.location_id !== undefined ||
+      filters.frequency !== undefined ||
+      filters.is_active !== undefined;
+
+    if (!hasFilters) {
+      return await this.scheduleDAO.findAllWithRelations();
     }
 
-    if (filters?.frequency) {
-      return await this.scheduleDAO.findByFrequency(filters.frequency);
-    }
-
-    if (filters?.is_active !== undefined) {
-      if (filters.is_active) {
-        return await this.scheduleDAO.findActive();
-      }
-    }
-
-    return await this.scheduleDAO.findAll();
+    // Use the combined filters method in DAO with relations for proper AND logic
+    return await this.scheduleDAO.findWithFiltersAndRelations(filters);
   }
 
-  async getScheduleById(id: string) {
+  /**
+   * Get a single PM schedule by ID with enriched relation data.
+   * Returns flat object with asset_name, location_name, assigned_to_name, vendor_name, last_completed_at.
+   */
+  async getScheduleById(id: string): Promise<PMScheduleWithRelations | null> {
+    return await this.scheduleDAO.findByIdWithRelations(id);
+  }
+
+  /**
+   * Get a PM schedule with its completions history (for detail views).
+   */
+  async getScheduleWithCompletions(id: string) {
     return await this.scheduleDAO.findWithCompletions(id);
   }
 
@@ -104,45 +116,54 @@ export class PMScheduleService {
     return await this.scheduleDAO.findByLocation(locationId);
   }
 
-  async getDueToday(): Promise<PMSchedule[]> {
-    return await this.scheduleDAO.findDueToday();
+  /**
+   * Get PM schedules that are due today with enriched relation data.
+   */
+  async getDueToday(): Promise<PMScheduleWithRelations[]> {
+    return await this.scheduleDAO.findDueTodayWithRelations();
   }
 
   async getOverdue(): Promise<PMSchedule[]> {
     return await this.scheduleDAO.findOverdue();
   }
 
+  /**
+   * Get PM calendar data for the specified month/year.
+   * Returns a flat array of schedules with their asset/location names,
+   * filtered to only include schedules due in the specified month.
+   */
   async getPMCalendar(month: number, year: number): Promise<PMCalendarItem[]> {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);
 
-    const all = await this.scheduleDAO.findActive();
+    // Fetch active schedules with joined asset/location names
+    const all = await this.scheduleDAO.findActiveWithRelations();
 
-    const calendar: Map<string, PMCalendarItem> = new Map();
+    // Filter to only schedules due within the specified month
+    const calendarItems: PMCalendarItem[] = [];
 
     all.forEach(schedule => {
       if (!schedule.next_due_date) return;
 
       const dueDate = new Date(schedule.next_due_date);
       if (dueDate >= startDate && dueDate <= endDate) {
-        const dateKey = schedule.next_due_date;
-
-        if (!calendar.has(dateKey)) {
-          calendar.set(dateKey, {
-            date: dateKey,
-            schedules: []
-          });
-        }
-
-        calendar.get(dateKey)!.schedules.push({
+        calendarItems.push({
           id: schedule.id,
           name: schedule.name,
-          frequency: schedule.frequency
+          asset_name: schedule.asset_name,
+          location_name: schedule.location_name,
+          frequency: schedule.frequency,
+          next_due_date: schedule.next_due_date,
         });
       }
     });
 
-    return Array.from(calendar.values()).sort((a, b) => a.date.localeCompare(b.date));
+    // Sort by due date
+    return calendarItems.sort((a, b) => {
+      const dateA = a.next_due_date || '';
+      const dateB = b.next_due_date || '';
+      return dateA.localeCompare(dateB);
+    });
   }
 
   async getPMStats(): Promise<PMStats> {
@@ -223,6 +244,18 @@ export class PMScheduleService {
       }
     }
 
+    // XOR validation for asset_id/location_id
+    const finalAssetId = data.asset_id !== undefined ? data.asset_id : existing.asset_id;
+    const finalLocationId = data.location_id !== undefined ? data.location_id : existing.location_id;
+
+    if (!finalAssetId && !finalLocationId) {
+      throw new Error('Either asset_id or location_id is required');
+    }
+
+    if (finalAssetId && finalLocationId) {
+      throw new Error('Cannot specify both asset_id and location_id');
+    }
+
     const updateData: Record<string, unknown> = {};
     if (data.template_id !== undefined) updateData.template_id = data.template_id;
     if (data.name !== undefined) updateData.name = data.name.trim();
@@ -237,8 +270,12 @@ export class PMScheduleService {
     if (data.vendor_id !== undefined) updateData.vendor_id = data.vendor_id;
     if (data.estimated_cost !== undefined) updateData.estimated_cost = data.estimated_cost;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
+    if (data.last_generated_at !== undefined) updateData.last_generated_at = data.last_generated_at;
 
-    if (data.frequency !== undefined || data.day_of_week !== undefined ||
+    // If next_due_date is explicitly provided, use it; otherwise recalculate if frequency params changed
+    if (data.next_due_date !== undefined) {
+      updateData.next_due_date = data.next_due_date;
+    } else if (data.frequency !== undefined || data.day_of_week !== undefined ||
         data.day_of_month !== undefined || data.month_of_year !== undefined) {
       const newNextDueDate = this.calculateNextDueDateFromFrequency(
         data.frequency || existing.frequency,
@@ -337,27 +374,106 @@ export class PMScheduleService {
         now.setDate(now.getDate() + 1);
         break;
       case 'weekly':
-        now.setDate(now.getDate() + 7);
+        if (dayOfWeek !== null && dayOfWeek >= 0 && dayOfWeek <= 6) {
+          // Find next occurrence of specified day (0=Sunday, 6=Saturday)
+          const currentDay = now.getDay();
+          let daysUntil = dayOfWeek - currentDay;
+          if (daysUntil <= 0) daysUntil += 7;
+          now.setDate(now.getDate() + daysUntil);
+        } else {
+          now.setDate(now.getDate() + 7);
+        }
         break;
       case 'biweekly':
-        now.setDate(now.getDate() + 14);
+        if (dayOfWeek !== null && dayOfWeek >= 0 && dayOfWeek <= 6) {
+          // Find next occurrence of specified day, then add a week for biweekly
+          const currentDay = now.getDay();
+          let daysUntil = dayOfWeek - currentDay;
+          if (daysUntil <= 0) daysUntil += 7;
+          now.setDate(now.getDate() + daysUntil + 7);
+        } else {
+          now.setDate(now.getDate() + 14);
+        }
         break;
       case 'monthly':
         now.setMonth(now.getMonth() + 1);
-        if (dayOfMonth) {
-          now.setDate(Math.min(dayOfMonth, 28));
+        if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
+          // Get last day of the new month to handle month-end properly
+          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          now.setDate(Math.min(dayOfMonth, lastDay));
         }
         break;
       case 'quarterly':
-        now.setMonth(now.getMonth() + 3);
+        if (monthOfYear !== null && monthOfYear >= 1 && monthOfYear <= 12) {
+          // Find the next quarter occurrence that aligns with the target month pattern
+          const currentMonth = now.getMonth(); // 0-indexed
+          const targetMonth = monthOfYear - 1; // Convert to 0-indexed
+
+          // Calculate the next occurrence based on quarterly intervals from target month
+          // e.g., if target is March (2), occurrences are Mar, Jun, Sep, Dec (months 2, 5, 8, 11)
+          const quarterOffset = targetMonth % 3; // Which position in quarter
+          const possibleMonths = [quarterOffset, quarterOffset + 3, quarterOffset + 6, quarterOffset + 9];
+
+          let nextMonth = possibleMonths.find(m => m > currentMonth);
+          let yearOffset = 0;
+
+          if (nextMonth === undefined) {
+            // All occurrences have passed this year
+            nextMonth = possibleMonths[0];
+            yearOffset = 1;
+          }
+
+          now.setFullYear(now.getFullYear() + yearOffset);
+          now.setMonth(nextMonth);
+        } else {
+          now.setMonth(now.getMonth() + 3);
+        }
+        // Apply day of month if specified
+        if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
+          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          now.setDate(Math.min(dayOfMonth, lastDay));
+        }
         break;
       case 'semi_annually':
-        now.setMonth(now.getMonth() + 6);
+        if (monthOfYear !== null && monthOfYear >= 1 && monthOfYear <= 12) {
+          // Find the next occurrence of the target month or 6 months after
+          const currentMonth = now.getMonth(); // 0-indexed
+          const targetMonth = monthOfYear - 1; // Convert to 0-indexed
+          const targetMonthPlus6 = (targetMonth + 6) % 12;
+
+          // Determine which occurrence is next
+          let nextMonth: number;
+          let yearOffset = 0;
+
+          if (targetMonth > currentMonth) {
+            nextMonth = targetMonth;
+          } else if (targetMonthPlus6 > currentMonth) {
+            nextMonth = targetMonthPlus6;
+          } else {
+            // Both occurrences have passed this year, go to next year
+            nextMonth = targetMonth;
+            yearOffset = 1;
+          }
+
+          now.setFullYear(now.getFullYear() + yearOffset);
+          now.setMonth(nextMonth);
+        } else {
+          now.setMonth(now.getMonth() + 6);
+        }
+        // Apply day of month if specified
+        if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
+          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          now.setDate(Math.min(dayOfMonth, lastDay));
+        }
         break;
       case 'annually':
         now.setFullYear(now.getFullYear() + 1);
-        if (monthOfYear) {
+        if (monthOfYear && monthOfYear >= 1 && monthOfYear <= 12) {
           now.setMonth(monthOfYear - 1);
+        }
+        if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
+          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          now.setDate(Math.min(dayOfMonth, lastDay));
         }
         break;
     }

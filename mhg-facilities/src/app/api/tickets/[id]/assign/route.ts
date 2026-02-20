@@ -23,6 +23,14 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Only managers and admins can assign tickets
+    if (user.role !== 'manager' && user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: manager or admin role required' },
+        { status: 403 }
+      )
+    }
+
     const { id } = await params
     const body = await request.json()
     const service = new TicketService()

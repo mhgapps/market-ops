@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/api-auth';
 
 export async function GET() {
   try {
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
+
     // Placeholder - budget reports would require budget DAO implementation
     return NextResponse.json({
       budgets: [],

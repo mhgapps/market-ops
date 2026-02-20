@@ -1,11 +1,14 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { PMTemplateService } from '@/services/pm-template.service';
 import { createPMTemplateSchema } from '@/lib/validations/pm';
 
 export async function GET(_request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const service = new PMTemplateService();
     const templates = await service.getAllTemplates();
@@ -22,6 +25,8 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const body = await request.json();
     const validated = createPMTemplateSchema.parse(body);

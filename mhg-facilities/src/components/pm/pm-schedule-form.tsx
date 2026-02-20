@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -59,7 +59,7 @@ interface PMScheduleFormProps {
   onCancel?: () => void
   isSubmitting?: boolean
   mode?: 'create' | 'edit'
-  assets?: Array<{ id: string; name: string; asset_tag: string }>
+  assets?: Array<{ id: string; name: string; qr_code: string }>
   locations?: Array<{ id: string; name: string; address?: string | null }>
   templates?: Array<{
     id: string
@@ -128,27 +128,29 @@ export function PMScheduleForm({
     },
   })
 
-  const targetType = form.watch('target_type')
-  const frequency = form.watch('frequency')
-  const selectedTemplateId = form.watch('template_id')
+  // Consolidate watches to reduce re-render cascades
+  const [targetType, frequency, selectedTemplateId] = form.watch(['target_type', 'frequency', 'template_id'])
 
-  // Auto-fill from template when selected
+  // Memoize template lookup
+  const selectedTemplate = useMemo(() => {
+    return selectedTemplateId ? templates.find(t => t.id === selectedTemplateId) : null
+  }, [selectedTemplateId, templates])
+
+  // Consolidated effect for template auto-fill, target clearing, and frequency reset
   useEffect(() => {
-    if (selectedTemplateId) {
-      const template = templates.find(t => t.id === selectedTemplateId)
-      if (template) {
-        if (template.name && !form.getValues('name')) {
-          form.setValue('name', template.name)
-        }
-        if (template.description && !form.getValues('description')) {
-          form.setValue('description', template.description)
-        }
-        if (template.default_vendor_id && !form.getValues('vendor_id')) {
-          form.setValue('vendor_id', template.default_vendor_id)
-        }
+    // Auto-fill from template when selected
+    if (selectedTemplate) {
+      if (selectedTemplate.name && !form.getValues('name')) {
+        form.setValue('name', selectedTemplate.name)
+      }
+      if (selectedTemplate.description && !form.getValues('description')) {
+        form.setValue('description', selectedTemplate.description)
+      }
+      if (selectedTemplate.default_vendor_id && !form.getValues('vendor_id')) {
+        form.setValue('vendor_id', selectedTemplate.default_vendor_id)
       }
     }
-  }, [selectedTemplateId, templates, form])
+  }, [selectedTemplate, form])
 
   // Clear the non-selected target when switching
   useEffect(() => {
@@ -161,17 +163,20 @@ export function PMScheduleForm({
 
   // Reset scheduling fields when frequency changes
   useEffect(() => {
-    if (frequency === 'daily') {
-      form.setValue('day_of_week', null)
-      form.setValue('day_of_month', null)
-      form.setValue('month_of_year', null)
-    } else if (frequency === 'weekly' || frequency === 'biweekly') {
-      form.setValue('day_of_month', null)
-      form.setValue('month_of_year', null)
-    } else if (frequency === 'monthly' || frequency === 'quarterly') {
-      form.setValue('day_of_week', null)
-      form.setValue('month_of_year', null)
+    const resetFields = () => {
+      if (frequency === 'daily') {
+        form.setValue('day_of_week', null)
+        form.setValue('day_of_month', null)
+        form.setValue('month_of_year', null)
+      } else if (frequency === 'weekly' || frequency === 'biweekly') {
+        form.setValue('day_of_month', null)
+        form.setValue('month_of_year', null)
+      } else if (frequency === 'monthly' || frequency === 'quarterly') {
+        form.setValue('day_of_week', null)
+        form.setValue('month_of_year', null)
+      }
     }
+    resetFields()
   }, [frequency, form])
 
   const handleSubmit = (data: FormValues) => {
@@ -330,7 +335,7 @@ export function PMScheduleForm({
                           <SelectItem key={asset.id} value={asset.id}>
                             <div>
                               <div className="font-medium">{asset.name}</div>
-                              <div className="text-xs text-muted-foreground">{asset.asset_tag}</div>
+                              <div className="text-xs text-muted-foreground">{asset.qr_code}</div>
                             </div>
                           </SelectItem>
                         ))}

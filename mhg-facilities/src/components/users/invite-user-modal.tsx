@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import api from '@/lib/api-client'
 
 const inviteUserSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -71,16 +72,7 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
         location_id: data.location_id || undefined,
       }
 
-      const response = await fetch('/api/invitations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to send invitation')
-      }
+      await api.post('/api/invitations', payload)
 
       setSuccess(true)
       reset()

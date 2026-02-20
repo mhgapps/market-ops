@@ -1,13 +1,30 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { AssetDAO, type AssetFilters } from '../asset.dao';
 import type { Database } from '@/types/database';
 
 type Asset = Database['public']['Tables']['assets']['Row'];
 
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  lte: Mock;
+  gte: Mock;
+  or: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+}
+
 describe('AssetDAO', () => {
   let dao: AssetDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   const mockAsset: Asset = {
     id: 'asset-1',

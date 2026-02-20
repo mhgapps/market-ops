@@ -1,4 +1,4 @@
-import { AssetDAO, type AssetWithRelations, type AssetFilters, type PaginatedResult } from '@/dao/asset.dao'
+import { AssetDAO, type AssetWithRelations, type AssetFilters } from '@/dao/asset.dao'
 
 // Re-export types for consumers
 export type { AssetFilters, PaginatedResult } from '@/dao/asset.dao'
@@ -249,7 +249,7 @@ export class AssetService {
    */
   async updateAssetStatus(
     id: string,
-    status: 'active' | 'maintenance' | 'retired' | 'disposed'
+    status: 'active' | 'under_maintenance' | 'retired' | 'transferred' | 'disposed'
   ): Promise<Asset> {
     const asset = await this.assetDAO.findById(id)
     if (!asset) {
@@ -284,8 +284,9 @@ export class AssetService {
     return {
       total: stats.total,
       active: stats.by_status['active'] ?? 0,
-      maintenance: stats.by_status['maintenance'] ?? 0,
+      under_maintenance: stats.by_status['under_maintenance'] ?? 0,
       retired: stats.by_status['retired'] ?? 0,
+      transferred: stats.by_status['transferred'] ?? 0,
       disposed: stats.by_status['disposed'] ?? 0,
       warranty_expiring_soon: stats.warranty_expiring_30_days,
     }
@@ -351,8 +352,9 @@ export class AssetService {
 export interface AssetStats {
   total: number
   active: number
-  maintenance: number
+  under_maintenance: number
   retired: number
+  transferred: number
   disposed: number
   warranty_expiring_soon: number
 }

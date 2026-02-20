@@ -26,6 +26,7 @@ import {
 import { Plus, Search, QrCode, MapPin } from 'lucide-react'
 import { PageLoader } from '@/components/ui/loaders'
 import type { Database } from '@/types/database'
+import { TableLoadingOverlay } from '@/components/ui/table-loading-overlay'
 
 export default function AssetsPage() {
   const router = useRouter()
@@ -44,9 +45,24 @@ export default function AssetsPage() {
     pageSize,
   }), [statusFilter, debouncedSearch, page, pageSize])
 
-  const { data, isLoading } = useAssets(filters)
+  const { data, isLoading, isFetching } = useAssets(filters)
   const assets = data?.data || []
   const totalCount = data?.total ?? 0
+
+  // Pre-compute stats counts in a single pass to avoid multiple filter calls during render
+  const stats = useMemo(() => {
+    let active = 0
+    let underMaintenance = 0
+    let retired = 0
+
+    for (const asset of assets) {
+      if (asset.status === 'active') active++
+      else if (asset.status === 'under_maintenance') underMaintenance++
+      else if (asset.status === 'retired') retired++
+    }
+
+    return { active, underMaintenance, retired }
+  }, [assets])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,7 +81,7 @@ export default function AssetsPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return <PageLoader />
   }
 
@@ -73,12 +89,7 @@ export default function AssetsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Assets</h1>
-          <p className="mt-1 text-sm text-gray-600 md:text-base">
-            Manage equipment and facility assets
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Assets</h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -93,6 +104,44 @@ export default function AssetsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Stats Strip */}
+      <Card className="p-0 overflow-hidden">
+        <div className="flex flex-wrap md:flex-nowrap divide-y md:divide-y-0 md:divide-x divide-border">
+          <div
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => setStatusFilter('all')}
+          >
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{totalCount}</span>
+            <span className="text-sm text-muted-foreground">Total</span>
+          </div>
+          <div
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => setStatusFilter('active')}
+          >
+            <Plus className="h-4 w-4 text-green-600" />
+            <span className="font-semibold">{stats.active}</span>
+            <span className="text-sm text-muted-foreground">Active</span>
+          </div>
+          <div
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => setStatusFilter('under_maintenance')}
+          >
+            <QrCode className="h-4 w-4 text-amber-600" />
+            <span className="font-semibold">{stats.underMaintenance}</span>
+            <span className="text-sm text-muted-foreground">Under Maintenance</span>
+          </div>
+          <div
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => setStatusFilter('retired')}
+          >
+            <Search className="h-4 w-4 text-gray-500" />
+            <span className="font-semibold">{stats.retired}</span>
+            <span className="text-sm text-muted-foreground">Retired</span>
+          </div>
+        </div>
+      </Card>
 
       {/* Filters */}
       <Card>
@@ -131,15 +180,16 @@ export default function AssetsPage() {
       </Card>
 
       {/* Assets List */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>
-              Assets ({totalCount})
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <TableLoadingOverlay isLoading={isFetching}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                Assets ({totalCount})
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
           {assets.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-gray-500">No assets found</p>
@@ -256,7 +306,8 @@ export default function AssetsPage() {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </TableLoadingOverlay>
     </div>
   )
 }

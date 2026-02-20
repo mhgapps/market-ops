@@ -18,7 +18,6 @@ export async function proxy(request: NextRequest) {
   // Check if the current path is a protected route (dashboard, etc.)
   const isProtectedRoute =
     pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/locations') ||
     pathname.startsWith('/tickets') ||
     pathname.startsWith('/assets') ||
     pathname.startsWith('/vendors') ||

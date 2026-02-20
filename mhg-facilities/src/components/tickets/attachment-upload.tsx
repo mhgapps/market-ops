@@ -48,7 +48,6 @@ const attachmentSchema = z.object({
 type AttachmentFormValues = z.infer<typeof attachmentSchema>
 
 interface AttachmentUploadProps {
-  ticketId: string
   onUpload: (data: {
     file: File
     attachment_type: 'photo' | 'invoice' | 'quote' | 'other'
@@ -56,7 +55,7 @@ interface AttachmentUploadProps {
   onCancel?: () => void
 }
 
-export function AttachmentUpload({ ticketId, onUpload, onCancel }: AttachmentUploadProps) {
+export function AttachmentUpload({ onUpload, onCancel }: AttachmentUploadProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -166,7 +165,7 @@ export function AttachmentUpload({ ticketId, onUpload, onCancel }: AttachmentUpl
             <FormField
               control={form.control}
               name="file"
-              render={({ field: { value, onChange, ...fieldProps } }) => (
+              render={({ field: { onChange } }) => (
                 <FormItem>
                   <FormLabel>File</FormLabel>
                   <FormControl>

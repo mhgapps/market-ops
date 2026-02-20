@@ -22,12 +22,8 @@ interface StatusTimelineProps {
 
 const statusIcons: Record<TicketStatus, React.ComponentType<{ className?: string }>> = {
   submitted: Clock,
-  acknowledged: Check,
-  needs_approval: Circle,
-  approved: Check,
   in_progress: Circle,
   completed: Check,
-  verified: Check,
   closed: Check,
   rejected: X,
   on_hold: Pause,
@@ -35,12 +31,8 @@ const statusIcons: Record<TicketStatus, React.ComponentType<{ className?: string
 
 const statusColors: Record<TicketStatus, string> = {
   submitted: 'text-blue-600 bg-blue-100',
-  acknowledged: 'text-indigo-600 bg-indigo-100',
-  needs_approval: 'text-amber-600 bg-amber-100',
-  approved: 'text-teal-600 bg-teal-100',
   in_progress: 'text-purple-600 bg-purple-100',
   completed: 'text-green-600 bg-green-100',
-  verified: 'text-emerald-600 bg-emerald-100',
   closed: 'text-gray-600 bg-gray-100',
   rejected: 'text-red-600 bg-red-100',
   on_hold: 'text-orange-600 bg-orange-100',
@@ -48,12 +40,8 @@ const statusColors: Record<TicketStatus, string> = {
 
 const statusLabels: Record<TicketStatus, string> = {
   submitted: 'Submitted',
-  acknowledged: 'Acknowledged',
-  needs_approval: 'Needs Approval',
-  approved: 'Approved',
   in_progress: 'In Progress',
   completed: 'Completed',
-  verified: 'Verified',
   closed: 'Closed',
   rejected: 'Rejected',
   on_hold: 'On Hold',

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { UserService } from '@/services/user.service'
-import { UserDAO } from '@/dao/user.dao'
 import { requireAuth, requireAdmin } from '@/lib/auth/api-auth'
 import { updateUserSchema } from '@/lib/validations/user'
 
@@ -27,8 +26,8 @@ export async function GET(
       if (adminError) return adminError
     }
 
-    const userDAO = new UserDAO()
-    const user = await userDAO.findById(id)
+    const userService = new UserService()
+    const user = await userService.findById(id)
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -100,17 +99,22 @@ export async function PATCH(
       )
     }
 
-    const userDAO = new UserDAO()
+    const userService = new UserService()
 
-    // Update user
-    const updatedUser = await userDAO.update(id, {
-      full_name: validation.data.full_name,
-      role: validation.data.role,
-      location_id: validation.data.location_id,
+    // Update role via service if changing role (has validation logic)
+    if (validation.data.role) {
+      await userService.changeRole(id, validation.data.role)
+    }
+
+    // Update profile fields via service
+    const updatedUser = await userService.updateProfile(id, {
+      fullName: validation.data.full_name,
       phone: validation.data.phone,
-      language_preference: validation.data.language_preference,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      notification_preferences: validation.data.notification_preferences as any,
+      locationId: validation.data.location_id,
+      languagePreference: validation.data.language_preference as 'en' | 'es' | undefined,
+      notificationPreferences: validation.data.notification_preferences as
+        | { email: boolean; sms: boolean; push: boolean }
+        | undefined,
     })
 
     // Transform user for response

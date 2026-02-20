@@ -36,10 +36,10 @@ export default function NewCompliancePage() {
         renewal_cost: data.renewal_cost ? parseFloat(data.renewal_cost) : null,
         notes: data.notes || null,
       })
-      toast.success('Compliance document created successfully')
+      toast.success('Document created successfully')
       router.push(`/compliance/${document.id}`)
-    } catch (error) {
-      toast.error('Failed to create compliance document')
+    } catch (_error) {
+      toast.error('Failed to create document')
     }
   }
 
@@ -51,17 +51,14 @@ export default function NewCompliancePage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Add Compliance Document</h1>
-          <p className="text-muted-foreground">Track a new license, permit, or certificate</p>
-        </div>
+        <h1 className="text-2xl font-bold">Add Document</h1>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Document Details</CardTitle>
           <CardDescription>
-            Enter the details of the compliance document you want to track
+            Enter the details of the document you want to track
           </CardDescription>
         </CardHeader>
         <CardContent>

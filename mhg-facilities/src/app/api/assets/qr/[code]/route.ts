@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/api-auth'
 import { AssetService } from '@/services/asset.service'
 
 interface RouteParams {
@@ -11,6 +12,9 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { code } = await params
 
     if (!code || code.trim().length === 0) {

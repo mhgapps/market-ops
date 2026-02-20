@@ -16,6 +16,7 @@ export interface TicketFilters {
   search?: string
   page?: number
   pageSize?: number
+  is_emergency?: boolean
 }
 
 export interface PaginatedResult<T> {
@@ -145,6 +146,11 @@ export class TicketDAO extends BaseDAO<'tickets'> {
       query = query.or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`)
     }
 
+    // Apply emergency filter
+    if (filters?.is_emergency !== undefined) {
+      query = query.eq('is_emergency', filters.is_emergency)
+    }
+
     // Apply ordering and limit
     query = query
       .order('created_at', { ascending: false })
@@ -249,6 +255,12 @@ export class TicketDAO extends BaseDAO<'tickets'> {
       const searchPattern = `%${filters.search}%`
       countQuery = countQuery.or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`)
       dataQuery = dataQuery.or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`)
+    }
+
+    // Apply emergency filter
+    if (filters?.is_emergency !== undefined) {
+      countQuery = countQuery.eq('is_emergency', filters.is_emergency)
+      dataQuery = dataQuery.eq('is_emergency', filters.is_emergency)
     }
 
     // Apply ordering and pagination to data query
@@ -676,12 +688,8 @@ export class TicketDAO extends BaseDAO<'tickets'> {
 
     const statuses: TicketStatus[] = [
       'submitted',
-      'acknowledged',
-      'needs_approval',
-      'approved',
       'in_progress',
       'completed',
-      'verified',
       'closed',
       'rejected',
       'on_hold',
@@ -815,6 +823,249 @@ export class TicketDAO extends BaseDAO<'tickets'> {
     if (data) {
       data.forEach((row: { location_id: string }) => {
         counts[row.location_id] = (counts[row.location_id] || 0) + 1
+      })
+    }
+    return counts
+  }
+
+  // ============================================================
+  // EMERGENCY TICKET METHODS
+  // ============================================================
+
+  /**
+   * Find active emergency tickets (not closed/rejected)
+   */
+  async findActiveEmergencies(): Promise<Ticket[]> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_emergency', true)
+      .not('status', 'in', '(closed,rejected)')
+      .is('deleted_at', null)
+      .order('priority', { ascending: false })
+      .order('created_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }
+
+  /**
+   * Count active emergency tickets
+   */
+  async countActiveEmergencies(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { count, error } = await supabase
+      .from('tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('is_emergency', true)
+      .not('status', 'in', '(closed,rejected)')
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
+  }
+
+  /**
+   * Count resolved emergency tickets in last N days
+   */
+  async countResolvedEmergencies(days: number = 30): Promise<number> {
+    const { supabase, tenantId } = await this.getClient()
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - days)
+
+    const { count, error } = await supabase
+      .from('tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('is_emergency', true)
+      .eq('status', 'closed')
+      .gte('closed_at', cutoffDate.toISOString())
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
+  }
+
+  /**
+   * Count total emergency tickets in last N days
+   */
+  async countTotalEmergencies(days: number = 30): Promise<number> {
+    const { supabase, tenantId } = await this.getClient()
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - days)
+
+    const { count, error } = await supabase
+      .from('tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('is_emergency', true)
+      .gte('created_at', cutoffDate.toISOString())
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
+  }
+
+  /**
+   * Mark emergency ticket as contained
+   */
+  async markContained(id: string): Promise<Ticket> {
+    return this.update(id, {
+      status: 'in_progress' as TicketStatus,
+      contained_at: new Date().toISOString(),
+    })
+  }
+
+  /**
+   * Mark emergency ticket as resolved
+   */
+  async markResolved(id: string, resolutionNotes: string): Promise<Ticket> {
+    return this.update(id, {
+      status: 'closed' as TicketStatus,
+      resolution_notes: resolutionNotes,
+      closed_at: new Date().toISOString(),
+    })
+  }
+
+  // ============================================================
+  // DATE RANGE QUERIES (for dashboard trend charts)
+  // ============================================================
+
+  /**
+   * Find tickets created within a date range
+   * PERFORMANCE: Filters at database level, not in memory
+   */
+  async findByDateRange(startDate: string, endDate: string): Promise<Ticket[]> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }
+
+  /**
+   * Get ticket counts grouped by date for a date range
+   * PERFORMANCE: Only fetches created_at column, groups in database
+   */
+  async getCountsByDate(startDate: string, endDate: string): Promise<Record<string, number>> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('created_at')
+      .eq('tenant_id', tenantId)
+      .gte('created_at', startDate)
+      .lte('created_at', endDate)
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+
+    // Group by date (extract date portion only)
+    const counts: Record<string, number> = {}
+    if (data) {
+      data.forEach((row: { created_at: string }) => {
+        const dateKey = row.created_at.split('T')[0]
+        counts[dateKey] = (counts[dateKey] || 0) + 1
+      })
+    }
+    return counts
+  }
+
+  /**
+   * Find recent tickets with a limit
+   * PERFORMANCE: Uses LIMIT at database level
+   */
+  async findRecentCreated(limit: number = 5): Promise<Ticket[]> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }
+
+  /**
+   * Find recently completed tickets with a limit
+   * PERFORMANCE: Filters and limits at database level
+   */
+  async findRecentCompleted(limit: number = 5): Promise<Ticket[]> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'completed')
+      .not('completed_at', 'is', null)
+      .is('deleted_at', null)
+      .order('completed_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }
+
+  /**
+   * Find closed tickets within a date range (by closed_at)
+   * PERFORMANCE: Filters at database level for resolution time reports
+   */
+  async findClosedByDateRange(startDate: string, endDate: string): Promise<Ticket[]> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'closed')
+      .not('closed_at', 'is', null)
+      .gte('closed_at', startDate)
+      .lte('closed_at', endDate)
+      .is('deleted_at', null)
+      .order('closed_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }
+
+  /**
+   * Get category counts for tickets (for reports)
+   * PERFORMANCE: Only fetches category_id column
+   */
+  async getCategoryCounts(): Promise<Record<string, number>> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('category_id')
+      .eq('tenant_id', tenantId)
+      .not('category_id', 'is', null)
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+
+    const counts: Record<string, number> = {}
+    if (data) {
+      data.forEach((row: { category_id: string }) => {
+        counts[row.category_id] = (counts[row.category_id] || 0) + 1
       })
     }
     return counts

@@ -1,17 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
-export type TicketStatus =
-  | 'submitted'
-  | 'acknowledged'
-  | 'needs_approval'
-  | 'approved'
-  | 'in_progress'
-  | 'completed'
-  | 'verified'
-  | 'closed'
-  | 'rejected'
-  | 'on_hold'
+import { type TicketStatus } from '@/types/database'
+export type { TicketStatus }
 
 interface StatusBadgeProps {
   status: TicketStatus
@@ -31,21 +22,6 @@ const statusConfig: Record<
     variant: 'secondary',
     className: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
   },
-  acknowledged: {
-    label: 'Acknowledged',
-    variant: 'secondary',
-    className: 'bg-indigo-100 text-indigo-800 hover:bg-indigo-100',
-  },
-  needs_approval: {
-    label: 'Needs Approval',
-    variant: 'outline',
-    className: 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100',
-  },
-  approved: {
-    label: 'Approved',
-    variant: 'secondary',
-    className: 'bg-teal-100 text-teal-800 hover:bg-teal-100',
-  },
   in_progress: {
     label: 'In Progress',
     variant: 'default',
@@ -55,11 +31,6 @@ const statusConfig: Record<
     label: 'Completed',
     variant: 'secondary',
     className: 'bg-green-100 text-green-800 hover:bg-green-100',
-  },
-  verified: {
-    label: 'Verified',
-    variant: 'secondary',
-    className: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100',
   },
   closed: {
     label: 'Closed',

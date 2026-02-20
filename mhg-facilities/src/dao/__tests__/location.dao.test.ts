@@ -1,13 +1,27 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { LocationDAO } from '../location.dao';
 import type { Database } from '@/types/database';
 
 type Location = Database['public']['Tables']['locations']['Row'];
 
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+}
+
 describe('LocationDAO', () => {
   let dao: LocationDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   const mockLocation: Location = {
     id: 'location-1',

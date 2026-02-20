@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { DashboardService } from '@/services/dashboard.service';
+import { requireAuth } from '@/lib/auth/api-auth';
 
 /**
  * Combined dashboard endpoint
@@ -7,6 +8,9 @@ import { DashboardService } from '@/services/dashboard.service';
  */
 export async function GET() {
   try {
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
+
     const service = new DashboardService();
 
     // Fetch all dashboard data in parallel

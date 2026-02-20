@@ -1,5 +1,3 @@
-'use client'
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api-client'
 
@@ -50,7 +48,7 @@ export interface CreateLocationInput {
   notes?: string | null
 }
 
-export interface UpdateLocationInput extends Partial<CreateLocationInput> {}
+export type UpdateLocationInput = Partial<CreateLocationInput>
 
 // Query keys
 export const locationKeys = {
@@ -72,6 +70,7 @@ export function useLocations(withStats: boolean = false) {
       const data = await api.get<{ locations: LocationWithStats[] }>(url)
       return data.locations
     },
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -87,6 +86,7 @@ export function useLocation(id: string | null) {
       return data.location
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   })
 }
 

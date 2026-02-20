@@ -15,10 +15,9 @@ export type TenantPlan = 'free' | 'starter' | 'professional' | 'enterprise'
 export type TenantStatus = 'active' | 'suspended' | 'cancelled' | 'trial'
 export type LocationStatus = 'active' | 'temporarily_closed' | 'permanently_closed'
 export type AssetStatus = 'active' | 'under_maintenance' | 'retired' | 'transferred' | 'disposed'
-export type TicketStatus = 'submitted' | 'acknowledged' | 'needs_approval' | 'approved' | 'in_progress' | 'completed' | 'verified' | 'closed' | 'rejected' | 'on_hold'
+export type TicketStatus = 'submitted' | 'in_progress' | 'completed' | 'closed' | 'rejected' | 'on_hold'
 export type TicketPriority = 'low' | 'medium' | 'high' | 'critical'
 export type ComplianceStatus = 'active' | 'expiring_soon' | 'expired' | 'pending_renewal' | 'conditional' | 'failed_inspection' | 'suspended'
-export type ApprovalStatus = 'pending' | 'approved' | 'denied'
 export type InvoiceStatus = 'pending' | 'approved' | 'paid' | 'disputed'
 export type IncidentStatus = 'active' | 'contained' | 'resolved'
 export type IncidentSeverity = 'high' | 'critical'
@@ -433,7 +432,6 @@ export interface Database {
           default_priority: TicketPriority
           default_assignee_id: string | null
           preferred_vendor_id: string | null
-          approval_threshold: number | null
           escalation_hours: number
           created_at: string
           deleted_at: string | null
@@ -447,7 +445,6 @@ export interface Database {
           default_priority?: TicketPriority
           default_assignee_id?: string | null
           preferred_vendor_id?: string | null
-          approval_threshold?: number | null
           escalation_hours?: number
           created_at?: string
           deleted_at?: string | null
@@ -461,7 +458,6 @@ export interface Database {
           default_priority?: TicketPriority
           default_assignee_id?: string | null
           preferred_vendor_id?: string | null
-          approval_threshold?: number | null
           escalation_hours?: number
           created_at?: string
           deleted_at?: string | null
@@ -487,18 +483,16 @@ export interface Database {
           merged_into_ticket_id: string | null
           is_duplicate: boolean
           estimated_cost: number | null
-          approved_cost: number | null
           actual_cost: number | null
           is_warranty_claim: boolean
           due_date: string | null
-          acknowledged_at: string | null
-          approved_at: string | null
           started_at: string | null
           completed_at: string | null
           verified_at: string | null
           closed_at: string | null
           is_emergency: boolean
-          requires_approval: boolean
+          contained_at: string | null
+          resolution_notes: string | null
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -522,18 +516,16 @@ export interface Database {
           merged_into_ticket_id?: string | null
           is_duplicate?: boolean
           estimated_cost?: number | null
-          approved_cost?: number | null
           actual_cost?: number | null
           is_warranty_claim?: boolean
           due_date?: string | null
-          acknowledged_at?: string | null
-          approved_at?: string | null
           started_at?: string | null
           completed_at?: string | null
           verified_at?: string | null
           closed_at?: string | null
           is_emergency?: boolean
-          requires_approval?: boolean
+          contained_at?: string | null
+          resolution_notes?: string | null
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -557,18 +549,16 @@ export interface Database {
           merged_into_ticket_id?: string | null
           is_duplicate?: boolean
           estimated_cost?: number | null
-          approved_cost?: number | null
           actual_cost?: number | null
           is_warranty_claim?: boolean
           due_date?: string | null
-          acknowledged_at?: string | null
-          approved_at?: string | null
           started_at?: string | null
           completed_at?: string | null
           verified_at?: string | null
           closed_at?: string | null
           is_emergency?: boolean
-          requires_approval?: boolean
+          contained_at?: string | null
+          resolution_notes?: string | null
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -862,47 +852,6 @@ export interface Database {
           deleted_at?: string | null
         }
       }
-      cost_approvals: {
-        Row: {
-          id: string
-          ticket_id: string | null
-          estimated_cost: number
-          vendor_quote_path: string | null
-          requested_by: string | null
-          requested_at: string
-          reviewed_by: string | null
-          reviewed_at: string | null
-          status: ApprovalStatus
-          denial_reason: string | null
-          notes: string | null
-        }
-        Insert: {
-          id?: string
-          ticket_id?: string | null
-          estimated_cost: number
-          vendor_quote_path?: string | null
-          requested_by?: string | null
-          requested_at?: string
-          reviewed_by?: string | null
-          reviewed_at?: string | null
-          status?: ApprovalStatus
-          denial_reason?: string | null
-          notes?: string | null
-        }
-        Update: {
-          id?: string
-          ticket_id?: string | null
-          estimated_cost?: number
-          vendor_quote_path?: string | null
-          requested_by?: string | null
-          requested_at?: string
-          reviewed_by?: string | null
-          reviewed_at?: string | null
-          status?: ApprovalStatus
-          denial_reason?: string | null
-          notes?: string | null
-        }
-      }
     }
     Views: {
       [_ in never]: never
@@ -936,7 +885,6 @@ export interface Database {
       ticket_status: TicketStatus
       ticket_priority: TicketPriority
       compliance_status: ComplianceStatus
-      approval_status: ApprovalStatus
       invoice_status: InvoiceStatus
       incident_status: IncidentStatus
       incident_severity: IncidentSeverity

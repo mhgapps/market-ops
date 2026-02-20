@@ -11,7 +11,6 @@ export interface CreateCategoryInput {
   default_priority?: TicketPriority
   default_assignee_id?: string
   preferred_vendor_id?: string
-  approval_threshold?: number
   escalation_hours?: number
 }
 
@@ -22,7 +21,6 @@ export interface UpdateCategoryInput {
   default_priority?: TicketPriority
   default_assignee_id?: string | null
   preferred_vendor_id?: string | null
-  approval_threshold?: number | null
   escalation_hours?: number
 }
 
@@ -55,11 +53,6 @@ export class TicketCategoryService {
    * Create new category
    */
   async createCategory(data: CreateCategoryInput): Promise<TicketCategory> {
-    // Validate approval threshold if provided
-    if (data.approval_threshold !== undefined && data.approval_threshold !== null && data.approval_threshold < 0) {
-      throw new Error('Approval threshold must be a positive number')
-    }
-
     // Validate escalation hours if provided
     if (data.escalation_hours !== undefined && data.escalation_hours < 1) {
       throw new Error('Escalation hours must be at least 1')
@@ -74,11 +67,6 @@ export class TicketCategoryService {
   async updateCategory(id: string, data: UpdateCategoryInput): Promise<TicketCategory> {
     // Verify category exists
     await this.getCategoryById(id)
-
-    // Validate approval threshold if provided
-    if (data.approval_threshold !== undefined && data.approval_threshold !== null && data.approval_threshold < 0) {
-      throw new Error('Approval threshold must be a positive number')
-    }
 
     // Validate escalation hours if provided
     if (data.escalation_hours !== undefined && data.escalation_hours < 1) {
@@ -106,25 +94,5 @@ export class TicketCategoryService {
    */
   async getCategoriesByPriority(priority: TicketPriority) {
     return this.categoryDAO.findByPriority(priority)
-  }
-
-  /**
-   * Get categories that require cost approval
-   */
-  async getCategoriesRequiringApproval() {
-    return this.categoryDAO.findWithApprovalThreshold()
-  }
-
-  /**
-   * Check if category requires approval for given cost
-   */
-  async requiresApproval(categoryId: string, estimatedCost: number): Promise<boolean> {
-    const category = await this.getCategoryById(categoryId)
-
-    if (!category.approval_threshold) {
-      return false
-    }
-
-    return estimatedCost >= category.approval_threshold
   }
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -24,7 +25,9 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
 import { Spinner } from '@/components/ui/loaders'
+import { AlertTriangle } from 'lucide-react'
 
 const ticketFormSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(200),
@@ -33,6 +36,7 @@ const ticketFormSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   location_id: uuid('Please select a location'),
   asset_id: optionalNullableUuid(),
+  is_emergency: z.boolean(),
 })
 
 type TicketFormValues = z.infer<typeof ticketFormSchema>
@@ -86,26 +90,58 @@ export function TicketForm({
       priority: 'medium',
       location_id: '',
       asset_id: null,
+      is_emergency: false,
       ...defaultValues,
     },
   })
 
-  const selectedLocationId = form.watch('location_id')
-  const filteredAssets = assets.filter((asset) => asset.location_id === selectedLocationId)
+  const [selectedLocationId, isEmergency] = form.watch(['location_id', 'is_emergency'])
+
+  // Memoize filtered assets to prevent recalculation on every render
+  const filteredAssets = useMemo(
+    () => assets.filter((asset) => asset.location_id === selectedLocationId),
+    [assets, selectedLocationId]
+  )
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{mode === 'create' ? 'Create New Ticket' : 'Edit Ticket'}</CardTitle>
-        <CardDescription>
-          {mode === 'create'
-            ? 'Submit a maintenance or facilities request'
-            : 'Update ticket information'}
-        </CardDescription>
-      </CardHeader>
+    <Form {...form}>
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <div className="space-y-1.5">
+            <CardTitle>{mode === 'create' ? 'Create New Ticket' : 'Edit Ticket'}</CardTitle>
+            <CardDescription>
+              {mode === 'create'
+                ? 'Submit a maintenance or facilities request'
+                : 'Update ticket information'}
+            </CardDescription>
+          </div>
+          {/* Emergency Toggle - Top Right */}
+          <div
+            className={`flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
+              isEmergency
+                ? 'border-red-300 bg-red-100'
+                : 'border-red-200 bg-red-50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle className={`h-4 w-4 ${isEmergency ? 'text-red-600' : 'text-red-500'}`} />
+              <span className={`text-sm font-medium ${isEmergency ? 'text-red-700' : 'text-foreground'}`}>
+                Emergency
+              </span>
+            </div>
+            <Switch
+              checked={isEmergency}
+              onCheckedChange={(checked) => {
+                form.setValue('is_emergency', checked)
+                if (checked) {
+                  form.setValue('priority', 'critical')
+                }
+              }}
+            />
+          </div>
+        </CardHeader>
 
-      <CardContent>
-        <Form {...form}>
+        <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Title - Full width */}
             <FormField
@@ -336,8 +372,8 @@ export function TicketForm({
               </Button>
             </div>
           </form>
-        </Form>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Form>
   )
 }

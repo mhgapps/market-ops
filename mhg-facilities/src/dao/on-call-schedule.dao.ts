@@ -2,8 +2,8 @@ import { BaseDAO } from './base.dao'
 import type { Database } from '@/types/database-extensions'
 
 type OnCallSchedule = Database['public']['Tables']['on_call_schedules']['Row']
-type OnCallScheduleInsert = Database['public']['Tables']['on_call_schedules']['Insert']
-type OnCallScheduleUpdate = Database['public']['Tables']['on_call_schedules']['Update']
+type _OnCallScheduleInsert = Database['public']['Tables']['on_call_schedules']['Insert']
+type _OnCallScheduleUpdate = Database['public']['Tables']['on_call_schedules']['Update']
 
 export class OnCallScheduleDAO extends BaseDAO<'on_call_schedules'> {
   constructor() {

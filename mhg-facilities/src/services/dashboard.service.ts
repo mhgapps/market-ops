@@ -8,9 +8,9 @@ import { LocationDAO } from '@/dao/location.dao';
 // Overview stats
 export interface OverviewStats {
   openTickets: number;
-  pendingApprovals: number;
   expiringCompliance: number;
   overduePM: number;
+  activeEmergencies: number;
 }
 
 // Ticket stats
@@ -41,8 +41,9 @@ export interface TrendData {
 export interface AssetStats {
   total: number;
   active: number;
-  maintenance: number;
+  under_maintenance: number;
   retired: number;
+  transferred: number;
   expiringWarranties: number;
 }
 
@@ -108,22 +109,22 @@ export class DashboardService {
    * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getOverviewStats(): Promise<OverviewStats> {
-    const [openTickets, pendingApprovals, expiringCompliance, overduePM] = await Promise.all([
-      // Count open tickets (not closed, verified, or rejected)
-      this.ticketDAO.countByStatusNot(['closed', 'verified', 'rejected']),
-      // Count tickets needing approval
-      this.ticketDAO.countByStatus(['needs_approval']),
+    const [openTickets, expiringCompliance, overduePM, activeEmergencies] = await Promise.all([
+      // Count open tickets (not closed or rejected)
+      this.ticketDAO.countByStatusNot(['closed', 'rejected']),
       // Count compliance documents expiring in 30 days
       this.complianceDAO.countExpiringSoon(30),
       // Count overdue PM schedules
       this.pmScheduleDAO.countOverdue(),
+      // Count active emergency tickets
+      this.ticketDAO.countActiveEmergencies(),
     ]);
 
     return {
       openTickets,
-      pendingApprovals,
       expiringCompliance,
       overduePM,
+      activeEmergencies,
     };
   }
 
@@ -138,9 +139,9 @@ export class DashboardService {
   async getTicketStats(): Promise<TicketStats> {
     const [total, open, inProgress, completed, avgResolutionHours] = await Promise.all([
       this.ticketDAO.countTotal(),
-      this.ticketDAO.countByStatusNot(['closed', 'verified', 'rejected']),
+      this.ticketDAO.countByStatusNot(['closed', 'rejected']),
       this.ticketDAO.countByStatus(['in_progress']),
-      this.ticketDAO.countByStatus(['completed', 'verified', 'closed']),
+      this.ticketDAO.countByStatus(['completed', 'closed']),
       this.ticketDAO.getAverageResolutionHours(),
     ]);
 
@@ -184,37 +185,28 @@ export class DashboardService {
 
   /**
    * Get ticket creation trend over time
+   * PERFORMANCE: Uses database filtering instead of loading all tickets
    */
   async getTicketTrend(days: number): Promise<TrendData[]> {
-    const tickets = await this.ticketDAO.findAll();
-
     // Calculate date range
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Filter tickets in date range
-    const recentTickets = tickets.filter((t) => {
-      const created = new Date(t.created_at);
-      return created >= startDate && created <= endDate;
-    });
+    // Get counts grouped by date from database (only fetches created_at column)
+    const dateCounts = await this.ticketDAO.getCountsByDate(
+      startDate.toISOString(),
+      endDate.toISOString()
+    );
 
-    // Group by date
+    // Initialize date map with zeros for all days in range
     const dateMap = new Map<string, number>();
-
     for (let i = 0; i < days; i++) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateKey = date.toISOString().split('T')[0];
-      dateMap.set(dateKey, 0);
+      dateMap.set(dateKey, dateCounts[dateKey] || 0);
     }
-
-    recentTickets.forEach((ticket) => {
-      const dateKey = ticket.created_at.split('T')[0];
-      if (dateMap.has(dateKey)) {
-        dateMap.set(dateKey, dateMap.get(dateKey)! + 1);
-      }
-    });
 
     // Convert to array and sort by date
     return Array.from(dateMap.entries())
@@ -236,42 +228,31 @@ export class DashboardService {
 
   /**
    * Get asset statistics
+   * PERFORMANCE: Uses COUNT queries instead of loading all assets
    */
   async getAssetStats(): Promise<AssetStats> {
-    const [allAssets, expiringWarranties] = await Promise.all([
-      this.assetDAO.findAll(),
-      this.assetDAO.findWarrantyExpiring(30),
+    const [total, statusCounts, expiringWarranties] = await Promise.all([
+      this.assetDAO.countTotal(),
+      this.assetDAO.getStatusCounts(),
+      this.assetDAO.countWarrantyExpiring(30),
     ]);
 
-    const active = allAssets.filter((a) => a.status === 'active').length;
-    const maintenance = allAssets.filter(
-      (a) => a.status === 'under_maintenance'
-    ).length;
-    const retired = allAssets.filter((a) => a.status === 'retired').length;
-
     return {
-      total: allAssets.length,
-      active,
-      maintenance,
-      retired,
-      expiringWarranties: expiringWarranties.length,
+      total,
+      active: statusCounts['active'] || 0,
+      under_maintenance: statusCounts['under_maintenance'] || 0,
+      retired: statusCounts['retired'] || 0,
+      transferred: statusCounts['transferred'] || 0,
+      expiringWarranties,
     };
   }
 
   /**
    * Get asset counts by status
+   * PERFORMANCE: Uses optimized COUNT queries instead of loading all assets
    */
   async getAssetsByStatus(): Promise<StatusCount[]> {
-    const assets = await this.assetDAO.findAll();
-
-    const statusCounts = assets.reduce(
-      (acc, asset) => {
-        const status = asset.status || 'active';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
+    const statusCounts = await this.assetDAO.getStatusCounts();
 
     return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
       status,
@@ -312,18 +293,10 @@ export class DashboardService {
 
   /**
    * Get compliance counts by status
+   * PERFORMANCE: Uses optimized COUNT queries instead of loading all documents
    */
   async getComplianceByStatus(): Promise<StatusCount[]> {
-    const documents = await this.complianceDAO.findAll();
-
-    const statusCounts = documents.reduce(
-      (acc, doc) => {
-        const status = doc.status || 'active';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
+    const statusCounts = await this.complianceDAO.getStatusCounts();
 
     return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
       status,
@@ -446,72 +419,53 @@ export class DashboardService {
 
   /**
    * Get recent activity across all modules
+   * PERFORMANCE: Uses LIMIT at database level instead of loading all records
    */
   async getRecentActivity(limit: number = 10): Promise<ActivityItem[]> {
-    const [tickets, compliance] = await Promise.all([
-      this.ticketDAO.findAll(),
-      this.complianceDAO.findAll(),
+    // Fetch only the limited records we need from each source
+    const [recentCreated, recentCompleted, expiringCompliance] = await Promise.all([
+      this.ticketDAO.findRecentCreated(5),
+      this.ticketDAO.findRecentCompleted(5),
+      this.complianceDAO.findRecentExpiring(30, 5),
     ]);
 
     const activities: ActivityItem[] = [];
 
     // Recent ticket creations
-    tickets
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
-      .slice(0, 5)
-      .forEach((ticket) => {
-        activities.push({
-          id: ticket.id,
-          type: 'ticket_created',
-          title: 'New Ticket Created',
-          description: ticket.title,
-          timestamp: ticket.created_at,
-          linkUrl: `/tickets/${ticket.id}`,
-        });
+    recentCreated.forEach((ticket) => {
+      activities.push({
+        id: ticket.id,
+        type: 'ticket_created',
+        title: 'New Ticket Created',
+        description: ticket.title,
+        timestamp: ticket.created_at,
+        linkUrl: `/tickets/${ticket.id}`,
       });
+    });
 
     // Recent ticket completions
-    tickets
-      .filter((t) => t.status === 'completed' && t.completed_at)
-      .sort(
-        (a, b) =>
-          new Date(b.completed_at || b.created_at).getTime() -
-          new Date(a.completed_at || a.created_at).getTime()
-      )
-      .slice(0, 5)
-      .forEach((ticket) => {
-        activities.push({
-          id: ticket.id,
-          type: 'ticket_completed',
-          title: 'Ticket Completed',
-          description: ticket.title,
-          timestamp: ticket.completed_at || ticket.created_at,
-          linkUrl: `/tickets/${ticket.id}`,
-        });
+    recentCompleted.forEach((ticket) => {
+      activities.push({
+        id: ticket.id,
+        type: 'ticket_completed',
+        title: 'Ticket Completed',
+        description: ticket.title,
+        timestamp: ticket.completed_at || ticket.created_at,
+        linkUrl: `/tickets/${ticket.id}`,
       });
+    });
 
     // Compliance expiring soon
-    compliance
-      .filter((d) => d.status === 'expiring_soon' && d.expiration_date)
-      .sort(
-        (a, b) =>
-          new Date(a.expiration_date!).getTime() -
-          new Date(b.expiration_date!).getTime()
-      )
-      .slice(0, 5)
-      .forEach((doc) => {
-        activities.push({
-          id: doc.id,
-          type: 'compliance_expiring',
-          title: 'Compliance Expiring Soon',
-          description: doc.name,
-          timestamp: doc.expiration_date!,
-          linkUrl: `/compliance/${doc.id}`,
-        });
+    expiringCompliance.forEach((doc) => {
+      activities.push({
+        id: doc.id,
+        type: 'compliance_expiring',
+        title: 'Compliance Expiring Soon',
+        description: doc.name,
+        timestamp: doc.expiration_date!,
+        linkUrl: `/compliance/${doc.id}`,
       });
+    });
 
     // Sort all activities by timestamp and limit
     return activities

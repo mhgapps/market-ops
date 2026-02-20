@@ -5,6 +5,8 @@ import {
   Bell,
   Tags,
   Users,
+  MapPin,
+  BarChart3,
   ChevronRight,
 } from 'lucide-react';
 
@@ -15,6 +17,12 @@ export default function SettingsPage() {
       description: 'Manage organization name, branding, and preferences',
       icon: Building2,
       href: '/settings/tenant',
+    },
+    {
+      title: 'Locations',
+      description: 'Manage facility locations and addresses',
+      icon: MapPin,
+      href: '/settings/locations',
     },
     {
       title: 'Notifications',
@@ -34,16 +42,17 @@ export default function SettingsPage() {
       icon: Users,
       href: '/users',
     },
+    {
+      title: 'Reports',
+      description: 'View analytics and generate reports',
+      icon: BarChart3,
+      href: '/reports',
+    },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Manage your organization settings and preferences
-        </p>
-      </div>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
 
       <div className="grid gap-4 md:grid-cols-2">
         {settingsSections.map((section) => {

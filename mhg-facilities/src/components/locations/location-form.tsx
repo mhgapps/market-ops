@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useUsers } from '@/hooks/use-users'
+import api from '@/lib/api-client'
 
 // Form validation schema
 const locationFormSchema = z.object({
@@ -38,12 +40,6 @@ interface LocationFormProps {
   onCancel?: () => void
 }
 
-interface User {
-  id: string
-  fullName: string
-  role: string
-}
-
 export function LocationForm({
   locationId,
   initialData,
@@ -52,8 +48,16 @@ export function LocationForm({
 }: LocationFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [managers, setManagers] = useState<User[]>([])
-  const [loadingManagers, setLoadingManagers] = useState(true)
+
+  // Use the useUsers hook to load users
+  const { data: users, isLoading: loadingManagers } = useUsers()
+
+  // Filter users to only managers and admins
+  const managers = useMemo(() => {
+    return (users || []).filter(
+      (u) => u.role === 'manager' || u.role === 'admin'
+    )
+  }, [users])
 
   const {
     register,
@@ -79,28 +83,6 @@ export function LocationForm({
   const selectedManagerId = watch('manager_id')
   const selectedStatus = watch('status')
 
-  useEffect(() => {
-    async function loadManagers() {
-      try {
-        // Load users with manager or admin roles
-        const response = await fetch('/api/users')
-        if (!response.ok) throw new Error('Failed to load managers')
-
-        const data = await response.json()
-        const eligibleManagers = (data.users || []).filter(
-          (u: User) => u.role === 'manager' || u.role === 'admin'
-        )
-        setManagers(eligibleManagers)
-      } catch (err) {
-        console.error('Error loading managers:', err)
-      } finally {
-        setLoadingManagers(false)
-      }
-    }
-
-    loadManagers()
-  }, [])
-
   async function onSubmit(data: LocationFormData) {
     setError(null)
     setSubmitting(true)
@@ -114,18 +96,10 @@ export function LocationForm({
         state: data.state || undefined,
       }
 
-      const url = locationId ? `/api/locations/${locationId}` : '/api/locations'
-      const method = locationId ? 'PATCH' : 'POST'
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to save location')
+      if (locationId) {
+        await api.patch(`/api/locations/${locationId}`, payload)
+      } else {
+        await api.post('/api/locations', payload)
       }
 
       onSuccess?.()

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DashboardService } from '@/services/dashboard.service';
+import { requireAuth } from '@/lib/auth/api-auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
+
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '10');
 

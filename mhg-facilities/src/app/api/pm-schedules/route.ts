@@ -1,13 +1,24 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { PMScheduleService } from '@/services/pm-schedule.service';
 import { createPMScheduleSchema, pmFiltersSchema } from '@/lib/validations/pm';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const { searchParams } = new URL(request.url);
+    const service = new PMScheduleService();
+
+    // Check if stats are requested
+    if (searchParams.get('stats') === 'true') {
+      const stats = await service.getPMStats();
+      return NextResponse.json({ stats });
+    }
+
     const filters = pmFiltersSchema.parse({
       asset_id: searchParams.get('asset_id') || undefined,
       location_id: searchParams.get('location_id') || undefined,
@@ -15,8 +26,7 @@ export async function GET(request: NextRequest) {
       is_active: searchParams.get('is_active') === 'true' ? true : searchParams.get('is_active') === 'false' ? false : undefined,
     });
 
-    const service = new PMScheduleService();
-    const schedules = await service.getAllSchedules( filters);
+    const schedules = await service.getAllSchedules(filters);
 
     return NextResponse.json({ schedules });
   } catch (error: unknown) {
@@ -38,6 +48,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const body = await request.json();
     const validated = createPMScheduleSchema.parse(body);

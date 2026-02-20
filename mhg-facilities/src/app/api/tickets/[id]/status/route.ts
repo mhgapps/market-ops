@@ -6,14 +6,21 @@ import {
   rejectTicketSchema,
   holdTicketSchema,
 } from '@/lib/validations/ticket'
+import type { TicketStatus } from '@/types/database'
 
 /**
  * PATCH /api/tickets/[id]/status
  * Handle ticket status transitions
  *
+ * Status flow: submitted → in_progress → completed → closed
+ * verified_at is a flag, not a status
+ *
  * Body should include:
- * - action: 'acknowledge' | 'start_work' | 'complete' | 'verify' | 'close' | 'reject' | 'hold' | 'resume'
+ * - action: 'start_work' | 'complete' | 'verify' | 'close' | 'reject' | 'hold' | 'resume' | 'set_status' | 'contain' | 'resolve'
  * - Plus action-specific fields
+ * - For 'set_status': new_status (admin/manager only, allows any transition)
+ * - For 'contain': (emergency tickets only) marks as contained
+ * - For 'resolve': (emergency tickets only) notes required for resolution
  */
 export async function PATCH(
   request: NextRequest,
@@ -41,10 +48,6 @@ export async function PATCH(
     let ticket
 
     switch (action) {
-      case 'acknowledge':
-        ticket = await service.acknowledgeTicket(id, user.id)
-        break
-
       case 'start_work':
         ticket = await service.startWork(id, user.id)
         break
@@ -64,7 +67,10 @@ export async function PATCH(
         break
 
       case 'close':
-        ticket = await service.closeTicket(id, user.id)
+        ticket = await service.closeTicket(id, user.id, {
+          cost: data.cost,
+          notes: data.notes,
+        })
         break
 
       case 'reject': {
@@ -82,6 +88,41 @@ export async function PATCH(
       case 'resume':
         ticket = await service.resumeFromHold(id, user.id)
         break
+
+      case 'set_status': {
+        if (user.role !== 'manager' && user.role !== 'admin') {
+          return NextResponse.json(
+            { error: 'Forbidden: manager or admin role required' },
+            { status: 403 }
+          )
+        }
+        const newStatus = data.new_status as TicketStatus
+        if (!newStatus) {
+          return NextResponse.json(
+            { error: 'new_status is required for set_status action' },
+            { status: 400 }
+          )
+        }
+        ticket = await service.setStatus(id, user.id, newStatus)
+        break
+      }
+
+      // Emergency-specific actions
+      case 'contain':
+        ticket = await service.containEmergency(id, user.id)
+        break
+
+      case 'resolve': {
+        const notes = data.notes as string
+        if (!notes) {
+          return NextResponse.json(
+            { error: 'notes is required for resolve action' },
+            { status: 400 }
+          )
+        }
+        ticket = await service.resolveEmergency(id, user.id, notes)
+        break
+      }
 
       default:
         return NextResponse.json(

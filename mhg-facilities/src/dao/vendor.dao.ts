@@ -2,8 +2,8 @@ import { BaseDAO } from './base.dao'
 import type { Database } from '@/types/database'
 
 type Vendor = Database['public']['Tables']['vendors']['Row']
-type VendorInsert = Database['public']['Tables']['vendors']['Insert']
-type VendorUpdate = Database['public']['Tables']['vendors']['Update']
+type _VendorInsert = Database['public']['Tables']['vendors']['Insert']
+type _VendorUpdate = Database['public']['Tables']['vendors']['Update']
 
 export interface VendorWithStats extends Vendor {
   average_rating?: number | null

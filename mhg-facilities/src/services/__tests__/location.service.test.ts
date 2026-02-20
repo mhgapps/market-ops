@@ -53,7 +53,7 @@ describe('LocationService', () => {
     deleted_at: null,
   };
 
-  const mockTenant: Tenant = {
+  const _mockTenant: Tenant = {
     id: 'tenant-1',
     name: 'Test Tenant',
     slug: 'test-tenant',
@@ -203,6 +203,15 @@ describe('LocationService', () => {
   describe('deleteLocation', () => {
     it('should soft delete location', async () => {
       when(mockLocationDAO.findById('location-1')).thenResolve(mockLocation);
+      when(mockLocationDAO.getTicketStats('location-1')).thenResolve({
+        totalTickets: 0,
+        openTickets: 0,
+        highPriorityTickets: 0,
+      });
+      when(mockLocationDAO.getAssetStats('location-1')).thenResolve({
+        totalAssets: 0,
+        criticalAssets: 0,
+      });
       when(mockLocationDAO.softDelete('location-1')).thenResolve();
 
       await service.deleteLocation('location-1');

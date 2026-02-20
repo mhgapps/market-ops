@@ -122,12 +122,7 @@ export default function NewTicketPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Create New Ticket</h1>
-        <p className="mt-2 text-gray-600">
-          Submit a maintenance or facilities request
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold text-gray-900">Create New Ticket</h1>
 
       {showDuplicateWarning && (
         <Alert variant="destructive">

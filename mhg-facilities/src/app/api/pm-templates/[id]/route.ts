@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { PMTemplateService } from '@/services/pm-template.service';
 import { updatePMTemplateSchema } from '@/lib/validations/pm';
 
@@ -10,8 +11,38 @@ interface RouteContext {
   }>;
 }
 
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
+    const { id } = await context.params;
+
+    const service = new PMTemplateService();
+    const template = await service.getTemplateById(id);
+
+    if (!template) {
+      return NextResponse.json(
+        { error: 'PM template not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ template });
+  } catch (error: unknown) {
+    console.error('Error fetching PM template:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : String(error) || 'Failed to fetch PM template' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params;
 
     const body = await request.json();
@@ -40,6 +71,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params;
 
     const service = new PMTemplateService();

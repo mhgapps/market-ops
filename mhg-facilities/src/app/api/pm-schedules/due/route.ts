@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { PMScheduleService } from '@/services/pm-schedule.service';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'today';

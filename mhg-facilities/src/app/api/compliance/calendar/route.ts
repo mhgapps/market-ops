@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { ComplianceDocumentService } from '@/services/compliance-document.service';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const { searchParams } = new URL(request.url);
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1), 10);

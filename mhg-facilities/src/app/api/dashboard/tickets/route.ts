@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DashboardService } from '@/services/dashboard.service';
+import { requireAuth } from '@/lib/auth/api-auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
+
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get('days') || '30');
     const includeBreakdown = searchParams.get('breakdown') === 'true';

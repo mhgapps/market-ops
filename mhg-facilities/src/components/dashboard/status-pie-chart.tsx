@@ -15,15 +15,11 @@ interface StatusPieChartProps {
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'var(--primary)',
-  acknowledged: 'var(--chart-1)',
   in_progress: 'var(--chart-4)',
   completed: 'var(--chart-2)',
-  verified: 'var(--chart-2)',
   closed: 'var(--muted-foreground)',
   rejected: 'var(--destructive)',
   on_hold: 'var(--chart-5)',
-  needs_approval: 'var(--chart-4)',
-  approved: 'var(--chart-2)',
 };
 
 export function StatusPieChart({ data, title = 'Status Distribution' }: StatusPieChartProps) {

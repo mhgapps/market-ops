@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -107,7 +107,12 @@ export function AssetForm({
   })
 
   const selectedCategoryId = form.watch('category_id')
-  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId)
+
+  // Memoize category lookup to prevent recalculation on every render
+  const selectedCategory = useMemo(
+    () => categories.find((cat) => cat.id === selectedCategoryId),
+    [categories, selectedCategoryId]
+  )
 
   // Auto-set lifespan from category default if not already set
   useEffect(() => {

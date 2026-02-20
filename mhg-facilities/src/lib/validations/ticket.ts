@@ -4,12 +4,8 @@ import { uuid, optionalNullableUuid, uuidArray } from './shared'
 // Ticket status and priority enums
 const ticketStatuses = [
   'submitted',
-  'acknowledged',
-  'needs_approval',
-  'approved',
   'in_progress',
   'completed',
-  'verified',
   'closed',
   'rejected',
   'on_hold',
@@ -51,6 +47,7 @@ export const ticketFiltersSchema = z.object({
   date_from: z.string().datetime('Invalid date format').optional(),
   date_to: z.string().datetime('Invalid date format').optional(),
   search: z.string().max(200, 'Search query too long').optional(),
+  is_emergency: z.boolean().optional(),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(50),
 })
@@ -103,7 +100,6 @@ export const createCategorySchema = z.object({
   default_priority: z.enum(ticketPriorities).default('medium'),
   default_assignee_id: uuid('Invalid assignee ID').optional(),
   preferred_vendor_id: uuid('Invalid vendor ID').optional(),
-  approval_threshold: z.number().min(0, 'Approval threshold must be non-negative').optional(),
   escalation_hours: z.number().int().min(1, 'Escalation hours must be at least 1').default(4),
 })
 
@@ -114,7 +110,6 @@ export const updateCategorySchema = z.object({
   default_priority: z.enum(ticketPriorities).optional(),
   default_assignee_id: optionalNullableUuid('Invalid assignee ID'),
   preferred_vendor_id: optionalNullableUuid('Invalid vendor ID'),
-  approval_threshold: z.number().min(0, 'Approval threshold must be non-negative').optional().nullable(),
   escalation_hours: z.number().int().min(1, 'Escalation hours must be at least 1').optional(),
 })
 
@@ -136,24 +131,6 @@ export const uploadAttachmentSchema = z.object({
 })
 
 // ============================================================
-// COST APPROVAL SCHEMAS
-// ============================================================
-
-export const requestApprovalSchema = z.object({
-  estimated_cost: z.number().min(0.01, 'Estimated cost must be greater than zero'),
-  vendor_quote_path: z.string().optional(),
-  notes: z.string().max(1000, 'Notes cannot exceed 1000 characters').optional(),
-})
-
-export const approveRequestSchema = z.object({
-  // No additional fields needed - approval ID in URL, approver from auth
-})
-
-export const denyRequestSchema = z.object({
-  reason: z.string().min(10, 'Denial reason must be at least 10 characters').max(1000, 'Reason too long'),
-})
-
-// ============================================================
 // TYPE EXPORTS
 // ============================================================
 
@@ -172,5 +149,3 @@ export type CreateCategoryInput = z.infer<typeof createCategorySchema>
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>
 export type CreateCommentInput = z.infer<typeof createCommentSchema>
 export type UploadAttachmentInput = z.infer<typeof uploadAttachmentSchema>
-export type RequestApprovalInput = z.infer<typeof requestApprovalSchema>
-export type DenyRequestInput = z.infer<typeof denyRequestSchema>

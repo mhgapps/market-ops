@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState, useMemo } from 'react'
+import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAsset, useAssetTransferHistory, useDeleteAsset, useTransferAsset } from '@/hooks/use-assets'
 import { useQuery } from '@tanstack/react-query'
@@ -385,7 +385,6 @@ export default function AssetDetailPage({ params }: PageProps) {
       {/* Transfer Modal */}
       {showTransferModal && locationsData && currentUser && (
         <TransferModal
-          assetId={id}
           assetName={asset.name}
           currentLocationId={asset.location_id}
           open={showTransferModal}

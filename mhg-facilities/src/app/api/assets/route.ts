@@ -4,7 +4,7 @@ import { createAssetSchema, assetFilterSchema } from '@/lib/validations/assets-v
 import { requireAuth } from '@/lib/auth/api-auth'
 
 // Helper to convert null to undefined
-function nullToUndefined<T extends Record<string, any>>(obj: T): T {
+function nullToUndefined<T extends Record<string, unknown>>(obj: T): T {
   return Object.fromEntries(
     Object.entries(obj).map(([key, value]) => [key, value === null ? undefined : value])
   ) as T
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const service = new AssetService()
     // Convert null values to undefined for service layer
     const data = nullToUndefined(validationResult.data)
-    const asset = await service.createAsset(data as any)
+    const asset = await service.createAsset(data as Parameters<AssetService['createAsset']>[0])
 
     return NextResponse.json({ asset }, { status: 201 })
   } catch (error) {

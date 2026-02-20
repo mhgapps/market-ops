@@ -1,11 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Camera, CameraOff, CheckCircle, XCircle } from 'lucide-react'
 import { Spinner } from '@/components/ui/loaders'
+
+// Scanner state enum to avoid importing the library just for types
+const ScannerState = {
+  NOT_STARTED: 1,
+  SCANNING: 2,
+  PAUSED: 3,
+} as const
 
 interface QRScannerProps {
   onScan: (qrCode: string) => void | Promise<void>
@@ -14,17 +21,40 @@ interface QRScannerProps {
 
 export function QRScanner({ onScan, onClose }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const scannerRef = useRef<Html5QrcodeType | null>(null)
   const scannerIdRef = useRef<string>('qr-scanner-region')
+  const isProcessingRef = useRef(false)
+
+  const stopScanner = useCallback(async () => {
+    try {
+      if (scannerRef.current) {
+        const state = scannerRef.current.getState()
+        if (state === ScannerState.SCANNING || state === ScannerState.PAUSED) {
+          await scannerRef.current.stop()
+        }
+      }
+      setIsScanning(false)
+    } catch (err) {
+      console.error('Error stopping scanner:', err)
+      setIsScanning(false)
+    }
+  }, [])
 
   const startScanner = async () => {
     try {
       setError(null)
       setSuccess(null)
+      setIsLoading(true)
+
+      // Dynamically import html5-qrcode only when scanner is activated (~50-60KB)
+      const { Html5Qrcode, Html5QrcodeScannerState } = await import('html5-qrcode')
+
       setIsScanning(true)
+      setIsLoading(false)
 
       if (!scannerRef.current) {
         scannerRef.current = new Html5Qrcode(scannerIdRef.current)
@@ -45,8 +75,9 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
           aspectRatio: 1.0,
         },
         async (decodedText) => {
-          // On successful scan
-          if (!isProcessing) {
+          // On successful scan - use ref to prevent race conditions
+          if (!isProcessingRef.current) {
+            isProcessingRef.current = true
             setIsProcessing(true)
             try {
               await onScan(decodedText)
@@ -55,13 +86,13 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
             } catch (err) {
               setError(err instanceof Error ? err.message : 'Failed to process QR code')
             } finally {
+              isProcessingRef.current = false
               setIsProcessing(false)
             }
           }
         },
-        (errorMessage) => {
+        (_errorMessage) => {
           // Scanning errors (ignore these - they're normal during scanning)
-          // console.log('Scan error:', errorMessage)
         }
       )
     } catch (err) {
@@ -71,24 +102,7 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
           : 'Failed to start camera. Please ensure camera permissions are granted.'
       setError(errorMsg)
       setIsScanning(false)
-    }
-  }
-
-  const stopScanner = async () => {
-    try {
-      if (scannerRef.current) {
-        const state = scannerRef.current.getState()
-        if (
-          state === Html5QrcodeScannerState.SCANNING ||
-          state === Html5QrcodeScannerState.PAUSED
-        ) {
-          await scannerRef.current.stop()
-        }
-      }
-      setIsScanning(false)
-    } catch (err) {
-      console.error('Error stopping scanner:', err)
-      setIsScanning(false)
+      setIsLoading(false)
     }
   }
 
@@ -97,10 +111,7 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
       // Cleanup on unmount
       if (scannerRef.current) {
         const state = scannerRef.current.getState()
-        if (
-          state === Html5QrcodeScannerState.SCANNING ||
-          state === Html5QrcodeScannerState.PAUSED
-        ) {
+        if (state === ScannerState.SCANNING || state === ScannerState.PAUSED) {
           scannerRef.current
             .stop()
             .catch((err) => console.error('Error stopping scanner on unmount:', err))
@@ -129,11 +140,23 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
           {!isScanning && !success && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
               <div className="text-center p-6">
-                <Camera className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                <p className="text-sm text-gray-600">Camera not active</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Click &quot;Start Scanning&quot; to begin
-                </p>
+                {isLoading ? (
+                  <>
+                    <Spinner size="lg" className="mx-auto text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-600">Loading camera...</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please wait while we initialize the scanner
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-600">Camera not active</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Click &quot;Start Scanning&quot; to begin
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -172,11 +195,20 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
           {!isScanning ? (
             <Button
               onClick={startScanner}
-              disabled={isProcessing}
+              disabled={isProcessing || isLoading}
               className="flex-1"
             >
-              <Camera className="mr-2 h-4 w-4" />
-              Start Scanning
+              {isLoading ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Initializing...
+                </>
+              ) : (
+                <>
+                  <Camera className="mr-2 h-4 w-4" />
+                  Start Scanning
+                </>
+              )}
             </Button>
           ) : (
             <Button

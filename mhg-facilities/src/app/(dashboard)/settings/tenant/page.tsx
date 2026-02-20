@@ -12,9 +12,9 @@ import { toast } from 'sonner'
 export default function TenantSettingsPage() {
   const [tenantName, setTenantName] = useState('MHG Facilities')
   const [tenantSlug, setTenantSlug] = useState('mhg-facilities')
-  const [tenantPlan, setTenantPlan] = useState('professional')
-  const [maxUsers, setMaxUsers] = useState(50)
-  const [maxLocations, setMaxLocations] = useState(10)
+  const tenantPlan = 'professional'
+  const maxUsers = 50
+  const maxLocations = 10
 
   const handleSave = () => {
     // TODO: Call tenant update API

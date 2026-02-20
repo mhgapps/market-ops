@@ -217,64 +217,18 @@ export class LocationService {
    * Get location statistics
    */
   async getLocationStats(locationId: string): Promise<LocationStats> {
-    const { supabase, tenantId } = await this.locationDAO['getClient']()
-
-    // Get ticket counts
-    const [
-      { count: totalTickets },
-      { count: openTickets },
-      { count: highPriorityTickets },
-    ] = await Promise.all([
-      supabase
-        .from('tickets')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('location_id', locationId)
-        .is('deleted_at', null),
-      supabase
-        .from('tickets')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('location_id', locationId)
-        .in('status', ['open', 'in_progress'])
-        .is('deleted_at', null),
-      supabase
-        .from('tickets')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('location_id', locationId)
-        .eq('priority', 'high')
-        .in('status', ['open', 'in_progress'])
-        .is('deleted_at', null),
-    ])
-
-    // Get asset counts
-    const [
-      { count: totalAssets },
-      { count: criticalAssets },
-    ] = await Promise.all([
-      supabase
-        .from('assets')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('location_id', locationId)
-        .is('deleted_at', null),
-      supabase
-        .from('assets')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('location_id', locationId)
-        .eq('status', 'critical')
-        .is('deleted_at', null),
+    const [ticketStats, assetStats] = await Promise.all([
+      this.locationDAO.getTicketStats(locationId),
+      this.locationDAO.getAssetStats(locationId),
     ])
 
     return {
-      ticket_count: totalTickets ?? 0,
-      open_tickets: openTickets ?? 0,
-      high_priority_tickets: highPriorityTickets ?? 0,
-      asset_count: totalAssets ?? 0,
-      total_assets: totalAssets ?? 0,
-      critical_assets: criticalAssets ?? 0,
+      ticket_count: ticketStats.totalTickets,
+      open_tickets: ticketStats.openTickets,
+      high_priority_tickets: ticketStats.highPriorityTickets,
+      asset_count: assetStats.totalAssets,
+      total_assets: assetStats.totalAssets,
+      critical_assets: assetStats.criticalAssets,
     }
   }
 
@@ -282,7 +236,7 @@ export class LocationService {
    * Check if tenant is within location limit
    */
   async checkWithinTenantLimit(): Promise<boolean> {
-    const { tenantId } = await this.locationDAO['getClient']()
+    const tenantId = await this.locationDAO.getTenantId()
     const tenant = await this.tenantDAO.findById(tenantId)
     if (!tenant) {
       throw new Error('Tenant not found')
@@ -296,7 +250,7 @@ export class LocationService {
    * Get remaining location slots for tenant
    */
   async getRemainingLocationSlots(): Promise<number> {
-    const { tenantId } = await this.locationDAO['getClient']()
+    const tenantId = await this.locationDAO.getTenantId()
     const tenant = await this.tenantDAO.findById(tenantId)
     if (!tenant) {
       throw new Error('Tenant not found')

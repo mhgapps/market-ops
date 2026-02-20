@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/api-auth'
 import { AssetCategoryService } from '@/services/asset-category.service'
 import { createAssetCategorySchema } from '@/lib/validations/assets-vendors'
 
@@ -8,6 +9,9 @@ import { createAssetCategorySchema } from '@/lib/validations/assets-vendors'
  */
 export async function GET() {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const service = new AssetCategoryService()
     const categories = await service.getAllCategories()
 
@@ -30,6 +34,9 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const body = await request.json()
 
     // Validate input

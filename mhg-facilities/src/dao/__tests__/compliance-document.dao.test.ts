@@ -1,14 +1,31 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { ComplianceDocumentDAO } from '../compliance-document.dao';
 import type { Database } from '@/types/database';
 
 type ComplianceDocument = Database['public']['Tables']['compliance_documents']['Row'];
 type ComplianceStatus = Database['public']['Enums']['compliance_status'];
 
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  or: Mock;
+  lte: Mock;
+  gte: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+}
+
 describe('ComplianceDocumentDAO', () => {
   let dao: ComplianceDocumentDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   const mockDocument: ComplianceDocument = {
     id: 'doc-1',

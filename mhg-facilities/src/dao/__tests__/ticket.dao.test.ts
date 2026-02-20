@@ -1,13 +1,32 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { TicketDAO } from '../ticket.dao';
 import type { Database, TicketStatus, TicketPriority } from '@/types/database';
 
 type Ticket = Database['public']['Tables']['tickets']['Row'];
 
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  in: Mock;
+  not: Mock;
+  lt: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+  limit: Mock;
+  ilike: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+}
+
 describe('TicketDAO', () => {
   let dao: TicketDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   const mockTicket: Ticket = {
     id: 'ticket-1',
@@ -28,18 +47,16 @@ describe('TicketDAO', () => {
     merged_into_ticket_id: null,
     is_duplicate: false,
     estimated_cost: null,
-    approved_cost: null,
     actual_cost: null,
     is_warranty_claim: false,
     due_date: null,
-    acknowledged_at: null,
-    approved_at: null,
     started_at: null,
     completed_at: null,
     verified_at: null,
     closed_at: null,
     is_emergency: false,
-    requires_approval: false,
+    contained_at: null,
+    resolution_notes: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     deleted_at: null,

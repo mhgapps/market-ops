@@ -44,10 +44,10 @@ export default function EditCompliancePage() {
           notes: data.notes || null,
         },
       })
-      toast.success('Compliance document updated successfully')
+      toast.success('Document updated successfully')
       router.push(`/compliance/${documentId}`)
-    } catch (error) {
-      toast.error('Failed to update compliance document')
+    } catch (_error) {
+      toast.error('Failed to update document')
     }
   }
 
@@ -67,7 +67,7 @@ export default function EditCompliancePage() {
           <h1 className="text-2xl font-bold">Document Not Found</h1>
         </div>
         <p className="text-muted-foreground">
-          The compliance document you are looking for does not exist or has been deleted.
+          The document you are looking for does not exist or has been deleted.
         </p>
       </div>
     )
@@ -82,7 +82,7 @@ export default function EditCompliancePage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Edit Compliance Document</h1>
+          <h1 className="text-2xl font-bold">Edit Document</h1>
           <p className="text-muted-foreground">{document.name}</p>
         </div>
       </div>
@@ -91,7 +91,7 @@ export default function EditCompliancePage() {
         <CardHeader>
           <CardTitle>Document Details</CardTitle>
           <CardDescription>
-            Update the compliance document information
+            Update the document information
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,24 +1,48 @@
 'use client';
 
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { StatCard } from '@/components/dashboard/stat-card';
-import { TicketTrendChart } from '@/components/dashboard/ticket-trend-chart';
-import { StatusPieChart } from '@/components/dashboard/status-pie-chart';
-import { PriorityBarChart } from '@/components/dashboard/priority-bar-chart';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { ActivityFeed } from '@/components/dashboard/activity-feed';
+
+// Dynamically import heavy chart components (Recharts ~96KB)
+const TicketTrendChart = dynamic(
+  () => import('@/components/dashboard/ticket-trend-chart').then(mod => ({ default: mod.TicketTrendChart })),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton title="Ticket Trend (30 Days)" variant="line" />,
+  }
+);
+
+const StatusPieChart = dynamic(
+  () => import('@/components/dashboard/status-pie-chart').then(mod => ({ default: mod.StatusPieChart })),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton title="Tickets by Status" variant="pie" />,
+  }
+);
+
+const PriorityBarChart = dynamic(
+  () => import('@/components/dashboard/priority-bar-chart').then(mod => ({ default: mod.PriorityBarChart })),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton title="Tickets by Priority" variant="bar" />,
+  }
+);
 import {
   useOverviewStats,
   useTicketStats,
   useRecentActivity,
 } from '@/hooks/use-dashboard';
+import { Card } from '@/components/ui/card';
 import {
   FileText,
-  AlertCircle,
   FileCheck,
   Wrench,
   Plus,
+  AlertTriangle,
 } from 'lucide-react';
 
 function DashboardOverview() {
@@ -29,11 +53,7 @@ function DashboardOverview() {
   if (overviewLoading || ticketsLoading || activityLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 md:h-32 rounded-lg bg-muted animate-pulse" />
-          ))}
-        </div>
+        <div className="h-12 rounded-lg bg-muted animate-pulse" />
         <div className="grid gap-6 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-[400px] rounded-lg bg-muted animate-pulse" />
@@ -49,9 +69,6 @@ function DashboardOverview() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Welcome back! Here&apos;s what&apos;s happening today.
-          </p>
         </div>
         <Button asChild className="hidden md:flex">
           <Link href="/tickets/new">
@@ -61,37 +78,47 @@ function DashboardOverview() {
         </Button>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
-        <StatCard
-          title="Open Tickets"
-          value={overview?.openTickets ?? 0}
-          icon={<FileText className="h-4 w-4" />}
-          href="/tickets"
-          description="Active tickets"
-        />
-        <StatCard
-          title="Pending Approvals"
-          value={overview?.pendingApprovals ?? 0}
-          icon={<AlertCircle className="h-4 w-4" />}
-          href="/approvals"
-          description="Awaiting approval"
-        />
-        <StatCard
-          title="Expiring Compliance"
-          value={overview?.expiringCompliance ?? 0}
-          icon={<FileCheck className="h-4 w-4" />}
-          href="/compliance"
-          description="Next 30 days"
-        />
-        <StatCard
-          title="Overdue PM"
-          value={overview?.overduePM ?? 0}
-          icon={<Wrench className="h-4 w-4" />}
-          href="/pm"
-          description="Needs attention"
-        />
-      </div>
+      {/* Stats Strip */}
+      <Card className="p-0 overflow-hidden">
+        <div className="flex flex-wrap md:flex-nowrap divide-y md:divide-y-0 md:divide-x divide-border">
+          <Link
+            href="/tickets"
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors"
+          >
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{overview?.openTickets ?? 0}</span>
+            <span className="text-sm text-muted-foreground">Open</span>
+          </Link>
+          <Link
+            href="/tickets?emergency=true"
+            className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${
+              (overview?.activeEmergencies ?? 0) > 0 ? 'bg-red-50' : ''
+            }`}
+          >
+            <AlertTriangle className={`h-4 w-4 ${(overview?.activeEmergencies ?? 0) > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
+            <span className={`font-semibold ${(overview?.activeEmergencies ?? 0) > 0 ? 'text-red-600' : ''}`}>
+              {overview?.activeEmergencies ?? 0}
+            </span>
+            <span className="text-sm text-muted-foreground">Emergencies</span>
+          </Link>
+          <Link
+            href="/compliance"
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors"
+          >
+            <FileCheck className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{overview?.expiringCompliance ?? 0}</span>
+            <span className="text-sm text-muted-foreground">Expiring</span>
+          </Link>
+          <Link
+            href="/pm"
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors"
+          >
+            <Wrench className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{overview?.overduePM ?? 0}</span>
+            <span className="text-sm text-muted-foreground">Overdue PM</span>
+          </Link>
+        </div>
+      </Card>
 
       {/* Charts Row 1 */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -142,11 +169,7 @@ export default function DashboardPage() {
     <Suspense
       fallback={
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-16 md:h-32 rounded-lg bg-muted animate-pulse" />
-            ))}
-          </div>
+          <div className="h-12 rounded-lg bg-muted animate-pulse" />
         </div>
       }
     >

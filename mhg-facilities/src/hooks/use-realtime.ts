@@ -43,8 +43,6 @@ export function useRealtimeSubscription({
   // Use useCallback for the subscription handler to fix stale closure issue
   const handleChange = useCallback(
     (payload: { eventType: string; new: unknown; old: unknown }) => {
-      console.log(`Realtime change detected on ${table}:`, payload)
-
       // Call event-specific callbacks
       if (payload.eventType === 'INSERT' && onInsert) {
         onInsert(payload.new)

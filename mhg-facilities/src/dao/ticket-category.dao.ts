@@ -91,24 +91,6 @@ export class TicketCategoryDAO extends BaseDAO<'ticket_categories'> {
   }
 
   /**
-   * Find categories that require approval above threshold
-   */
-  async findWithApprovalThreshold(): Promise<TicketCategory[]> {
-    const { supabase, tenantId } = await this.getClient()
-
-    const { data, error } = await supabase
-      .from('ticket_categories')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .not('approval_threshold', 'is', null)
-      .is('deleted_at', null)
-      .order('approval_threshold', { ascending: true })
-
-    if (error) throw new Error(error.message)
-    return data ?? []
-  }
-
-  /**
    * Find categories by priority level
    */
   async findByPriority(priority: Database['public']['Tables']['ticket_categories']['Row']['default_priority']): Promise<TicketCategory[]> {

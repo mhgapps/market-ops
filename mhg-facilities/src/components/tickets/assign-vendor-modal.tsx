@@ -24,13 +24,12 @@ interface Vendor {
   id: string
   name: string
   contact_name: string
-  contact_email: string
+  email: string
   phone: string
-  services_offered: string[]
+  service_categories: string[]
 }
 
 interface AssignVendorModalProps {
-  ticketId: string
   ticketTitle: string
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -40,7 +39,6 @@ interface AssignVendorModalProps {
 }
 
 export function AssignVendorModal({
-  ticketId,
   ticketTitle,
   open,
   onOpenChange,
@@ -93,12 +91,12 @@ export function AssignVendorModal({
                       <div>
                         <div className="font-medium">{vendor.name}</div>
                         <div className="text-xs text-gray-500">
-                          {vendor.contact_name} • {vendor.contact_email}
+                          {vendor.contact_name} • {vendor.email}
                         </div>
-                        {vendor.services_offered && vendor.services_offered.length > 0 && (
+                        {vendor.service_categories && vendor.service_categories.length > 0 && (
                           <div className="mt-1 text-xs text-gray-400">
-                            Services: {vendor.services_offered.slice(0, 3).join(', ')}
-                            {vendor.services_offered.length > 3 && '...'}
+                            Services: {vendor.service_categories.slice(0, 3).join(', ')}
+                            {vendor.service_categories.length > 3 && '...'}
                           </div>
                         )}
                       </div>
@@ -115,14 +113,6 @@ export function AssignVendorModal({
               {vendors.find((v) => v.id === currentVendorId)?.name || 'Unknown'}
             </p>
           )}
-
-          <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
-            <p className="font-medium">Note:</p>
-            <p className="mt-1">
-              Vendor assignments may require cost approval if the estimated work exceeds the
-              approval threshold.
-            </p>
-          </div>
         </div>
 
         <DialogFooter>

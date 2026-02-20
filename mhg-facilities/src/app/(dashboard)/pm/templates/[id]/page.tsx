@@ -11,77 +11,46 @@ import { ArrowLeft, Trash2, Save } from 'lucide-react'
 import { PageLoader } from '@/components/ui/loaders'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
-export default function PMTemplateDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const templateId = params.id as string
-
-  const { data: template, isLoading } = usePMTemplate(templateId)
-  const updateTemplate = useUpdatePMTemplate()
-  const deleteTemplate = useDeletePMTemplate()
-
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [estimatedHours, setEstimatedHours] = useState<number | ''>('')
-
-  useEffect(() => {
-    if (template) {
-      setName(template.name)
-      setDescription(template.description || '')
-      setCategory(template.category || '')
-      setEstimatedHours(template.estimated_duration_hours || '')
-    }
-  }, [template])
-
-  const handleSave = async () => {
-    try {
-      await updateTemplate.mutateAsync({
-        id: templateId,
-        data: {
-          name,
-          description: description || null,
-          category: category || null,
-          estimated_duration_hours: estimatedHours || null,
-        },
-      })
-      toast.success('Template updated successfully')
-    } catch (error) {
-      toast.error('Failed to update template')
-    }
+// Separate form component that only renders when data is ready
+function TemplateForm({
+  template,
+  onSave,
+  onDelete,
+  isSaving,
+  isDeleting,
+}: {
+  template: {
+    name: string
+    description: string | null
+    category: string | null
+    estimated_duration_hours: number | null
   }
+  onSave: (data: {
+    name: string
+    description: string | null
+    category: string | null
+    estimated_duration_hours: number | null
+  }) => void
+  onDelete: () => void
+  isSaving: boolean
+  isDeleting: boolean
+}) {
+  const [name, setName] = useState(template.name)
+  const [description, setDescription] = useState(template.description || '')
+  const [category, setCategory] = useState(template.category || '')
+  const [estimatedHours, setEstimatedHours] = useState<number | ''>(
+    template.estimated_duration_hours || ''
+  )
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this template?')) return
-
-    try {
-      await deleteTemplate.mutateAsync(templateId)
-      toast.success('Template deleted successfully')
-      router.push('/pm/templates')
-    } catch (error) {
-      toast.error('Failed to delete template')
-    }
-  }
-
-  if (isLoading) {
-    return <PageLoader />
-  }
-
-  if (!template) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/pm/templates">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-bold">Template Not Found</h1>
-        </div>
-      </div>
-    )
+  const handleSave = () => {
+    onSave({
+      name,
+      description: description || null,
+      category: category || null,
+      estimated_duration_hours: estimatedHours || null,
+    })
   }
 
   return (
@@ -102,15 +71,15 @@ export default function PMTemplateDetailPage() {
           <Button
             variant="destructive"
             size="sm"
-            onClick={handleDelete}
-            disabled={deleteTemplate.isPending}
+            onClick={onDelete}
+            disabled={isDeleting}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
           </Button>
           <Button
             onClick={handleSave}
-            disabled={updateTemplate.isPending || !name}
+            disabled={isSaving || !name}
           >
             <Save className="h-4 w-4 mr-2" />
             Save Changes
@@ -170,5 +139,75 @@ export default function PMTemplateDetailPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function PMTemplateDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const templateId = params.id as string
+
+  const { data: template, isLoading } = usePMTemplate(templateId)
+  const updateTemplate = useUpdatePMTemplate()
+  const deleteTemplate = useDeletePMTemplate()
+
+  const handleSave = async (data: {
+    name: string
+    description: string | null
+    category: string | null
+    estimated_duration_hours: number | null
+  }) => {
+    try {
+      await updateTemplate.mutateAsync({
+        id: templateId,
+        data,
+      })
+      toast.success('Template updated successfully')
+    } catch (_error) {
+      toast.error('Failed to update template')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this template?')) return
+
+    try {
+      await deleteTemplate.mutateAsync(templateId)
+      toast.success('Template deleted successfully')
+      router.push('/pm/templates')
+    } catch (_error) {
+      toast.error('Failed to delete template')
+    }
+  }
+
+  if (isLoading) {
+    return <PageLoader />
+  }
+
+  if (!template) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/pm/templates">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold">Template Not Found</h1>
+        </div>
+      </div>
+    )
+  }
+
+  // Use key to reset form when template changes
+  return (
+    <TemplateForm
+      key={template.id}
+      template={template}
+      onSave={handleSave}
+      onDelete={handleDelete}
+      isSaving={updateTemplate.isPending}
+      isDeleting={deleteTemplate.isPending}
+    />
   )
 }

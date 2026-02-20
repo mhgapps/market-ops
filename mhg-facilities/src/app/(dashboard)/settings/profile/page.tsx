@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,6 +26,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { User } from 'lucide-react'
+import { useAuth, AUTH_QUERY_KEY } from '@/hooks/use-auth'
+import api from '@/lib/api-client'
 
 const profileSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(100),
@@ -52,22 +55,9 @@ const passwordSchema = z
 
 type PasswordFormData = z.infer<typeof passwordSchema>
 
-interface UserProfile {
-  id: string
-  email: string
-  fullName: string
-  phone?: string
-  languagePreference: string
-  notificationPreferences: {
-    email: boolean
-    sms: boolean
-    push: boolean
-  }
-}
-
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const { user, isLoading: loading } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [profileSuccess, setProfileSuccess] = useState(false)
@@ -97,33 +87,19 @@ export default function ProfilePage() {
   const notifSms = watch('notification_preferences.sms')
   const notifPush = watch('notification_preferences.push')
 
+  // Set form values when user data loads
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const response = await fetch('/api/auth/me')
-        if (!response.ok) throw new Error('Failed to load user')
-
-        const data = await response.json()
-        setUser(data.user)
-
-        // Set form values
-        setValue('full_name', data.user.fullName || '')
-        setValue('phone', data.user.phone || '')
-        setValue('language_preference', data.user.languagePreference || 'en')
-        setValue('notification_preferences', data.user.notificationPreferences || {
-          email: true,
-          sms: false,
-          push: false,
-        })
-      } catch (error) {
-        console.error('Error loading user:', error)
-      } finally {
-        setLoading(false)
-      }
+    if (user) {
+      setValue('full_name', user.fullName || '')
+      setValue('phone', user.phone || '')
+      setValue('language_preference', user.languagePreference || 'en')
+      setValue('notification_preferences', user.notificationPreferences || {
+        email: true,
+        sms: false,
+        push: false,
+      })
     }
-
-    loadUser()
-  }, [setValue])
+  }, [user, setValue])
 
   async function onSubmitProfile(data: ProfileFormData) {
     if (!user) return
@@ -133,29 +109,18 @@ export default function ProfilePage() {
     setSubmitting(true)
 
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: data.full_name,
-          phone: data.phone || undefined,
-          language_preference: data.language_preference,
-          notification_preferences: data.notification_preferences,
-        }),
+      await api.patch(`/api/users/${user.id}`, {
+        full_name: data.full_name,
+        phone: data.phone || undefined,
+        language_preference: data.language_preference,
+        notification_preferences: data.notification_preferences,
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update profile')
-      }
 
       setProfileSuccess(true)
       setTimeout(() => setProfileSuccess(false), 3000)
 
-      // Reload user data
-      const meResponse = await fetch('/api/auth/me')
-      const meData = await meResponse.json()
-      setUser(meData.user)
+      // Invalidate auth cache to reload user data
+      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY })
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'An error occurred')
     } finally {

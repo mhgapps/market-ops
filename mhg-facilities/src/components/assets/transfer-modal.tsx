@@ -30,7 +30,6 @@ interface Location {
 }
 
 interface TransferModalProps {
-  assetId: string
   assetName: string
   currentLocationId?: string | null
   open: boolean
@@ -46,7 +45,6 @@ interface TransferModalProps {
 }
 
 export function TransferModal({
-  assetId,
   assetName,
   currentLocationId,
   open,

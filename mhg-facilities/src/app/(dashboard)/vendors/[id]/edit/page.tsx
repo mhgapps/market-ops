@@ -22,7 +22,7 @@ export default function EditVendorPage() {
       await updateVendor.mutateAsync({ id: vendorId, data })
       toast.success('Vendor updated successfully')
       router.push(`/vendors/${vendorId}`)
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to update vendor')
     }
   }

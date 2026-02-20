@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { PMScheduleService } from '@/services/pm-schedule.service';
 import { completePMScheduleSchema } from '@/lib/validations/pm';
 
@@ -12,6 +13,10 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
+    const { user, error: authError } = await requireAuth()
+    if (authError) return authError
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 401 })
+
     const { id } = await context.params;
 
     const body = await request.json();
@@ -21,7 +26,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const completion = await service.markCompleted(
       id,
       validated.ticket_id,
-      validated.user_id,
+      user.id,
       validated.checklist_results || undefined
     );
 

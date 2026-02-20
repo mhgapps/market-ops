@@ -11,14 +11,9 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import {
-  MapPin,
   Wrench,
-  Users,
-  Shield,
-  BarChart3,
   Settings,
   Building2,
-  CheckCircle,
   DollarSign,
   type LucideIcon,
 } from 'lucide-react'
@@ -34,20 +29,9 @@ interface MenuItem {
 // Items NOT in bottom nav (the "more" items)
 const moreMenuItems: MenuItem[] = [
   {
-    title: 'Locations',
-    href: '/locations',
-    icon: MapPin,
-  },
-  {
     title: 'Assets',
     href: '/assets',
     icon: Wrench,
-  },
-  {
-    title: 'Approvals',
-    href: '/approvals',
-    icon: CheckCircle,
-    managerOnly: true,
   },
   {
     title: 'Vendors',
@@ -56,28 +40,10 @@ const moreMenuItems: MenuItem[] = [
     managerOnly: true,
   },
   {
-    title: 'Compliance',
-    href: '/compliance',
-    icon: Shield,
-    managerOnly: true,
-  },
-  {
     title: 'Budgets',
     href: '/budgets',
     icon: DollarSign,
     managerOnly: true,
-  },
-  {
-    title: 'Reports',
-    href: '/reports',
-    icon: BarChart3,
-    managerOnly: true,
-  },
-  {
-    title: 'Users',
-    href: '/users',
-    icon: Users,
-    adminOnly: true,
   },
   {
     title: 'Settings',

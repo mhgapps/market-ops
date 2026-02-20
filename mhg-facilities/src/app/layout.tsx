@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'MHG Facilities',
   description: 'Facilities management platform for MHG',
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({

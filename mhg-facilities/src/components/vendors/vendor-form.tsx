@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { forwardRef, useImperativeHandle } from 'react'
+import { forwardRef, useImperativeHandle, useCallback, useMemo } from 'react'
 import {
   Form,
   FormControl,
@@ -71,14 +71,22 @@ export const VendorForm = forwardRef<VendorFormHandle, VendorFormProps>(function
     },
   })
 
+  // Use getValues with a stable callback instead of watch to reduce re-renders
   const serviceCategories = form.watch('service_categories') || []
+
+  // Memoize the set of selected categories for efficient lookup
+  const selectedCategoriesSet = useMemo(
+    () => new Set(serviceCategories),
+    [serviceCategories]
+  )
 
   useImperativeHandle(ref, () => ({
     submit: () => form.handleSubmit(onSubmit)(),
   }))
 
-  const toggleServiceCategory = (category: string) => {
-    const current = serviceCategories
+  // Memoize toggle function to prevent recreation on every render
+  const toggleServiceCategory = useCallback((category: string) => {
+    const current = form.getValues('service_categories') || []
     if (current.includes(category)) {
       form.setValue(
         'service_categories',
@@ -87,7 +95,7 @@ export const VendorForm = forwardRef<VendorFormHandle, VendorFormProps>(function
     } else {
       form.setValue('service_categories', [...current, category])
     }
-  }
+  }, [form])
 
   return (
     <Form {...form}>
@@ -313,7 +321,7 @@ export const VendorForm = forwardRef<VendorFormHandle, VendorFormProps>(function
                           <div key={category} className="flex items-center space-x-2">
                             <Checkbox
                               id={`category-${category}`}
-                              checked={serviceCategories.includes(category)}
+                              checked={selectedCategoriesSet.has(category)}
                               onCheckedChange={() => toggleServiceCategory(category)}
                             />
                             <label

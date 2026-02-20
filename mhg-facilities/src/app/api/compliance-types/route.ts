@@ -1,10 +1,14 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/api-auth';
 import { ComplianceDocumentTypeService } from '@/services/compliance-document-type.service';
 import { createComplianceDocTypeSchema } from '@/lib/validations/compliance';
 
 export async function GET(_request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const service = new ComplianceDocumentTypeService();
     const types = await service.getAllTypes();
 
@@ -20,6 +24,9 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const body = await request.json();
     const validated = createComplianceDocTypeSchema.parse(body);
 

@@ -9,7 +9,6 @@ import type {
   AssetStats,
   ComplianceStats,
   PMStats,
-  LocationTicketCount,
   ActivityItem,
 } from '@/services/dashboard.service';
 
@@ -17,10 +16,10 @@ import type {
 export const dashboardKeys = {
   all: ['dashboard'] as const,
   overview: () => [...dashboardKeys.all, 'overview'] as const,
-  tickets: (days?: number) => [...dashboardKeys.all, 'tickets', days] as const,
-  assets: () => [...dashboardKeys.all, 'assets'] as const,
-  compliance: () => [...dashboardKeys.all, 'compliance'] as const,
-  pm: () => [...dashboardKeys.all, 'pm'] as const,
+  tickets: (days?: number, includeBreakdown?: boolean) => [...dashboardKeys.all, 'tickets', days, includeBreakdown] as const,
+  assets: (includeBreakdown?: boolean) => [...dashboardKeys.all, 'assets', includeBreakdown] as const,
+  compliance: (includeBreakdown?: boolean) => [...dashboardKeys.all, 'compliance', includeBreakdown] as const,
+  pm: (includeOverdue?: boolean) => [...dashboardKeys.all, 'pm', includeOverdue] as const,
   activity: (limit?: number) => [...dashboardKeys.all, 'activity', limit] as const,
 };
 
@@ -37,7 +36,7 @@ export function useOverviewStats() {
 // Ticket stats
 export function useTicketStats(days: number = 30, includeBreakdown: boolean = false) {
   return useQuery({
-    queryKey: dashboardKeys.tickets(days),
+    queryKey: dashboardKeys.tickets(days, includeBreakdown),
     queryFn: async () => {
       const params = new URLSearchParams({
         days: days.toString(),
@@ -50,13 +49,14 @@ export function useTicketStats(days: number = 30, includeBreakdown: boolean = fa
         byPriority?: PriorityCount[];
       }>(`/api/dashboard/tickets?${params.toString()}`);
     },
+    staleTime: 30 * 1000,
   });
 }
 
 // Asset stats
 export function useAssetStats(includeBreakdown: boolean = false) {
   return useQuery({
-    queryKey: dashboardKeys.assets(),
+    queryKey: dashboardKeys.assets(includeBreakdown),
     queryFn: async () => {
       const params = new URLSearchParams({
         breakdown: includeBreakdown.toString(),
@@ -67,13 +67,14 @@ export function useAssetStats(includeBreakdown: boolean = false) {
         expiringWarranties?: unknown[];
       }>(`/api/dashboard/assets?${params.toString()}`);
     },
+    staleTime: 30 * 1000,
   });
 }
 
 // Compliance stats
 export function useComplianceStats(includeBreakdown: boolean = false) {
   return useQuery({
-    queryKey: dashboardKeys.compliance(),
+    queryKey: dashboardKeys.compliance(includeBreakdown),
     queryFn: async () => {
       const params = new URLSearchParams({
         breakdown: includeBreakdown.toString(),
@@ -84,13 +85,14 @@ export function useComplianceStats(includeBreakdown: boolean = false) {
         upcomingExpirations?: unknown[];
       }>(`/api/dashboard/compliance?${params.toString()}`);
     },
+    staleTime: 30 * 1000,
   });
 }
 
 // PM stats
 export function usePMStats(includeOverdue: boolean = false) {
   return useQuery({
-    queryKey: dashboardKeys.pm(),
+    queryKey: dashboardKeys.pm(includeOverdue),
     queryFn: async () => {
       const params = new URLSearchParams({
         include_overdue: includeOverdue.toString(),
@@ -100,6 +102,7 @@ export function usePMStats(includeOverdue: boolean = false) {
         overdue?: unknown[];
       }>(`/api/dashboard/pm?${params.toString()}`);
     },
+    staleTime: 30 * 1000,
   });
 }
 

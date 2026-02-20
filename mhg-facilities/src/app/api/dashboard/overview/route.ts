@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { DashboardService } from '@/services/dashboard.service';
+import { requireAuth } from '@/lib/auth/api-auth';
 
 export async function GET() {
   try {
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
+
     const service = new DashboardService();
     const stats = await service.getOverviewStats();
 

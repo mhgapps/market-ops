@@ -17,6 +17,14 @@ import { NotificationService } from '@/services/notification.service';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Verify CRON_SECRET is configured
+    if (!process.env.CRON_SECRET) {
+      return NextResponse.json(
+        { error: 'CRON_SECRET not configured' },
+        { status: 500 }
+      );
+    }
+
     // Verify this is a legitimate cron request
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -29,24 +37,30 @@ export async function GET(request: NextRequest) {
     const complianceService = new ComplianceDocumentService();
     const notificationService = new NotificationService();
 
-    // Get documents expiring at various thresholds
-    const expiringIn30Days = await complianceService.getExpiringDocuments(30);
-    const expiringIn14Days = await complianceService.getExpiringDocuments(14);
-    const expiringIn7Days = await complianceService.getExpiringDocuments(7);
-    const expiringIn1Day = await complianceService.getExpiringDocuments(1);
-    const expiredToday = await complianceService.getExpiringDocuments(0);
+    // Get documents expiring at various thresholds (parallel fetch)
+    const [expiringIn30Days, expiringIn14Days, expiringIn7Days, expiringIn1Day, expiredToday] =
+      await Promise.all([
+        complianceService.getExpiringDocuments(30),
+        complianceService.getExpiringDocuments(14),
+        complianceService.getExpiringDocuments(7),
+        complianceService.getExpiringDocuments(1),
+        complianceService.getExpiringDocuments(0),
+      ]);
+
+    // Type for expiring document
+    type ExpiringDoc = Awaited<ReturnType<ComplianceDocumentService['getExpiringDocuments']>>[number];
 
     // Combine all documents that need alerts
     const allExpiringDocs = [
-      ...expiringIn30Days.map((doc: any) => ({ doc, days: 30 })),
-      ...expiringIn14Days.map((doc: any) => ({ doc, days: 14 })),
-      ...expiringIn7Days.map((doc: any) => ({ doc, days: 7 })),
-      ...expiringIn1Day.map((doc: any) => ({ doc, days: 1 })),
-      ...expiredToday.map((doc: any) => ({ doc, days: 0 })),
+      ...expiringIn30Days.map((doc: ExpiringDoc) => ({ doc, days: 30 })),
+      ...expiringIn14Days.map((doc: ExpiringDoc) => ({ doc, days: 14 })),
+      ...expiringIn7Days.map((doc: ExpiringDoc) => ({ doc, days: 7 })),
+      ...expiringIn1Day.map((doc: ExpiringDoc) => ({ doc, days: 1 })),
+      ...expiredToday.map((doc: ExpiringDoc) => ({ doc, days: 0 })),
     ];
 
     // Deduplicate by document ID (a document might appear in multiple threshold lists)
-    const uniqueDocs = new Map<string, { doc: any; days: number }>();
+    const uniqueDocs = new Map<string, { doc: ExpiringDoc; days: number }>();
     for (const item of allExpiringDocs) {
       // Keep the smallest days value (most urgent)
       if (!uniqueDocs.has(item.doc.id) || uniqueDocs.get(item.doc.id)!.days > item.days) {
@@ -57,9 +71,11 @@ export async function GET(request: NextRequest) {
     const alertsSent = [];
     const errors = [];
 
-    // Get managers and admins who should be notified
-    const managers = await notificationService.getManagers();
-    const admins = await notificationService.getAdminUsers();
+    // Get managers and admins who should be notified (parallel fetch)
+    const [managers, admins] = await Promise.all([
+      notificationService.getManagers(),
+      notificationService.getAdminUsers(),
+    ]);
     const recipients = [...new Set([...managers, ...admins])]; // Dedupe
 
     // Send alerts for each expiring document

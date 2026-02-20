@@ -145,26 +145,83 @@ export const theme = {
   },
 } as const
 
-// Ticket priority colors
+// Ticket priority colors (Linear-inspired)
 export const priorityColors = {
-  low: theme.gray[500],
-  medium: theme.info.main,
-  high: theme.warning.main,
-  critical: theme.error.main,
+  critical: {
+    border: '#ef4444',
+    bg: '#fef2f2',
+    text: '#dc2626',
+    dot: '#ef4444',
+  },
+  high: {
+    border: '#f97316',
+    bg: '#fff7ed',
+    text: '#ea580c',
+    dot: '#f97316',
+  },
+  medium: {
+    border: '#3b82f6',
+    bg: '#eff6ff',
+    text: '#2563eb',
+    dot: '#3b82f6',
+  },
+  low: {
+    border: '#6b7280',
+    bg: '#f9fafb',
+    text: '#4b5563',
+    dot: '#9ca3af',
+  },
 } as const
 
-// Ticket status colors
+// Ticket status colors (Linear-inspired)
 export const statusColors = {
-  submitted: theme.gray[500],
-  acknowledged: theme.info.main,
-  needs_approval: theme.warning.main,
-  approved: theme.info[600],
-  in_progress: theme.primary.main,
-  completed: theme.success.light,
-  verified: theme.success.main,
-  closed: theme.success.dark,
-  rejected: theme.error.main,
-  on_hold: theme.warning[600],
+  submitted: {
+    dot: '#6b7280',
+    bg: '#f3f4f6',
+    text: '#374151',
+    label: 'Submitted',
+  },
+  in_progress: {
+    dot: '#8b5cf6',
+    bg: '#f5f3ff',
+    text: '#6d28d9',
+    label: 'In Progress',
+  },
+  completed: {
+    dot: '#22c55e',
+    bg: '#f0fdf4',
+    text: '#15803d',
+    label: 'Completed',
+  },
+  closed: {
+    dot: '#64748b',
+    bg: '#f8fafc',
+    text: '#475569',
+    label: 'Closed',
+  },
+  rejected: {
+    dot: '#ef4444',
+    bg: '#fef2f2',
+    text: '#dc2626',
+    label: 'Rejected',
+  },
+  on_hold: {
+    dot: '#f59e0b',
+    bg: '#fffbeb',
+    text: '#d97706',
+    label: 'On Hold',
+  },
+} as const
+
+// Kanban column colors
+export const kanbanColors = {
+  columnBg: '#f8fafc',
+  cardBg: '#ffffff',
+  cardHoverBg: '#fafbfc',
+  cardBorder: '#e2e8f0',
+  cardShadow: '0 1px 2px 0 rgb(0 0 0 / 0.03)',
+  cardHoverShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+  dragOverBg: '#f0f9ff',
 } as const
 
 // Compliance status colors
@@ -186,5 +243,51 @@ export const assetStatusColors = {
   transferred: theme.info.main,
   disposed: theme.error.main,
 } as const
+
+// Budget utilization colors (threshold-based)
+export const budgetUtilizationColors = {
+  healthy: {
+    bg: theme.success[50],
+    border: theme.success[200],
+    text: theme.success[700],
+    bar: theme.success[500],
+    label: 'Healthy',
+  },
+  warning: {
+    bg: theme.warning[50],
+    border: theme.warning[200],
+    text: theme.warning[700],
+    bar: theme.warning[500],
+    label: 'Warning',
+  },
+  danger: {
+    bg: '#fff7ed', // Orange-50
+    border: '#fed7aa', // Orange-200
+    text: '#c2410c', // Orange-700
+    bar: '#f97316', // Orange-500
+    label: 'Danger',
+  },
+  over: {
+    bg: theme.error[50],
+    border: theme.error[200],
+    text: theme.error[700],
+    bar: theme.error[500],
+    label: 'Over Budget',
+  },
+} as const
+
+// Budget category colors for pie charts
+export const budgetCategoryColors = [
+  '#3b82f6', // Blue
+  '#22c55e', // Green
+  '#f59e0b', // Amber
+  '#8b5cf6', // Purple
+  '#ec4899', // Pink
+  '#06b6d4', // Cyan
+  '#f97316', // Orange
+  '#14b8a6', // Teal
+  '#ef4444', // Red
+  '#6366f1', // Indigo
+] as const
 
 export type ThemeColors = typeof theme

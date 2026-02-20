@@ -3,23 +3,11 @@ import api from '@/lib/api-client'
 import type { Database } from '@/types/database'
 
 // Types
-interface Ticket {
-  id: string
-  ticket_number: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  category_id: string
-  location_id: string
-  asset_id?: string | null
-  submitted_by: string
-  assignee_id?: string | null
-  vendor_id?: string | null
-  estimated_completion?: string | null
-  actual_completion?: string | null
-  created_at: string
-  updated_at: string
+// Import Ticket from database types
+type TicketRow = Database['public']['Tables']['tickets']['Row']
+
+// Extended Ticket type with relations
+export interface Ticket extends TicketRow {
   // Joined fields (populated by API)
   location?: {
     id: string
@@ -63,6 +51,8 @@ interface TicketFilters {
   assignee_id?: string
   page?: number
   pageSize?: number
+  is_emergency?: boolean
+  search?: string
 }
 
 interface PaginatedResponse<T> {
@@ -80,6 +70,7 @@ export interface CreateTicketData {
   priority: string
   location_id: string
   asset_id?: string | null
+  is_emergency?: boolean
 }
 
 interface UpdateTicketData {
@@ -92,6 +83,8 @@ interface StatusActionData {
   action: string
   reason?: string
   notes?: string
+  cost?: number
+  new_status?: string
 }
 
 interface AssignmentData {
@@ -109,17 +102,6 @@ interface AttachmentData {
   attachment_type: 'photo' | 'invoice' | 'quote' | 'other'
 }
 
-interface ApprovalRequestData {
-  estimated_cost: number
-  vendor_quote_path?: string
-  notes: string
-}
-
-interface ApprovalActionData {
-  action: 'approve' | 'deny'
-  reason?: string
-}
-
 // Query Keys
 export const ticketKeys = {
   all: ['tickets'] as const,
@@ -129,7 +111,6 @@ export const ticketKeys = {
   detail: (id: string) => [...ticketKeys.details(), id] as const,
   comments: (id: string) => [...ticketKeys.detail(id), 'comments'] as const,
   attachments: (id: string) => [...ticketKeys.detail(id), 'attachments'] as const,
-  approval: (id: string) => [...ticketKeys.detail(id), 'approval'] as const,
 }
 
 // Cache settings for React Query
@@ -149,6 +130,8 @@ export function useTickets(filters?: TicketFilters) {
       if (filters?.assignee_id) params.append('assignee_id', filters.assignee_id)
       if (filters?.page) params.append('page', filters.page.toString())
       if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString())
+      if (filters?.is_emergency !== undefined) params.append('is_emergency', filters.is_emergency.toString())
+      if (filters?.search) params.append('search', filters.search)
 
       const response = await api.get<PaginatedResponse<Ticket>>(
         `/api/tickets?${params.toString()}`
@@ -199,21 +182,6 @@ export function useTicketAttachments(id: string) {
         `/api/tickets/${id}/attachments`
       )
       return response.attachments
-    },
-    enabled: !!id,
-    staleTime: STALE_TIME,
-    gcTime: GC_TIME,
-  })
-}
-
-export function useTicketApproval(id: string) {
-  return useQuery({
-    queryKey: ticketKeys.approval(id),
-    queryFn: async () => {
-      const response = await api.get<{ approval: Database['public']['Tables']['cost_approvals']['Row'] | null }>(
-        `/api/tickets/${id}/approval`
-      )
-      return response.approval
     },
     enabled: !!id,
     staleTime: STALE_TIME,
@@ -335,37 +303,6 @@ export function useDeleteAttachment(ticketId: string) {
   })
 }
 
-export function useRequestApproval(id: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (data: ApprovalRequestData) => {
-      const response = await api.post(`/api/tickets/${id}/approval`, data)
-      return response
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ticketKeys.approval(id) })
-      queryClient.invalidateQueries({ queryKey: ticketKeys.detail(id) })
-    },
-  })
-}
-
-export function useApprovalAction(id: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (data: ApprovalActionData) => {
-      const response = await api.patch(`/api/tickets/${id}/approval`, data)
-      return response
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ticketKeys.approval(id) })
-      queryClient.invalidateQueries({ queryKey: ticketKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ticketKeys.lists() })
-    },
-  })
-}
-
 export function useCheckDuplicates() {
   return useMutation({
     mutationFn: async (data: {
@@ -378,6 +315,126 @@ export function useCheckDuplicates() {
         duplicates: Ticket[]
       }>('/api/tickets/check-duplicate', data)
       return response
+    },
+  })
+}
+
+// ============================================================
+// EMERGENCY TICKET HOOKS
+// ============================================================
+
+export interface EmergencyStats {
+  active: number
+  resolved_30_days: number
+  total_30_days: number
+}
+
+export interface CreateEmergencyData {
+  title: string
+  description: string
+  location_id: string
+  priority?: 'high' | 'critical'
+}
+
+// Query keys for emergencies
+export const emergencyKeys = {
+  all: ['emergencies'] as const,
+  stats: () => [...emergencyKeys.all, 'stats'] as const,
+  active: () => [...emergencyKeys.all, 'active'] as const,
+}
+
+/**
+ * Get emergency statistics for dashboard
+ */
+export function useEmergencyStats() {
+  return useQuery({
+    queryKey: emergencyKeys.stats(),
+    queryFn: async () => {
+      const response = await api.get<{ stats: EmergencyStats }>('/api/tickets/emergencies/stats')
+      return response.stats
+    },
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
+  })
+}
+
+/**
+ * Get active emergencies (tickets with is_emergency=true and not closed)
+ */
+export function useActiveEmergencies() {
+  return useQuery({
+    queryKey: emergencyKeys.active(),
+    queryFn: async () => {
+      const response = await api.get<{ tickets: Ticket[] }>('/api/tickets/emergencies/active')
+      return response.tickets
+    },
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
+  })
+}
+
+/**
+ * Create an emergency ticket
+ */
+export function useCreateEmergency() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: CreateEmergencyData) => {
+      const response = await api.post<{ ticket: Ticket }>('/api/tickets', {
+        ...data,
+        is_emergency: true,
+        priority: data.priority ?? 'critical',
+      })
+      return response.ticket
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ticketKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: emergencyKeys.all })
+    },
+  })
+}
+
+/**
+ * Contain an emergency (mark as contained/in_progress)
+ */
+export function useContainEmergency(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.patch<{ ticket: Ticket }>(
+        `/api/tickets/${id}/status`,
+        { action: 'contain' }
+      )
+      return response.ticket
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ticketKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: ticketKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: emergencyKeys.all })
+    },
+  })
+}
+
+/**
+ * Resolve an emergency (mark as resolved/closed)
+ */
+export function useResolveEmergency(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (resolutionNotes: string) => {
+      const response = await api.patch<{ ticket: Ticket }>(
+        `/api/tickets/${id}/status`,
+        { action: 'resolve', notes: resolutionNotes }
+      )
+      return response.ticket
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ticketKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: ticketKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: emergencyKeys.all })
     },
   })
 }

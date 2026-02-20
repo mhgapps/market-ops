@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import api from '@/lib/api-client'
 
 interface InvitationData {
   email: string
@@ -41,18 +42,12 @@ export default function AcceptInvitePage({
   useEffect(() => {
     async function loadInvitation() {
       try {
-        const response = await fetch(`/api/invitations/${resolvedParams.token}`)
-
-        if (!response.ok) {
-          const data = await response.json()
-          setError(data.error || 'Invalid or expired invitation')
-          return
-        }
-
-        const data = await response.json()
+        const data = await api.get<{ invitation: InvitationData }>(
+          `/api/invitations/${resolvedParams.token}`
+        )
         setInvitation(data.invitation)
       } catch (err) {
-        setError('Failed to load invitation')
+        setError(err instanceof Error ? err.message : 'Invalid or expired invitation')
         console.error(err)
       } finally {
         setLoading(false)
@@ -81,25 +76,15 @@ export default function AcceptInvitePage({
     setSubmitting(true)
 
     try {
-      const response = await fetch(`/api/invitations/${resolvedParams.token}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: formData.fullName,
-          password: formData.password,
-        }),
+      await api.post(`/api/invitations/${resolvedParams.token}`, {
+        full_name: formData.fullName,
+        password: formData.password,
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        setError(data.error || 'Failed to accept invitation')
-        return
-      }
 
       // Success - redirect to dashboard
       router.push('/dashboard')
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.')
       console.error(err)
     } finally {
       setSubmitting(false)

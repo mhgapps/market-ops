@@ -33,6 +33,7 @@ import { EditUserModal } from '@/components/users/edit-user-modal'
 import { useAuth } from '@/hooks/use-auth'
 import { useUsers, useDeactivateUser, type User } from '@/hooks/use-users'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { TableLoadingOverlay } from '@/components/ui/table-loading-overlay'
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -55,7 +56,7 @@ export default function UsersPage() {
   }), [debouncedSearch, roleFilter, statusFilter])
 
   // Use React Query hook with caching
-  const { data: users = [], isLoading: usersLoading } = useUsers(filters)
+  const { data: users = [], isLoading: usersLoading, isFetching: usersFetching } = useUsers(filters)
 
   // Deactivate user mutation
   const deactivateUser = useDeactivateUser()
@@ -90,7 +91,7 @@ export default function UsersPage() {
 
   const isLoading = authLoading || usersLoading
 
-  if (isLoading) {
+  if (isLoading && users.length === 0) {
     return <PageLoader />
   }
 
@@ -98,12 +99,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Users</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage user accounts and permissions
-          </p>
-        </div>
+        <h1 className="text-2xl md:text-3xl font-bold">Users</h1>
         {canManageUsers && (
           <Button onClick={() => setInviteModalOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
@@ -180,10 +176,11 @@ export default function UsersPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
+        <TableLoadingOverlay isLoading={usersFetching}>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
@@ -255,7 +252,8 @@ export default function UsersPage() {
               </Table>
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </TableLoadingOverlay>
       )}
 
       {/* Summary */}

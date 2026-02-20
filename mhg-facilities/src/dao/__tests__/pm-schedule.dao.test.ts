@@ -1,14 +1,30 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { PMScheduleDAO } from '../pm-schedule.dao';
 import type { Database } from '@/types/database';
 
 type PMSchedule = Database['public']['Tables']['pm_schedules']['Row'];
 type PMFrequency = Database['public']['Enums']['pm_frequency'];
 
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  lte: Mock;
+  lt: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+}
+
 describe('PMScheduleDAO', () => {
   let dao: PMScheduleDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   const mockSchedule: PMSchedule = {
     id: 'schedule-1',
@@ -104,14 +120,14 @@ describe('PMScheduleDAO', () => {
   });
 
   describe('findDueToday', () => {
-    it('should find schedules due today or earlier', async () => {
+    it('should find schedules due exactly today', async () => {
       mockQuery.order.mockResolvedValueOnce({ data: [mockSchedule], error: null });
 
       const result = await dao.findDueToday();
 
       expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
       expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
-      expect(mockQuery.lte).toHaveBeenCalledWith('next_due_date', expect.any(String));
+      expect(mockQuery.eq).toHaveBeenCalledWith('next_due_date', expect.any(String));
       expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
       expect(result).toEqual([mockSchedule]);
     });
@@ -147,7 +163,7 @@ describe('PMScheduleDAO', () => {
 
       expect(mockQuery.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: 'Monthly HVAC Inspection',
+          name: 'Monthly HVAC Inspection',
           tenant_id: 'test-tenant-id',
         })
       );

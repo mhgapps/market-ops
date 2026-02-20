@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/api-auth'
 import { VendorService } from '@/services/vendor.service'
 import { createVendorSchema, vendorFilterSchema } from '@/lib/validations/assets-vendors'
 
 // Helper to convert null to undefined
-function nullToUndefined<T extends Record<string, any>>(obj: T): T {
+function nullToUndefined<T extends Record<string, unknown>>(obj: T): T {
   return Object.fromEntries(
     Object.entries(obj).map(([key, value]) => [key, value === null ? undefined : value])
   ) as T
@@ -16,6 +17,9 @@ function nullToUndefined<T extends Record<string, any>>(obj: T): T {
  */
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const searchParams = request.nextUrl.searchParams
 
     // Parse pagination params
@@ -58,6 +62,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const body = await request.json()
 
     // Validate input
@@ -72,7 +79,7 @@ export async function POST(request: NextRequest) {
     const service = new VendorService()
     // Convert null values to undefined for service layer
     const data = nullToUndefined(validationResult.data)
-    const vendor = await service.createVendor(data as any)
+    const vendor = await service.createVendor(data as Parameters<VendorService['createVendor']>[0])
 
     return NextResponse.json({ vendor }, { status: 201 })
   } catch (error) {

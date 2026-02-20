@@ -6,16 +6,16 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   Ticket,
-  AlertTriangle,
   Calendar,
+  Shield,
   MoreHorizontal,
 } from 'lucide-react'
 
 const bottomNavItems = [
   { title: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Tickets', href: '/tickets', icon: Ticket },
-  { title: 'Emergency', href: '/emergencies', icon: AlertTriangle },
   { title: 'PM', href: '/pm', icon: Calendar },
+  { title: 'Docs', href: '/compliance', icon: Shield },
 ]
 
 interface BottomNavProps {

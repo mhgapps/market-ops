@@ -1,6 +1,19 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { BaseDAO } from '../base.dao';
-import type { Database } from '@/types/database-extensions';
+
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+}
 
 // Concrete implementation for testing
 class TestDAO extends BaseDAO<'users'> {
@@ -11,8 +24,8 @@ class TestDAO extends BaseDAO<'users'> {
 
 describe('BaseDAO', () => {
   let dao: TestDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   beforeEach(() => {
     dao = new TestDAO();
@@ -70,7 +83,7 @@ describe('BaseDAO', () => {
         error: null,
       });
 
-      await dao.update('test-id', { email: 'updated@test.com' } as any);
+      await dao.update('test-id', { email: 'updated@test.com' } as Parameters<typeof dao.update>[1]);
 
       expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
     });
@@ -119,7 +132,7 @@ describe('BaseDAO', () => {
         error: null,
       });
 
-      await dao.update('test-id', { email: 'test@test.com' } as any);
+      await dao.update('test-id', { email: 'test@test.com' } as Parameters<typeof dao.update>[1]);
 
       expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
     });
@@ -134,7 +147,7 @@ describe('BaseDAO', () => {
       };
       mockQuery.single.mockResolvedValueOnce({ data: mockUser, error: null });
 
-      const result = await dao.create({ email: 'test@test.com' } as any);
+      const result = await dao.create({ email: 'test@test.com' } as Parameters<typeof dao.create>[0]);
 
       expect(mockQuery.insert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -153,7 +166,7 @@ describe('BaseDAO', () => {
       };
       mockQuery.single.mockResolvedValueOnce({ data: mockUser, error: null });
 
-      await dao.update('test-id', { email: 'updated@test.com' } as any);
+      await dao.update('test-id', { email: 'updated@test.com' } as Parameters<typeof dao.update>[1]);
 
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -232,7 +245,7 @@ describe('BaseDAO', () => {
         error: { message: 'Insert failed' },
       });
 
-      await expect(dao.create({ email: 'test@test.com' } as any)).rejects.toThrow(
+      await expect(dao.create({ email: 'test@test.com' } as Parameters<typeof dao.create>[0])).rejects.toThrow(
         'Insert failed'
       );
     });
@@ -243,7 +256,7 @@ describe('BaseDAO', () => {
         error: { message: 'Update failed' },
       });
 
-      await expect(dao.update('test-id', { email: 'test@test.com' } as any)).rejects.toThrow(
+      await expect(dao.update('test-id', { email: 'test@test.com' } as Parameters<typeof dao.update>[1])).rejects.toThrow(
         'Update failed'
       );
     });

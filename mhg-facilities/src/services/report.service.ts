@@ -1,8 +1,9 @@
-import { TicketDAO } from '@/dao/ticket.dao';
+import { TicketDAO, TicketFilters } from '@/dao/ticket.dao';
 import { AssetDAO } from '@/dao/asset.dao';
 import { VendorDAO } from '@/dao/vendor.dao';
 import { ComplianceDocumentDAO } from '@/dao/compliance-document.dao';
 import { PMScheduleDAO } from '@/dao/pm-schedule.dao';
+import type { TicketStatus, TicketPriority } from '@/types/database';
 
 // Date range type
 export interface DateRange {
@@ -172,32 +173,35 @@ export class ReportService {
   // TICKET REPORTS
   // ============================================================
 
+  /**
+   * Get ticket report with filters
+   * PERFORMANCE: Uses database-level filtering instead of loading all tickets
+   */
   async getTicketReport(filters: TicketReportFilters): Promise<TicketReportData> {
-    let tickets = await this.ticketDAO.findAll();
-
-    // Apply filters
-    if (filters.dateRange) {
-      const start = new Date(filters.dateRange.start);
-      const end = new Date(filters.dateRange.end);
-      tickets = tickets.filter((t) => {
-        const created = new Date(t.created_at);
-        return created >= start && created <= end;
-      });
-    }
+    // Build filters for DAO query - all filtering happens at database level
+    const daoFilters: TicketFilters = {};
 
     if (filters.status && filters.status.length > 0) {
-      tickets = tickets.filter((t) => filters.status!.includes(t.status));
+      daoFilters.status = filters.status as TicketStatus[];
     }
 
     if (filters.priority && filters.priority.length > 0) {
-      tickets = tickets.filter((t) => filters.priority!.includes(t.priority));
+      daoFilters.priority = filters.priority as TicketPriority[];
     }
 
     if (filters.locationId) {
-      tickets = tickets.filter((t) => t.location_id === filters.locationId);
+      daoFilters.location_id = filters.locationId;
     }
 
-    // Aggregate data
+    if (filters.dateRange) {
+      daoFilters.date_from = filters.dateRange.start;
+      daoFilters.date_to = filters.dateRange.end;
+    }
+
+    // Query with filters applied at database level
+    const tickets = await this.ticketDAO.findAllWithFilters(daoFilters, 1000);
+
+    // Aggregate data from filtered results
     const byStatus: Record<string, number> = {};
     const byPriority: Record<string, number> = {};
     const byCategory: Record<string, number> = {};
@@ -234,16 +238,16 @@ export class ReportService {
     };
   }
 
+  /**
+   * Get resolution time report
+   * PERFORMANCE: Uses database-level filtering to only fetch closed tickets in date range
+   */
   async getResolutionTimeReport(dateRange: DateRange): Promise<ResolutionReport> {
-    const tickets = await this.ticketDAO.findAll();
-    const start = new Date(dateRange.start);
-    const end = new Date(dateRange.end);
-
-    const closedTickets = tickets.filter((t) => {
-      if (t.status !== 'closed' || !t.closed_at) return false;
-      const closed = new Date(t.closed_at);
-      return closed >= start && closed <= end;
-    });
+    // Query only closed tickets within the date range at database level
+    const closedTickets = await this.ticketDAO.findClosedByDateRange(
+      dateRange.start,
+      dateRange.end
+    );
 
     if (closedTickets.length === 0) {
       return {
@@ -297,23 +301,41 @@ export class ReportService {
   // ASSET REPORTS
   // ============================================================
 
+  /**
+   * Get asset report with filters
+   * PERFORMANCE: Uses database-level filtering instead of loading all assets
+   */
   async getAssetReport(filters: AssetReportFilters): Promise<AssetReportData> {
-    let assets = await this.assetDAO.findAll();
+    // Build filters for DAO query - all filtering happens at database level
+    const daoFilters: {
+      status?: string;
+      category_id?: string;
+      location_id?: string;
+    } = {};
 
-    // Apply filters
-    if (filters.status && filters.status.length > 0) {
-      assets = assets.filter((a) => filters.status!.includes(a.status || 'active'));
+    // Note: AssetDAO.findWithRelations supports single status filter
+    // For multiple statuses, we need to handle differently or use multiple calls
+    if (filters.status && filters.status.length === 1) {
+      daoFilters.status = filters.status[0];
     }
 
     if (filters.categoryId) {
-      assets = assets.filter((a) => a.category_id === filters.categoryId);
+      daoFilters.category_id = filters.categoryId;
     }
 
     if (filters.locationId) {
-      assets = assets.filter((a) => a.location_id === filters.locationId);
+      daoFilters.location_id = filters.locationId;
     }
 
-    // Aggregate data
+    // Query with filters applied at database level
+    let assets = await this.assetDAO.findWithRelations(daoFilters);
+
+    // Handle multiple status filter if needed (rare case)
+    if (filters.status && filters.status.length > 1) {
+      assets = assets.filter((a) => filters.status!.includes(a.status || 'active'));
+    }
+
+    // Aggregate data from filtered results
     const byStatus: Record<string, number> = {};
     const byCategory: Record<string, number> = {};
     const byLocation: Record<string, number> = {};
@@ -407,7 +429,7 @@ export class ReportService {
   // PM REPORTS
   // ============================================================
 
-  async getPMComplianceReport(dateRange: DateRange): Promise<PMComplianceReport> {
+  async getPMComplianceReport(_dateRange: DateRange): Promise<PMComplianceReport> {
     const schedules = await this.pmScheduleDAO.findAll();
 
     // This would require PM completion history tracking
@@ -429,7 +451,7 @@ export class ReportService {
   /**
    * Convert data to CSV format
    */
-  exportToCSV(data: Record<string, unknown>[], filename: string): Blob {
+  exportToCSV(data: Record<string, unknown>[], _filename: string): Blob {
     if (data.length === 0) {
       return new Blob(['No data to export'], { type: 'text/csv' });
     }

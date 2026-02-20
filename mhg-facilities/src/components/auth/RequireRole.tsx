@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/use-auth'
 import type { UserRole } from '@/types/database'
 
 interface RequireRoleProps {
@@ -31,49 +32,20 @@ export function RequireRole({
   redirectTo,
 }: RequireRoleProps) {
   const router = useRouter()
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null)
-  const [userRole, setUserRole] = useState<UserRole | null>(null)
+  const { user, isLoading, error } = useAuth()
+
+  const userRole = user?.role ?? null
+  const hasAccess = userRole ? allowedRoles.includes(userRole) : false
 
   useEffect(() => {
-    async function checkRole() {
-      try {
-        const response = await fetch('/api/auth/me')
-
-        if (!response.ok) {
-          setHasAccess(false)
-          if (redirectTo) {
-            router.push(redirectTo)
-          }
-          return
-        }
-
-        const data = await response.json()
-        const role = data.user?.role
-
-        setUserRole(role)
-
-        if (allowedRoles.includes(role)) {
-          setHasAccess(true)
-        } else {
-          setHasAccess(false)
-          if (redirectTo) {
-            router.push(redirectTo)
-          }
-        }
-      } catch (error) {
-        console.error('Error checking role:', error)
-        setHasAccess(false)
-        if (redirectTo) {
-          router.push(redirectTo)
-        }
-      }
+    // Only redirect after loading is complete and we know the user doesn't have access
+    if (!isLoading && !hasAccess && redirectTo) {
+      router.push(redirectTo)
     }
-
-    checkRole()
-  }, [allowedRoles, redirectTo, router])
+  }, [isLoading, hasAccess, redirectTo, router])
 
   // Loading state
-  if (hasAccess === null) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
@@ -81,8 +53,8 @@ export function RequireRole({
     )
   }
 
-  // Access denied state
-  if (!hasAccess) {
+  // Access denied state (no user or error or not in allowed roles)
+  if (!hasAccess || error) {
     if (fallback) {
       return <>{fallback}</>
     }

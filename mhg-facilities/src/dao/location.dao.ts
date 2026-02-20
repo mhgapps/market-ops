@@ -20,6 +20,14 @@ export class LocationDAO extends BaseDAO<'locations'> {
   }
 
   /**
+   * Get the current tenant ID
+   */
+  async getTenantId(): Promise<string> {
+    const { tenantId } = await this.getClient()
+    return tenantId
+  }
+
+  /**
    * Find all active locations (not soft-deleted)
    * Inherits tenant isolation from BaseDAO
    */
@@ -156,6 +164,89 @@ export class LocationDAO extends BaseDAO<'locations'> {
    */
   async updateLocation(id: string, data: Partial<LocationUpdate>): Promise<Location> {
     return this.update(id, data)
+  }
+
+  // ============================================================
+  // STATS METHODS
+  // ============================================================
+
+  /**
+   * Get ticket statistics for a specific location
+   */
+  async getTicketStats(locationId: string): Promise<{
+    totalTickets: number
+    openTickets: number
+    highPriorityTickets: number
+  }> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const [
+      { count: totalTickets },
+      { count: openTickets },
+      { count: highPriorityTickets },
+    ] = await Promise.all([
+      supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('location_id', locationId)
+        .is('deleted_at', null),
+      supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('location_id', locationId)
+        .in('status', ['open', 'in_progress'])
+        .is('deleted_at', null),
+      supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('location_id', locationId)
+        .eq('priority', 'high')
+        .in('status', ['open', 'in_progress'])
+        .is('deleted_at', null),
+    ])
+
+    return {
+      totalTickets: totalTickets ?? 0,
+      openTickets: openTickets ?? 0,
+      highPriorityTickets: highPriorityTickets ?? 0,
+    }
+  }
+
+  /**
+   * Get asset statistics for a specific location
+   */
+  async getAssetStats(locationId: string): Promise<{
+    totalAssets: number
+    criticalAssets: number
+  }> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const [
+      { count: totalAssets },
+      { count: criticalAssets },
+    ] = await Promise.all([
+      supabase
+        .from('assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('location_id', locationId)
+        .is('deleted_at', null),
+      supabase
+        .from('assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('location_id', locationId)
+        .eq('status', 'critical')
+        .is('deleted_at', null),
+    ])
+
+    return {
+      totalAssets: totalAssets ?? 0,
+      criticalAssets: criticalAssets ?? 0,
+    }
   }
 
   // ============================================================

@@ -2,8 +2,8 @@ import { BaseDAO } from './base.dao'
 import type { Database } from '@/types/database'
 
 type Asset = Database['public']['Tables']['assets']['Row']
-type AssetInsert = Database['public']['Tables']['assets']['Insert']
-type AssetUpdate = Database['public']['Tables']['assets']['Update']
+type _AssetInsert = Database['public']['Tables']['assets']['Insert']
+type _AssetUpdate = Database['public']['Tables']['assets']['Update']
 
 export interface AssetWithRelations extends Asset {
   category?: {
@@ -420,6 +420,158 @@ export class AssetDAO extends BaseDAO<'assets'> {
       by_status: byStatus,
       warranty_expiring_30_days: warningExpiring.length,
     }
+  }
+
+  // ============================================================
+  // COUNT METHODS (for dashboard performance)
+  // ============================================================
+
+  /**
+   * Get counts grouped by status (for charts)
+   * PERFORMANCE: Uses efficient COUNT queries instead of loading all assets
+   */
+  async getStatusCounts(): Promise<Record<string, number>> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const statuses = ['active', 'under_maintenance', 'retired', 'transferred', 'disposed']
+
+    // Run COUNT queries in parallel for each status
+    const countPromises = statuses.map(async (status) => {
+      const { count, error } = await supabase
+        .from('assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('status', status)
+        .is('deleted_at', null)
+
+      if (error) throw new Error(error.message)
+      return { status, count: count || 0 }
+    })
+
+    const results = await Promise.all(countPromises)
+
+    const counts: Record<string, number> = {}
+    results.forEach(({ status, count }) => {
+      if (count > 0) {
+        counts[status] = count
+      }
+    })
+
+    return counts
+  }
+
+  /**
+   * Count total assets
+   * PERFORMANCE: Uses database COUNT instead of loading all records
+   */
+  async countTotal(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { count, error } = await supabase
+      .from('assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
+  }
+
+  /**
+   * Count assets with expiring warranties
+   * PERFORMANCE: Uses database COUNT instead of loading all records
+   */
+  async countWarrantyExpiring(daysAhead: number): Promise<number> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const today = new Date()
+    const futureDate = new Date()
+    futureDate.setDate(today.getDate() + daysAhead)
+
+    const { count, error } = await supabase
+      .from('assets')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .gte('warranty_expiration', today.toISOString().split('T')[0])
+      .lte('warranty_expiration', futureDate.toISOString().split('T')[0])
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
+  }
+
+  /**
+   * Get counts grouped by category (for reports)
+   * PERFORMANCE: Only fetches category_id column
+   */
+  async getCategoryCounts(): Promise<Record<string, number>> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('assets')
+      .select('category_id')
+      .eq('tenant_id', tenantId)
+      .not('category_id', 'is', null)
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+
+    const counts: Record<string, number> = {}
+    if (data) {
+      data.forEach((row: { category_id: string }) => {
+        counts[row.category_id] = (counts[row.category_id] || 0) + 1
+      })
+    }
+    return counts
+  }
+
+  /**
+   * Get counts grouped by location (for reports)
+   * PERFORMANCE: Only fetches location_id column
+   */
+  async getLocationCounts(): Promise<Record<string, number>> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('assets')
+      .select('location_id')
+      .eq('tenant_id', tenantId)
+      .not('location_id', 'is', null)
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+
+    const counts: Record<string, number> = {}
+    if (data) {
+      data.forEach((row: { location_id: string }) => {
+        counts[row.location_id] = (counts[row.location_id] || 0) + 1
+      })
+    }
+    return counts
+  }
+
+  /**
+   * Get total value of assets
+   * PERFORMANCE: Uses database SUM instead of loading all records
+   */
+  async getTotalValue(): Promise<number> {
+    const { supabase, tenantId } = await this.getClient()
+
+    const { data, error } = await supabase
+      .from('assets')
+      .select('purchase_price')
+      .eq('tenant_id', tenantId)
+      .not('purchase_price', 'is', null)
+      .is('deleted_at', null)
+
+    if (error) throw new Error(error.message)
+
+    // Sum all purchase prices
+    const total = (data || []).reduce((sum, row: { purchase_price: number }) => {
+      return sum + (row.purchase_price || 0)
+    }, 0)
+
+    return total
   }
 }
 

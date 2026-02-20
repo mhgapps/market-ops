@@ -38,7 +38,7 @@ export default function AssetScanPage() {
 
       // Redirect to asset detail page
       router.push(`/assets/${data.asset.id}`)
-    } catch (err) {
+    } catch (_err) {
       // Asset not found
       setError(`Asset not found with QR code: ${qrCode}`)
     } finally {
@@ -106,12 +106,12 @@ export default function AssetScanPage() {
           the first time you use this feature.
         </p>
         <p>
-          If scanning doesn't work, make sure:
+          If scanning doesn&apos;t work, make sure:
         </p>
         <ul className="list-disc list-inside ml-4 space-y-1">
-          <li>You've granted camera permissions</li>
+          <li>You&apos;ve granted camera permissions</li>
           <li>The QR code is clearly visible and well-lit</li>
-          <li>You're holding the camera steady</li>
+          <li>You&apos;re holding the camera steady</li>
         </ul>
       </div>
     </div>

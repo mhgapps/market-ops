@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -15,17 +15,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   LayoutDashboard,
-  MapPin,
   Ticket,
   Wrench,
-  Users,
   Shield,
-  BarChart3,
   Settings,
   Building2,
-  AlertTriangle,
   Calendar,
-  CheckCircle,
   DollarSign,
   LogOut,
   User,
@@ -55,25 +50,20 @@ const navItems: NavItem[] = [
     icon: Ticket,
   },
   {
-    title: 'Approvals',
-    href: '/approvals',
-    icon: CheckCircle,
-    managerOnly: true,
+    title: 'PM Schedules',
+    href: '/pm',
+    icon: Calendar,
   },
   {
-    title: 'Locations',
-    href: '/locations',
-    icon: MapPin,
+    title: 'Documents',
+    href: '/compliance',
+    icon: Shield,
+    managerOnly: true,
   },
   {
     title: 'Assets',
     href: '/assets',
     icon: Wrench,
-  },
-  {
-    title: 'PM Schedules',
-    href: '/pm',
-    icon: Calendar,
   },
   {
     title: 'Vendors',
@@ -82,33 +72,10 @@ const navItems: NavItem[] = [
     managerOnly: true,
   },
   {
-    title: 'Compliance',
-    href: '/compliance',
-    icon: Shield,
-    managerOnly: true,
-  },
-  {
-    title: 'Emergencies',
-    href: '/emergencies',
-    icon: AlertTriangle,
-  },
-  {
     title: 'Budgets',
     href: '/budgets',
     icon: DollarSign,
     managerOnly: true,
-  },
-  {
-    title: 'Reports',
-    href: '/reports',
-    icon: BarChart3,
-    managerOnly: true,
-  },
-  {
-    title: 'Users',
-    href: '/users',
-    icon: Users,
-    adminOnly: true,
   },
   {
     title: 'Settings',
@@ -137,36 +104,43 @@ export function Sidebar() {
     }
   }
 
-  // Filter nav items based on user role
+  // Memoize filtered nav items to prevent recalculation on every render
   // Admin and super_admin can see everything
   // Manager can see managerOnly items
   // Staff/vendor/readonly only see items without restrictions
-  const filteredNavItems = navItems.filter((item) => {
-    // Admins see everything
-    if (isAdmin) return true
+  const filteredNavItems = useMemo(() => {
+    return navItems.filter((item) => {
+      // Admins see everything
+      if (isAdmin) return true
 
-    // Admin-only items are hidden for non-admins
-    if (item.adminOnly) return false
+      // Admin-only items are hidden for non-admins
+      if (item.adminOnly) return false
 
-    // Manager-only items: managers and above can see them
-    if (item.managerOnly) {
-      return user?.role === 'manager'
-    }
+      // Manager-only items: managers and above can see them
+      if (item.managerOnly) {
+        return user?.role === 'manager'
+      }
 
-    // No restrictions - everyone can see
-    return true
-  })
+      // No restrictions - everyone can see
+      return true
+    })
+  }, [isAdmin, user?.role])
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border">
       {/* Logo/Brand */}
       <div className="flex items-center h-16 px-6 border-b border-border">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-primary-foreground" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="MHG Facilities"
+            width={32}
+            height={32}
+            className="w-8 h-8"
+          />
           <span className="font-semibold text-foreground truncate">
-            MarketOps
+            MHG Facilities
           </span>
         </Link>
       </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { TicketAttachmentService } from '@/services/ticket-attachment.service'
+import { TicketService } from '@/services/ticket.service'
 import { requireAuth } from '@/lib/auth/api-auth'
 import { uploadAttachmentSchema } from '@/lib/validations/ticket'
 
@@ -101,6 +102,21 @@ export async function DELETE(
     if (error) return error
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    // Verify ownership: submitter, assignee, or manager/admin
+    const ticketService = new TicketService()
+    const ticket = await ticketService.getTicketById(id)
+    const isSubmitter = ticket.submitted_by === user.id
+    const isAssignee = ticket.assigned_to === user.id
+    const isManagerOrAdmin = user.role === 'manager' || user.role === 'admin'
+    if (!isSubmitter && !isAssignee && !isManagerOrAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: you do not have permission to delete attachments on this ticket' },
+        { status: 403 }
+      )
     }
 
     const { searchParams } = new URL(request.url)

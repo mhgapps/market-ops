@@ -16,8 +16,8 @@ interface CreateUserInput {
 
 interface UpdateProfileInput {
   fullName?: string
-  phone?: string
-  locationId?: string
+  phone?: string | null
+  locationId?: string | null
   languagePreference?: 'en' | 'es'
   notificationPreferences?: NotificationPreferences
 }
@@ -59,6 +59,13 @@ export class UserService {
     }
 
     return user as User
+  }
+
+  /**
+   * Get a user by ID
+   */
+  async findById(id: string): Promise<User | null> {
+    return this.userDAO.findById(id)
   }
 
   /**

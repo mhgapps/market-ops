@@ -41,7 +41,7 @@ export default function EditPMSchedulePage() {
   const assets = assetsData?.data?.map((a: { id: string; name: string; qr_code?: string | null; serial_number?: string | null }) => ({
     id: a.id,
     name: a.name,
-    asset_tag: a.qr_code || a.serial_number || 'N/A',
+    qr_code: a.qr_code || a.serial_number || 'N/A',
   })) ?? []
 
   const locations = locationsData?.map((l) => ({
@@ -72,7 +72,7 @@ export default function EditPMSchedulePage() {
   }) => {
     try {
       // Remove target_type as it's only used for form UX
-      const { target_type, ...submitData } = data
+      const { target_type: _target_type, ...submitData } = data
 
       await updateSchedule.mutateAsync({
         id: scheduleId,
@@ -93,7 +93,7 @@ export default function EditPMSchedulePage() {
       })
       toast.success('PM Schedule updated successfully')
       router.push(`/pm/${scheduleId}`)
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to update PM schedule')
     }
   }

@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ComplianceList } from './compliance-list';
 
 export const metadata = {
-  title: 'Compliance Documents',
-  description: 'Manage permits, licenses, and compliance documentation',
+  title: 'Documents',
+  description: 'Manage permits, licenses, insurance, and compliance documentation',
 };
 
 export default async function CompliancePage() {
@@ -17,12 +17,7 @@ export default async function CompliancePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Compliance Documents</h1>
-          <p className="text-muted-foreground">
-            Track permits, licenses, and regulatory compliance
-          </p>
-        </div>
+        <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
         <Button asChild>
           <Link href="/compliance/new">
             <Plus className="mr-2 h-4 w-4" />
@@ -41,7 +36,7 @@ export default async function CompliancePage() {
         <CardHeader>
           <CardTitle>All Documents</CardTitle>
           <CardDescription>
-            View and manage all compliance documents
+            View and manage permits, licenses, insurance, and other documents
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -65,108 +60,39 @@ async function StatsCards() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
-      <Card>
-        {/* Mobile compact layout */}
-        <CardContent className="p-3 md:hidden">
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium text-muted-foreground truncate">Total</p>
-              <p className="text-base font-bold">{stats.total}</p>
-            </div>
-          </div>
-        </CardContent>
-        {/* Desktop layout */}
-        <div className="hidden md:block">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
+    <Card className="p-0 overflow-hidden">
+      <div className="flex flex-wrap md:flex-nowrap divide-y md:divide-y-0 md:divide-x divide-border">
+        <div className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <span className="font-semibold">{stats.total}</span>
+          <span className="text-sm text-muted-foreground">Total</span>
         </div>
-      </Card>
-
-      <Card>
-        {/* Mobile compact layout */}
-        <CardContent className="p-3 md:hidden">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium text-muted-foreground truncate">Active</p>
-              <p className="text-base font-bold">{stats.active}</p>
-            </div>
-          </div>
-        </CardContent>
-        {/* Desktop layout */}
-        <div className="hidden md:block">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.active}</div>
-          </CardContent>
+        <div className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <span className="font-semibold">{stats.active}</span>
+          <span className="text-sm text-muted-foreground">Active</span>
         </div>
-      </Card>
-
-      <Card>
-        {/* Mobile compact layout */}
-        <CardContent className="p-3 md:hidden">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium text-muted-foreground truncate">Expiring</p>
-              <p className="text-base font-bold">{stats.expiring_soon}</p>
-            </div>
-          </div>
-        </CardContent>
-        {/* Desktop layout */}
-        <div className="hidden md:block">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
-            <Clock className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.expiring_soon}</div>
-          </CardContent>
+        <div className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${stats.expiring_soon > 0 ? 'bg-amber-50' : ''}`}>
+          <Clock className={`h-4 w-4 ${stats.expiring_soon > 0 ? 'text-amber-600' : 'text-muted-foreground'}`} />
+          <span className={`font-semibold ${stats.expiring_soon > 0 ? 'text-amber-700' : ''}`}>
+            {stats.expiring_soon}
+          </span>
+          <span className="text-sm text-muted-foreground">Expiring Soon</span>
         </div>
-      </Card>
-
-      <Card>
-        {/* Mobile compact layout */}
-        <CardContent className="p-3 md:hidden">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium text-muted-foreground truncate">Expired</p>
-              <p className="text-base font-bold">{stats.expired}</p>
-            </div>
-          </div>
-        </CardContent>
-        {/* Desktop layout */}
-        <div className="hidden md:block">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expired</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.expired}</div>
-          </CardContent>
+        <div className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${stats.expired > 0 ? 'bg-red-50' : ''}`}>
+          <AlertTriangle className={`h-4 w-4 ${stats.expired > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
+          <span className={`font-semibold ${stats.expired > 0 ? 'text-red-600' : ''}`}>
+            {stats.expired}
+          </span>
+          <span className="text-sm text-muted-foreground">Expired</span>
         </div>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 }
 
 function StatsLoading() {
   return (
-    <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
-      {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-16 md:h-28 rounded-lg bg-muted animate-pulse" />
-      ))}
-    </div>
+    <div className="h-12 rounded-lg bg-muted animate-pulse" />
   );
 }

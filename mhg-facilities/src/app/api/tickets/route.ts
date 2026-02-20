@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '50', 10)
 
     // Parse filters from query params
+    const isEmergencyParam = searchParams.get('is_emergency')
     const filters = {
       status: searchParams.get('status')?.split(',') as Database['public']['Enums']['ticket_status'][] | undefined,
       priority: searchParams.get('priority')?.split(',') as Database['public']['Enums']['ticket_priority'][] | undefined,
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
       date_from: searchParams.get('date_from') || undefined,
       date_to: searchParams.get('date_to') || undefined,
       search: searchParams.get('search') || undefined,
+      is_emergency: isEmergencyParam !== null ? isEmergencyParam === 'true' : undefined,
       page,
       pageSize,
     }

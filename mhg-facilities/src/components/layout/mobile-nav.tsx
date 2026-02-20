@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -14,20 +14,15 @@ import {
 } from '@/components/ui/sheet'
 import {
   LayoutDashboard,
-  MapPin,
   Ticket,
   Wrench,
-  Users,
   Shield,
-  BarChart3,
   Settings,
   Building2,
   X,
   LogOut,
   User,
-  AlertTriangle,
   Calendar,
-  CheckCircle,
   DollarSign,
   type LucideIcon,
 } from 'lucide-react'
@@ -54,25 +49,20 @@ const navItems: NavItem[] = [
     icon: Ticket,
   },
   {
-    title: 'Approvals',
-    href: '/approvals',
-    icon: CheckCircle,
-    managerOnly: true,
+    title: 'PM Schedules',
+    href: '/pm',
+    icon: Calendar,
   },
   {
-    title: 'Locations',
-    href: '/locations',
-    icon: MapPin,
+    title: 'Documents',
+    href: '/compliance',
+    icon: Shield,
+    managerOnly: true,
   },
   {
     title: 'Assets',
     href: '/assets',
     icon: Wrench,
-  },
-  {
-    title: 'PM Schedules',
-    href: '/pm',
-    icon: Calendar,
   },
   {
     title: 'Vendors',
@@ -81,33 +71,10 @@ const navItems: NavItem[] = [
     managerOnly: true,
   },
   {
-    title: 'Compliance',
-    href: '/compliance',
-    icon: Shield,
-    managerOnly: true,
-  },
-  {
-    title: 'Emergencies',
-    href: '/emergencies',
-    icon: AlertTriangle,
-  },
-  {
     title: 'Budgets',
     href: '/budgets',
     icon: DollarSign,
     managerOnly: true,
-  },
-  {
-    title: 'Reports',
-    href: '/reports',
-    icon: BarChart3,
-    managerOnly: true,
-  },
-  {
-    title: 'Users',
-    href: '/users',
-    icon: Users,
-    adminOnly: true,
   },
   {
     title: 'Settings',
@@ -150,23 +117,30 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     }
   }
 
-  // Filter nav items based on user role
-  const filteredNavItems = navItems.filter((item) => {
-    if (item.adminOnly && !isAdmin) return false
-    if (item.managerOnly) {
-      return isAdmin || user?.role === 'manager'
-    }
-    return true
-  })
+  // Memoize filtered nav items to prevent recalculation on every render
+  const filteredNavItems = useMemo(() => {
+    return navItems.filter((item) => {
+      if (item.adminOnly && !isAdmin) return false
+      if (item.managerOnly) {
+        return isAdmin || user?.role === 'manager'
+      }
+      return true
+    })
+  }, [isAdmin, user?.role])
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="left" className="w-72 p-0">
         <SheetHeader className="flex flex-row items-center justify-between h-16 px-6 border-b border-border">
           <SheetTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary-foreground" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="MHG Facilities"
+              width={32}
+              height={32}
+              className="w-8 h-8"
+            />
             <span className="font-semibold text-foreground truncate">
               {tenant?.name ?? 'MHG Facilities'}
             </span>

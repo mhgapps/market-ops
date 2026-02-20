@@ -1,12 +1,31 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { instance, mock, when, anything } from 'ts-mockito';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { UserDAO } from '../user.dao';
 import type { User, UserRole } from '@/types/database';
 
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  in: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+  auth: {
+    admin: {
+      getUserById: Mock;
+    };
+  };
+}
+
 describe('UserDAO', () => {
   let dao: UserDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   const mockUser: User = {
     id: 'user-1',

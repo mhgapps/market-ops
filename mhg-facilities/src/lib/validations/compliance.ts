@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { uuid, optionalNullableUuid, uuidArray, nullableUuid } from './shared'
+import { uuid, optionalNullableUuid, uuidArray } from './shared'
 
 export const createComplianceDocTypeSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),

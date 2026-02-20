@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useVendors } from '@/hooks/use-vendors'
 import type { Database } from '@/types/database'
@@ -23,9 +23,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Star, Phone, Mail, Calendar } from 'lucide-react'
+import { Plus, Search, Star, Phone, Mail } from 'lucide-react'
 import { PageLoader } from '@/components/ui/loaders'
-import { format } from 'date-fns'
+import { TableLoadingOverlay } from '@/components/ui/table-loading-overlay'
 
 export default function VendorsPage() {
   const router = useRouter()
@@ -44,14 +44,11 @@ export default function VendorsPage() {
     pageSize,
   }
 
-  const { data, isLoading } = useVendors(filters)
+  const { data, isLoading, isFetching } = useVendors(filters)
   const vendors = data?.data || []
   const totalCount = data?.total ?? 0
 
-  if (isLoading) {
-    return <PageLoader />
-  }
-
+  // Helper function to check if insurance is expiring within 30 days
   const isInsuranceExpiring = (expiration: string | null) => {
     if (!expiration) return false
     const expiryDate = new Date(expiration)
@@ -60,21 +57,93 @@ export default function VendorsPage() {
     return expiryDate < thirtyDaysFromNow && expiryDate > today
   }
 
+  // Pre-compute stats counts in a single pass to avoid multiple filter calls during render
+  const stats = useMemo(() => {
+    let active = 0
+    let preferred = 0
+    let insuranceExpiring = 0
+
+    for (const vendor of vendors) {
+      if (vendor.is_active) active++
+      if (vendor.is_preferred) preferred++
+      if (isInsuranceExpiring(vendor.insurance_expiration)) insuranceExpiring++
+    }
+
+    return { active, preferred, insuranceExpiring }
+  }, [vendors])
+
+  if (isLoading && !data) {
+    return <PageLoader />
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Vendors</h1>
-          <p className="mt-1 text-sm text-gray-600 md:text-base">
-            Manage service providers and contractors
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Vendors</h1>
         <Button onClick={() => router.push('/vendors/new')}>
           <Plus className="mr-2 h-4 w-4" />
           <span className="hidden sm:inline">Add Vendor</span>
         </Button>
       </div>
+
+      {/* Stats Strip */}
+      <Card className="p-0 overflow-hidden">
+        <div className="flex flex-wrap md:flex-nowrap divide-y md:divide-y-0 md:divide-x divide-border">
+          <div
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => {
+              setActiveFilter('all')
+              setPreferredFilter('all')
+            }}
+          >
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{totalCount}</span>
+            <span className="text-sm text-muted-foreground">Total</span>
+          </div>
+          <div
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => {
+              setActiveFilter('active')
+              setPreferredFilter('all')
+            }}
+          >
+            <Phone className="h-4 w-4 text-green-600" />
+            <span className="font-semibold">{stats.active}</span>
+            <span className="text-sm text-muted-foreground">Active</span>
+          </div>
+          <div
+            className="flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => {
+              setActiveFilter('all')
+              setPreferredFilter('preferred')
+            }}
+          >
+            <Star className="h-4 w-4 text-yellow-500" />
+            <span className="font-semibold">{stats.preferred}</span>
+            <span className="text-sm text-muted-foreground">Preferred</span>
+          </div>
+          <div
+            className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors cursor-pointer ${
+              stats.insuranceExpiring > 0 ? 'bg-amber-50' : ''
+            }`}
+            onClick={() => {
+              setActiveFilter('all')
+              setPreferredFilter('all')
+            }}
+          >
+            <Mail className={`h-4 w-4 ${
+              stats.insuranceExpiring > 0 ? 'text-amber-600' : 'text-muted-foreground'
+            }`} />
+            <span className={`font-semibold ${
+              stats.insuranceExpiring > 0 ? 'text-amber-700' : ''
+            }`}>
+              {stats.insuranceExpiring}
+            </span>
+            <span className="text-sm text-muted-foreground">Expiring Insurance</span>
+          </div>
+        </div>
+      </Card>
 
       {/* Filters */}
       <Card>
@@ -121,15 +190,16 @@ export default function VendorsPage() {
       </Card>
 
       {/* Vendors List */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>
-              Vendors ({totalCount})
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <TableLoadingOverlay isLoading={isFetching}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                Vendors ({totalCount})
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
           {vendors.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-gray-500">No vendors found</p>
@@ -280,7 +350,8 @@ export default function VendorsPage() {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </TableLoadingOverlay>
     </div>
   )
 }

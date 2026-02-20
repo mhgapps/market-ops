@@ -18,6 +18,14 @@ import { UserDAO } from '@/dao/user.dao';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Verify CRON_SECRET is configured
+    if (!process.env.CRON_SECRET) {
+      return NextResponse.json(
+        { error: 'CRON_SECRET not configured' },
+        { status: 500 }
+      );
+    }
+
     // Verify this is a legitimate cron request
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -31,68 +39,106 @@ export async function GET(request: NextRequest) {
     const notificationService = new NotificationService();
     const userDAO = new UserDAO();
 
-    // Get all tickets that haven't been closed
-    const activeTickets = await ticketService.getAllTickets({
-      status: ['submitted', 'acknowledged', 'approved', 'in_progress', 'needs_approval', 'on_hold'],
-    });
+    // Only escalate 'submitted' tickets (not yet acknowledged by staff).
+    // Tickets in 'in_progress' or 'on_hold' have already been responded to.
+    // NOTE: Without an escalated_at column, we cannot prevent re-escalation of
+    // 'submitted' tickets that remain unacknowledged across multiple cron runs.
+    // A future migration could add escalated_at to tickets for proper tracking.
+    const [activeTickets, managers, admins] = await Promise.all([
+      ticketService.getAllTickets({
+        status: ['submitted'],
+      }),
+      notificationService.getManagers(),
+      notificationService.getAdminUsers(),
+    ]);
+
+    // Dedupe notification recipients once, outside the loop
+    const notifyUsers = [...new Set([...managers, ...admins])];
 
     const escalated = [];
     const errors = [];
 
     const now = new Date();
 
+    // Collect tickets that need escalation and their submitter IDs for batch lookup
+    const ticketsToEscalate: Array<{
+      ticket: (typeof activeTickets)[number];
+      reason: string;
+    }> = [];
+
     for (const ticket of activeTickets) {
+      const createdAt = new Date(ticket.created_at);
+      const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+
+      // Determine if ticket should be escalated based on priority
+      let shouldEscalate = false;
+      let escalationReason = '';
+
+      if (ticket.priority === 'critical' && hoursSinceCreated > 2) {
+        shouldEscalate = true;
+        escalationReason = `Critical ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
+      } else if (ticket.priority === 'high' && hoursSinceCreated > 4) {
+        shouldEscalate = true;
+        escalationReason = `High priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
+      } else if (ticket.priority === 'medium' && hoursSinceCreated > 8) {
+        shouldEscalate = true;
+        escalationReason = `Medium priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
+      } else if (ticket.priority === 'low' && hoursSinceCreated > 24) {
+        shouldEscalate = true;
+        escalationReason = `Low priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
+      }
+
+      if (shouldEscalate) {
+        ticketsToEscalate.push({ ticket, reason: escalationReason });
+      }
+    }
+
+    // Batch fetch all submitter users in parallel
+    const uniqueSubmitterIds = [
+      ...new Set(
+        ticketsToEscalate
+          .map((t) => t.ticket.submitted_by)
+          .filter((id): id is string => id !== null && id !== undefined)
+      ),
+    ];
+
+    const submitterUsers = await Promise.all(
+      uniqueSubmitterIds.map((id) => userDAO.findById(id).catch(() => null))
+    );
+
+    // Create a map for quick lookup
+    const submitterMap = new Map<string, (typeof submitterUsers)[number]>();
+    uniqueSubmitterIds.forEach((id, index) => {
+      submitterMap.set(id, submitterUsers[index]);
+    });
+
+    // Process escalations
+    for (const { ticket, reason: escalationReason } of ticketsToEscalate) {
       try {
-        const createdAt = new Date(ticket.created_at);
-        const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        if (notifyUsers.length > 0) {
+          // Get the user who submitted the ticket from the pre-fetched map
+          const submittedBy = ticket.submitted_by
+            ? submitterMap.get(ticket.submitted_by) ?? null
+            : null;
 
-        // Determine if ticket should be escalated based on priority
-        let shouldEscalate = false;
-        let escalationReason = '';
-
-        if (ticket.priority === 'critical' && hoursSinceCreated > 2) {
-          shouldEscalate = true;
-          escalationReason = `Critical ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
-        } else if (ticket.priority === 'high' && hoursSinceCreated > 4) {
-          shouldEscalate = true;
-          escalationReason = `High priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
-        } else if (ticket.priority === 'medium' && hoursSinceCreated > 8) {
-          shouldEscalate = true;
-          escalationReason = `Medium priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
-        } else if (ticket.priority === 'low' && hoursSinceCreated > 24) {
-          shouldEscalate = true;
-          escalationReason = `Low priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
-        }
-
-        if (shouldEscalate) {
-          // Get managers and admins to notify
-          const managers = await notificationService.getManagers();
-          const admins = await notificationService.getAdminUsers();
-          const notifyUsers = [...new Set([...managers, ...admins])]; // Dedupe
-
-          if (notifyUsers.length > 0) {
-            // Get the user who submitted the ticket (or system)
-            const submittedBy = ticket.submitted_by
-              ? await userDAO.findById(ticket.submitted_by)
-              : null;
-
-            // Send escalation notifications
+          // Send escalation notifications - skip if no user found (system escalation)
+          if (submittedBy) {
             await notificationService.notifyTicketStatusChange({
               ticket,
               oldStatus: ticket.status,
               newStatus: ticket.status, // Status doesn't change, just escalating
-              changedBy: submittedBy || { id: 'system', full_name: 'System', email: null } as any,
+              changedBy: submittedBy,
               notifyUsers,
             });
-
-            escalated.push({
-              ticketId: ticket.id,
-              reason: escalationReason,
-              notifiedCount: notifyUsers.length,
-            });
-
-            console.log(`Escalated ticket ${ticket.id}: ${escalationReason}`);
           }
+
+          escalated.push({
+            ticketId: ticket.id,
+            reason: escalationReason,
+            notifiedCount: notifyUsers.length,
+          });
+
+          console.log(`Escalated ticket ${ticket.id}: ${escalationReason}`);
         }
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';

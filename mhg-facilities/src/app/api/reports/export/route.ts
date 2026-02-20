@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ReportService } from '@/services/report.service';
+import { requireAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
+
     const body = await request.json();
     const { data, filename, format = 'csv' } = body;
 
@@ -13,16 +17,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (Array.isArray(data) && data.length > 10000) {
+      return NextResponse.json(
+        { error: 'Export limited to 10,000 rows' },
+        { status: 400 }
+      );
+    }
+
+    const safeName = (filename || 'export').replace(/[^a-zA-Z0-9._-]/g, '_');
+
     const service = new ReportService();
 
     if (format === 'csv') {
-      const blob = service.exportToCSV(data, filename || 'export.csv');
+      const blob = service.exportToCSV(data, safeName + '.csv');
       const buffer = await blob.arrayBuffer();
 
       return new NextResponse(buffer, {
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="${filename || 'export.csv'}"`,
+          'Content-Disposition': `attachment; filename="${safeName}.csv"`,
         },
       });
     }

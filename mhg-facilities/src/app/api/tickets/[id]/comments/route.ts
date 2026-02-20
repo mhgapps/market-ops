@@ -12,15 +12,18 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error } = await requireAuth()
+    const { user, error } = await requireAuth()
     if (error) return error
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { id } = await params
     const service = new TicketCommentService()
 
-    // Get user role to determine if internal comments should be shown
+    // Only managers and admins can see internal comments
     const { searchParams } = new URL(request.url)
-    const includeInternal = searchParams.get('include_internal') === 'true'
+    const includeInternal = ['manager', 'admin'].includes(user.role) && searchParams.get('include_internal') === 'true'
 
     const comments = await service.getComments(id, includeInternal)
 

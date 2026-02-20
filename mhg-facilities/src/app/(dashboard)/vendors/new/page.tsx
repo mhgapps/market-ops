@@ -20,7 +20,7 @@ export default function NewVendorPage() {
       const vendor = await createVendor.mutateAsync(data)
       toast.success('Vendor created successfully')
       router.push(`/vendors/${vendor.id}`)
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create vendor')
     }
   }
@@ -34,10 +34,7 @@ export default function NewVendorPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Add New Vendor</h1>
-            <p className="text-muted-foreground">Register a new vendor in the system</p>
-          </div>
+          <h1 className="text-2xl font-bold">Add New Vendor</h1>
         </div>
         <div className="flex items-center gap-3">
           <Button

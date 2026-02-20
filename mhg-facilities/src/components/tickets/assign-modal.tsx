@@ -22,13 +22,13 @@ import { UserCircle } from 'lucide-react'
 
 interface StaffMember {
   id: string
-  full_name: string
+  full_name?: string
+  fullName?: string
   role: string
   email: string
 }
 
 interface AssignModalProps {
-  ticketId: string
   ticketTitle: string
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -38,7 +38,6 @@ interface AssignModalProps {
 }
 
 export function AssignModal({
-  ticketId,
   ticketTitle,
   open,
   onOpenChange,
@@ -89,7 +88,7 @@ export function AssignModal({
                     <div className="flex items-center gap-2">
                       <UserCircle className="h-4 w-4 text-gray-500" />
                       <div>
-                        <div className="font-medium">{staff.full_name}</div>
+                        <div className="font-medium">{staff.full_name || staff.fullName}</div>
                         <div className="text-xs text-gray-500">
                           {staff.role} • {staff.email}
                         </div>
@@ -104,8 +103,10 @@ export function AssignModal({
           {currentAssigneeId && (
             <p className="text-sm text-gray-600">
               <span className="font-medium">Current assignee:</span>{' '}
-              {staffMembers.find((s) => s.id === currentAssigneeId)?.full_name ||
-                'Unknown'}
+              {(() => {
+                const assignee = staffMembers.find((s) => s.id === currentAssigneeId)
+                return assignee?.full_name || assignee?.fullName || 'Unknown'
+              })()}
             </p>
           )}
         </div>

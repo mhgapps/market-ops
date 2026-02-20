@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { ComplianceDocumentService } from '@/services/compliance-document.service';
 import { updateComplianceDocSchema } from '@/lib/validations/compliance';
 
@@ -12,6 +13,9 @@ interface RouteContext {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params;
 
     const service = new ComplianceDocumentService();
@@ -33,6 +37,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params;
 
     const body = await request.json();
@@ -61,6 +68,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params;
 
     const service = new ComplianceDocumentService();

@@ -1,13 +1,30 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { VendorDAO, type VendorFilters } from '../vendor.dao';
 import type { Database } from '@/types/database';
 
 type Vendor = Database['public']['Tables']['vendors']['Row'];
 
+interface MockQueryBuilder {
+  select: Mock;
+  insert: Mock;
+  update: Mock;
+  eq: Mock;
+  contains: Mock;
+  lte: Mock;
+  gte: Mock;
+  is: Mock;
+  order: Mock;
+  single: Mock;
+}
+
+interface MockSupabaseClient {
+  from: Mock;
+}
+
 describe('VendorDAO', () => {
   let dao: VendorDAO;
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: MockSupabaseClient;
+  let mockQuery: MockQueryBuilder;
 
   const mockVendor: Vendor = {
     id: 'vendor-1',

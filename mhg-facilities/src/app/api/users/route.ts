@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { UserService } from '@/services/user.service'
-import { requireAdmin } from '@/lib/auth/api-auth'
+import { requireManager } from '@/lib/auth/api-auth'
+import type { UserRole } from '@/types/database'
 
 /**
  * GET /api/users
  * Get all users for the current tenant
- * Requires admin role
+ * Requires manager or admin role
  */
 export async function GET(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error } = await requireManager()
     if (error) return error
 
     const userService = new UserService()
@@ -22,9 +23,15 @@ export async function GET(request: NextRequest) {
 
     let users
 
+    const validRoles: UserRole[] = ['super_admin', 'admin', 'manager', 'staff', 'vendor', 'readonly']
     if (role) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      users = await userService.getUsersByRole(role as any)
+      if (!validRoles.includes(role as UserRole)) {
+        return NextResponse.json(
+          { error: `Invalid role. Must be one of: ${validRoles.join(', ')}` },
+          { status: 400 }
+        )
+      }
+      users = await userService.getUsersByRole(role as UserRole)
     } else if (locationId) {
       users = await userService.getUsersByLocation(locationId)
     } else if (activeOnly) {

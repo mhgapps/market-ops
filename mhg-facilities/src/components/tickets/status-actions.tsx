@@ -1,364 +1,170 @@
+'use client'
+
+import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import {
-  CheckCircle2,
-  PlayCircle,
-  CheckCheck,
-  Shield,
-  XCircle,
-  Pause,
-  Play,
-  Lock,
-} from 'lucide-react'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import type { TicketStatus } from './status-badge'
 
 interface StatusActionsProps {
-  ticketId: string
   currentStatus: TicketStatus
   userRole: 'admin' | 'manager' | 'staff' | 'user'
   isAssigned: boolean
-  onAction: (action: string) => void | Promise<void>
+  onAction: (action: string, data?: { cost?: number; notes?: string; new_status?: string }) => void | Promise<void>
   loading?: boolean
 }
 
-interface ActionButton {
-  action: string
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  variant: 'default' | 'outline' | 'destructive' | 'secondary'
-  requiresAssignment?: boolean
-}
-
-// Define which actions are available for each status and role
-const statusActions: Record<
-  TicketStatus,
-  {
-    staff: ActionButton[]
-    manager: ActionButton[]
-    admin: ActionButton[]
-    user: ActionButton[]
-  }
-> = {
-  submitted: {
-    staff: [
-      {
-        action: 'acknowledge',
-        label: 'Acknowledge',
-        icon: CheckCircle2,
-        variant: 'default',
-      },
-      {
-        action: 'reject',
-        label: 'Reject',
-        icon: XCircle,
-        variant: 'destructive',
-      },
-    ],
-    manager: [
-      {
-        action: 'acknowledge',
-        label: 'Acknowledge',
-        icon: CheckCircle2,
-        variant: 'default',
-      },
-      {
-        action: 'reject',
-        label: 'Reject',
-        icon: XCircle,
-        variant: 'destructive',
-      },
-    ],
-    admin: [
-      {
-        action: 'acknowledge',
-        label: 'Acknowledge',
-        icon: CheckCircle2,
-        variant: 'default',
-      },
-      {
-        action: 'reject',
-        label: 'Reject',
-        icon: XCircle,
-        variant: 'destructive',
-      },
-    ],
-    user: [],
-  },
-  acknowledged: {
-    staff: [
-      {
-        action: 'start_work',
-        label: 'Start Work',
-        icon: PlayCircle,
-        variant: 'default',
-        requiresAssignment: true,
-      },
-      {
-        action: 'hold',
-        label: 'Put On Hold',
-        icon: Pause,
-        variant: 'outline',
-      },
-    ],
-    manager: [
-      {
-        action: 'start_work',
-        label: 'Start Work',
-        icon: PlayCircle,
-        variant: 'default',
-      },
-      {
-        action: 'hold',
-        label: 'Put On Hold',
-        icon: Pause,
-        variant: 'outline',
-      },
-    ],
-    admin: [
-      {
-        action: 'start_work',
-        label: 'Start Work',
-        icon: PlayCircle,
-        variant: 'default',
-      },
-      {
-        action: 'hold',
-        label: 'Put On Hold',
-        icon: Pause,
-        variant: 'outline',
-      },
-    ],
-    user: [],
-  },
-  needs_approval: {
-    staff: [],
-    manager: [
-      {
-        action: 'approve',
-        label: 'Approve',
-        icon: CheckCircle2,
-        variant: 'default',
-      },
-      {
-        action: 'reject',
-        label: 'Reject',
-        icon: XCircle,
-        variant: 'destructive',
-      },
-    ],
-    admin: [
-      {
-        action: 'approve',
-        label: 'Approve',
-        icon: CheckCircle2,
-        variant: 'default',
-      },
-      {
-        action: 'reject',
-        label: 'Reject',
-        icon: XCircle,
-        variant: 'destructive',
-      },
-    ],
-    user: [],
-  },
-  approved: {
-    staff: [
-      {
-        action: 'start_work',
-        label: 'Start Work',
-        icon: PlayCircle,
-        variant: 'default',
-        requiresAssignment: true,
-      },
-    ],
-    manager: [
-      {
-        action: 'start_work',
-        label: 'Start Work',
-        icon: PlayCircle,
-        variant: 'default',
-      },
-    ],
-    admin: [
-      {
-        action: 'start_work',
-        label: 'Start Work',
-        icon: PlayCircle,
-        variant: 'default',
-      },
-    ],
-    user: [],
-  },
-  in_progress: {
-    staff: [
-      {
-        action: 'complete',
-        label: 'Mark Complete',
-        icon: CheckCheck,
-        variant: 'default',
-        requiresAssignment: true,
-      },
-      {
-        action: 'hold',
-        label: 'Put On Hold',
-        icon: Pause,
-        variant: 'outline',
-      },
-    ],
-    manager: [
-      {
-        action: 'complete',
-        label: 'Mark Complete',
-        icon: CheckCheck,
-        variant: 'default',
-      },
-      {
-        action: 'hold',
-        label: 'Put On Hold',
-        icon: Pause,
-        variant: 'outline',
-      },
-    ],
-    admin: [
-      {
-        action: 'complete',
-        label: 'Mark Complete',
-        icon: CheckCheck,
-        variant: 'default',
-      },
-      {
-        action: 'hold',
-        label: 'Put On Hold',
-        icon: Pause,
-        variant: 'outline',
-      },
-    ],
-    user: [],
-  },
-  completed: {
-    staff: [],
-    manager: [
-      {
-        action: 'verify',
-        label: 'Verify',
-        icon: Shield,
-        variant: 'default',
-      },
-    ],
-    admin: [
-      {
-        action: 'verify',
-        label: 'Verify',
-        icon: Shield,
-        variant: 'default',
-      },
-    ],
-    user: [
-      {
-        action: 'verify',
-        label: 'Verify',
-        icon: Shield,
-        variant: 'default',
-      },
-    ],
-  },
-  verified: {
-    staff: [],
-    manager: [
-      {
-        action: 'close',
-        label: 'Close Ticket',
-        icon: Lock,
-        variant: 'outline',
-      },
-    ],
-    admin: [
-      {
-        action: 'close',
-        label: 'Close Ticket',
-        icon: Lock,
-        variant: 'outline',
-      },
-    ],
-    user: [],
-  },
-  closed: {
-    staff: [],
-    manager: [],
-    admin: [],
-    user: [],
-  },
-  rejected: {
-    staff: [],
-    manager: [],
-    admin: [],
-    user: [],
-  },
-  on_hold: {
-    staff: [
-      {
-        action: 'resume',
-        label: 'Resume Work',
-        icon: Play,
-        variant: 'default',
-        requiresAssignment: true,
-      },
-    ],
-    manager: [
-      {
-        action: 'resume',
-        label: 'Resume Work',
-        icon: Play,
-        variant: 'default',
-      },
-    ],
-    admin: [
-      {
-        action: 'resume',
-        label: 'Resume Work',
-        icon: Play,
-        variant: 'default',
-      },
-    ],
-    user: [],
-  },
-}
+const statusOptions: { value: TicketStatus; label: string }[] = [
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'closed', label: 'Closed' },
+]
 
 export function StatusActions({
-  ticketId,
   currentStatus,
   userRole,
-  isAssigned,
   onAction,
   loading = false,
 }: StatusActionsProps) {
-  const availableActions = statusActions[currentStatus][userRole] || []
+  // Consolidate related state into a single object to reduce useState calls
+  const [dialogState, setDialogState] = useState({
+    isOpen: false,
+    cost: '',
+    notes: '',
+    isSubmitting: false,
+  })
+  const [selectedStatus, setSelectedStatus] = useState<TicketStatus>(currentStatus)
 
-  if (availableActions.length === 0) {
+  // All hooks must be called before any early returns
+  const handleStatusChange = useCallback(async (newStatus: TicketStatus) => {
+    if (newStatus === currentStatus) return
+
+    setSelectedStatus(newStatus)
+
+    if (newStatus === 'closed') {
+      // Show dialog to capture cost/notes when closing
+      setDialogState(prev => ({ ...prev, isOpen: true }))
+    } else {
+      // Direct status change via set_status action
+      await onAction('set_status', { new_status: newStatus })
+    }
+  }, [currentStatus, onAction])
+
+  const handleCloseSubmit = useCallback(async () => {
+    setDialogState(prev => ({ ...prev, isSubmitting: true }))
+    try {
+      await onAction('close', {
+        cost: dialogState.cost ? parseFloat(dialogState.cost) : undefined,
+        notes: dialogState.notes || undefined,
+      })
+      setDialogState({ isOpen: false, cost: '', notes: '', isSubmitting: false })
+    } finally {
+      setDialogState(prev => ({ ...prev, isSubmitting: false }))
+    }
+  }, [onAction, dialogState.cost, dialogState.notes])
+
+  const handleCloseCancel = useCallback(() => {
+    setDialogState({ isOpen: false, cost: '', notes: '', isSubmitting: false })
+    setSelectedStatus(currentStatus) // Reset to current status
+  }, [currentStatus])
+
+  // Only managers and admins can change status - early return after hooks
+  if (userRole === 'user') {
     return null
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {availableActions.map((action) => {
-        const Icon = action.icon
-        const isDisabled =
-          loading || (action.requiresAssignment && !isAssigned && userRole === 'staff')
+    <>
+      <div className="flex items-center gap-3">
+        <Label htmlFor="status-select" className="text-sm font-medium">
+          Status:
+        </Label>
+        <Select
+          value={selectedStatus}
+          onValueChange={(value) => handleStatusChange(value as TicketStatus)}
+          disabled={loading || dialogState.isSubmitting}
+        >
+          <SelectTrigger id="status-select" className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-        return (
-          <Button
-            key={action.action}
-            variant={action.variant}
-            size="sm"
-            onClick={() => onAction(action.action)}
-            disabled={isDisabled}
-            className="gap-2"
-          >
-            <Icon className="h-4 w-4" />
-            {action.label}
-          </Button>
-        )
-      })}
-    </div>
+      {/* Close Ticket Dialog */}
+      <Dialog open={dialogState.isOpen} onOpenChange={(open) => !open && handleCloseCancel()}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Close Ticket</DialogTitle>
+            <DialogDescription>
+              Enter the final cost and any notes before closing.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="cost">Final Cost ($)</Label>
+              <Input
+                id="cost"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={dialogState.cost}
+                onChange={(e) => setDialogState(prev => ({ ...prev, cost: e.target.value }))}
+              />
+              <p className="text-xs text-gray-500">Enter the total cost from the vendor invoice</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Resolution Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="What was done to resolve this issue..."
+                value={dialogState.notes}
+                onChange={(e) => setDialogState(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseCancel}
+              disabled={dialogState.isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleCloseSubmit} disabled={dialogState.isSubmitting}>
+              {dialogState.isSubmitting ? 'Closing...' : 'Close Ticket'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

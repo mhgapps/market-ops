@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { requireAuth } from '@/lib/auth/api-auth'
 import { AssetCategoryService } from '@/services/asset-category.service'
 import { updateAssetCategorySchema } from '@/lib/validations/assets-vendors'
 
@@ -12,6 +13,9 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
 
     const service = new AssetCategoryService()
@@ -37,6 +41,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
 
@@ -89,6 +96,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await params
 
     const service = new AssetCategoryService()

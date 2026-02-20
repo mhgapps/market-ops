@@ -1,11 +1,14 @@
 import { ZodError } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/auth/api-auth';
 import { ComplianceDocumentService } from '@/services/compliance-document.service';
 import { createComplianceDocSchema, complianceFiltersSchema } from '@/lib/validations/compliance';
 
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const { searchParams } = new URL(request.url);
     const filters = complianceFiltersSchema.parse({
@@ -38,6 +41,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const body = await request.json();
     const validated = createComplianceDocSchema.parse(body);

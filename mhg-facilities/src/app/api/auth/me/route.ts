@@ -46,19 +46,16 @@ export async function GET() {
     const tenantId = user?.tenant_id ?? authUser.user_metadata?.tenant_id
 
     if (!tenantId) {
-      // Debug info to help diagnose
+      console.error('No tenant associated with user:', {
+        authUserId: authUser.id,
+        authUserEmail: authUser.email,
+        userFound: !!user,
+        userTenantId: user?.tenant_id ?? null,
+        userMetadataTenantId: authUser.user_metadata?.tenant_id ?? null,
+        userError: userError?.message ?? null,
+      })
       return NextResponse.json(
-        {
-          error: 'No tenant associated with user. Please contact support.',
-          debug: {
-            authUserId: authUser.id,
-            authUserEmail: authUser.email,
-            userFound: !!user,
-            userTenantId: user?.tenant_id ?? null,
-            userMetadataTenantId: authUser.user_metadata?.tenant_id ?? null,
-            userError: userError?.message ?? null,
-          }
-        },
+        { error: 'No tenant associated with user. Please contact support.' },
         { status: 400 }
       )
     }

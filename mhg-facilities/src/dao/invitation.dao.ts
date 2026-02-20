@@ -2,8 +2,8 @@ import { BaseDAO } from './base.dao'
 import type { Database } from '@/types/database-extensions'
 
 type TenantInvitation = Database['public']['Tables']['tenant_invitations']['Row']
-type TenantInvitationInsert = Database['public']['Tables']['tenant_invitations']['Insert']
-type TenantInvitationUpdate = Database['public']['Tables']['tenant_invitations']['Update']
+type _TenantInvitationInsert = Database['public']['Tables']['tenant_invitations']['Insert']
+type _TenantInvitationUpdate = Database['public']['Tables']['tenant_invitations']['Update']
 
 export class InvitationDAO extends BaseDAO<'tenant_invitations'> {
   constructor() {
