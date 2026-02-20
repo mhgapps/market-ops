@@ -2,6 +2,7 @@ import { getPooledSupabaseClient } from '@/lib/supabase/server-pooled'
 import { getTenantContext } from '@/lib/tenant/context'
 import { sendEmail } from '@/lib/email/smtp'
 import { generateInvitationEmail } from '@/lib/email/templates/invitation'
+import { InvitationDAO } from '@/dao/invitation.dao'
 import { UserService } from '@/services/user.service'
 import { TenantService } from '@/services/tenant.service'
 import type { Database } from '@/types/database'
@@ -25,25 +26,26 @@ interface AcceptInvitationInput {
 /**
  * Invitation Service - Business logic for user invitations
  * Handles invitation creation, email sending, and acceptance
+ *
+ * Architecture:
+ * - Tenant-scoped operations (inviteUser, resendInvitation, cancelInvitation)
+ *   use InvitationDAO which provides tenant isolation via BaseDAO
+ * - Public operations (getInvitationByToken, acceptInvitation) use
+ *   getPooledSupabaseClient() directly since they run without auth/tenant context
  */
 export class InvitationService {
   constructor(
+    private invitationDAO = new InvitationDAO(),
     private userService = new UserService(),
     private tenantService = new TenantService()
   ) {}
 
   /**
-   * Get tenant-scoped client
+   * Get all pending invitations for the current tenant
+   * Delegates to DAO's findPending() which filters by tenant, not accepted, not expired, not deleted
    */
-  private async getClient() {
-    const supabase = await getPooledSupabaseClient()
-    const tenant = await getTenantContext()
-
-    if (!tenant) {
-      throw new Error('Tenant context required for invitation operations')
-    }
-
-    return { supabase, tenantId: tenant.id, tenant }
+  async getPendingInvitations(): Promise<TenantInvitation[]> {
+    return this.invitationDAO.findPending()
   }
 
   /**
@@ -51,10 +53,16 @@ export class InvitationService {
    * Creates invitation record and sends email
    */
   async inviteUser(input: InviteUserInput): Promise<TenantInvitation> {
-    const { email, role, invited_by } = input
-    const { supabase, tenantId, tenant } = await this.getClient()
+    const { email, role, location_id, invited_by } = input
+    const tenant = await getTenantContext()
 
-    // Check if user already exists
+    if (!tenant) {
+      throw new Error('Tenant context required for invitation operations')
+    }
+
+    // Check if user already exists (uses DAO's tenant-scoped client)
+    const { supabase, tenantId } = await this.getTenantClient()
+
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
@@ -67,18 +75,9 @@ export class InvitationService {
       throw new Error('A user with this email already exists in your organization')
     }
 
-    // Check if there's a pending invitation
-    const { data: existingInvitation } = await supabase
-      .from('tenant_invitations')
-      .select('id, expires_at')
-      .eq('tenant_id', tenantId)
-      .eq('email', email)
-      .is('accepted_at', null)
-      .is('deleted_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .single()
-
-    if (existingInvitation) {
+    // Check if there's a pending invitation via DAO
+    const existingInvitation = await this.invitationDAO.findByEmail(email)
+    if (existingInvitation && !existingInvitation.accepted_at && new Date(existingInvitation.expires_at) > new Date()) {
       throw new Error('This user already has a pending invitation')
     }
 
@@ -88,23 +87,19 @@ export class InvitationService {
       throw new Error('User limit reached for your plan. Please upgrade to invite more users.')
     }
 
-    // Create invitation
-    const { data: invitation, error } = await supabase
-      .from('tenant_invitations')
-      .insert({
-        tenant_id: tenantId,
-        email,
-        role,
-        invited_by,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-      .select()
-      .single()
+    // Create invitation via DAO (auto-sets tenant_id)
+    const insertData: Record<string, unknown> = {
+      email,
+      role,
+      invited_by,
+    }
+    if (location_id) {
+      insertData.location_id = location_id
+    }
 
-    if (error) throw new Error(error.message)
-    if (!invitation) throw new Error('Failed to create invitation')
-
-    const invData = invitation as TenantInvitation
+    const invitation = await this.invitationDAO.create(
+      insertData as Partial<Database['public']['Tables']['tenant_invitations']['Insert']>
+    )
 
     // Get inviter details
     const { data: inviter } = await supabase
@@ -115,18 +110,18 @@ export class InvitationService {
 
     // Generate invitation link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const inviteLink = `${baseUrl}/accept-invite/${invData.token}`
+    const inviteLink = `${baseUrl}/accept-invite/${invitation.token}`
 
     // Send invitation email
     try {
+      const inviterRecord = inviter as { full_name: string } | null
       const emailContent = generateInvitationEmail({
         recipientName: '',
         recipientEmail: email,
         tenantName: tenant.name,
         role: this.formatRoleName(role),
         inviteLink,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        inviterName: (inviter as any)?.full_name || 'Your team',
+        inviterName: inviterRecord?.full_name || 'Your team',
       })
 
       await sendEmail({
@@ -135,19 +130,19 @@ export class InvitationService {
         html: emailContent.html,
         text: emailContent.text,
       })
-    } catch (error) {
-      console.error('Failed to send invitation email:', error)
+    } catch (emailError) {
+      console.error('Failed to send invitation email:', emailError)
       // Don't throw - invitation was created successfully
       // Admin can resend if needed
     }
 
-    return invData
+    return invitation
   }
 
   /**
-   * Get invitation by token
+   * Get invitation by token (public endpoint, no tenant context required)
    */
-  async getInvitationByToken(token: string): Promise<(TenantInvitation & { tenant_name: string }) | null> {
+  async getInvitationByToken(token: string): Promise<(TenantInvitation & { tenant_name: string; location_id?: string }) | null> {
     const supabase = await getPooledSupabaseClient()
 
     const { data: invitation, error } = await supabase
@@ -166,19 +161,18 @@ export class InvitationService {
 
     if (error || !invitation) return null
 
+    const invRecord = invitation as TenantInvitation & { tenant: { name: string } | null }
+
     return {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...(invitation as any),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tenant_name: (invitation as any).tenant?.name || 'Unknown',
-    }
+      ...invRecord,
+      tenant_name: invRecord.tenant?.name || 'Unknown',
+    } as TenantInvitation & { tenant_name: string; location_id?: string }
   }
 
   /**
-   * Accept an invitation and create user account
+   * Accept an invitation and create user account (public endpoint, no tenant context required)
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async acceptInvitation(input: AcceptInvitationInput): Promise<{ user: any; session: any }> {
+  async acceptInvitation(input: AcceptInvitationInput): Promise<{ user: Record<string, unknown>; session: unknown }> {
     const { token, password, full_name } = input
 
     // Get invitation
@@ -204,20 +198,25 @@ export class InvitationService {
     if (authError) throw new Error(authError.message)
     if (!authData.user) throw new Error('Failed to create user account')
 
-    // Create user in users table
+    // Create user in users table, including location_id if present on the invitation
+    const userInsert: Record<string, unknown> = {
+      tenant_id: invitation.tenant_id,
+      auth_user_id: authData.user.id,
+      email: invitation.email,
+      full_name,
+      role: invitation.role,
+      is_active: true,
+      language_preference: 'en',
+      notification_preferences: { email: true, sms: false, push: false },
+    }
+
+    if (invitation.location_id) {
+      userInsert.location_id = invitation.location_id
+    }
+
     const { data: user, error: userError } = await supabase
       .from('users')
-      .insert({
-        tenant_id: invitation.tenant_id,
-        auth_user_id: authData.user.id,
-        email: invitation.email,
-        full_name,
-        role: invitation.role,
-        is_active: true,
-        language_preference: 'en',
-        notification_preferences: { email: true, sms: false, push: false },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
+      .insert(userInsert as never)
       .select()
       .single()
 
@@ -227,13 +226,21 @@ export class InvitationService {
       throw new Error(userError.message)
     }
 
-    // Mark invitation as accepted
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateResult = (await supabase.from('tenant_invitations')) as any
-
-    await updateResult
-      .update({ accepted_at: new Date().toISOString() })
+    // Mark invitation as accepted with proper error handling
+    const { error: acceptError } = await supabase
+      .from('tenant_invitations')
+      .update({ accepted_at: new Date().toISOString() } as never)
       .eq('id', invitation.id)
+
+    if (acceptError) {
+      // Critical: If marking accepted fails, we have a user but the invitation
+      // remains "pending" and could be accepted again creating duplicates.
+      // Log the error but don't rollback the user - they were created successfully.
+      console.error(
+        `Failed to mark invitation ${invitation.id} as accepted: ${acceptError.message}. ` +
+        'Manual cleanup may be required to prevent duplicate acceptance.'
+      )
+    }
 
     return {
       user,
@@ -242,51 +249,53 @@ export class InvitationService {
   }
 
   /**
-   * Resend invitation email
+   * Resend invitation email (tenant-scoped, uses DAO)
    */
   async resendInvitation(invitationId: string): Promise<void> {
-    const { supabase, tenant } = await this.getClient()
+    const tenant = await getTenantContext()
+    if (!tenant) {
+      throw new Error('Tenant context required for invitation operations')
+    }
 
-    const { data: invitation, error } = await supabase
-      .from('tenant_invitations')
-      .select(`
-        *,
-        inviter:users!invited_by (
-          full_name
-        )
-      `)
-      .eq('id', invitationId)
-      .is('accepted_at', null)
-      .is('deleted_at', null)
-      .single()
+    // Use DAO to get invitation with tenant isolation
+    const invitation = await this.invitationDAO.findById(invitationId)
 
-    if (error || !invitation) {
+    if (!invitation || invitation.accepted_at) {
       throw new Error('Invitation not found or already accepted')
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const invData = invitation as any
-
-    if (new Date(invData.expires_at) < new Date()) {
+    if (new Date(invitation.expires_at) < new Date()) {
       throw new Error('Invitation has expired. Please create a new invitation.')
+    }
+
+    // Get inviter name
+    const { supabase } = await this.getTenantClient()
+    let inviterRecord: { full_name: string } | null = null
+    if (invitation.invited_by) {
+      const { data: inviter } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', invitation.invited_by)
+        .single()
+      inviterRecord = inviter as { full_name: string } | null
     }
 
     // Generate invitation link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const inviteLink = `${baseUrl}/accept-invite/${invData.token}`
+    const inviteLink = `${baseUrl}/accept-invite/${invitation.token}`
 
     // Send invitation email
     const emailContent = generateInvitationEmail({
       recipientName: '',
-      recipientEmail: invData.email,
+      recipientEmail: invitation.email,
       tenantName: tenant.name,
-      role: this.formatRoleName(invData.role),
+      role: this.formatRoleName(invitation.role),
       inviteLink,
-      inviterName: invData.inviter?.full_name || 'Your team',
+      inviterName: inviterRecord?.full_name || 'Your team',
     })
 
     await sendEmail({
-      to: invData.email,
+      to: invitation.email,
       subject: emailContent.subject,
       html: emailContent.html,
       text: emailContent.text,
@@ -294,17 +303,25 @@ export class InvitationService {
   }
 
   /**
-   * Cancel/revoke an invitation
+   * Cancel/revoke an invitation (tenant-scoped, uses DAO soft delete)
    */
   async cancelInvitation(invitationId: string): Promise<void> {
-    const { supabase, tenantId } = await this.getClient()
+    await this.invitationDAO.softDelete(invitationId)
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateResult = supabase.from('tenant_invitations') as any
+  /**
+   * Get a tenant-scoped Supabase client for queries not covered by the DAO
+   * (e.g., cross-table queries on the users table)
+   */
+  private async getTenantClient() {
+    const supabase = await getPooledSupabaseClient()
+    const tenant = await getTenantContext()
 
-    const { error } = await updateResult.update({ deleted_at: new Date().toISOString() }).eq('id', invitationId).eq('tenant_id', tenantId)
+    if (!tenant) {
+      throw new Error('Tenant context required for invitation operations')
+    }
 
-    if (error) throw new Error(error.message)
+    return { supabase, tenantId: tenant.id, tenant }
   }
 
   /**

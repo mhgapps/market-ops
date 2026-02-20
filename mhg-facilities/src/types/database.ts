@@ -161,6 +161,7 @@ export interface Database {
           token: string
           expires_at: string
           accepted_at: string | null
+          location_id: string | null
           created_at: string
           deleted_at: string | null
         }
@@ -173,6 +174,7 @@ export interface Database {
           token?: string
           expires_at?: string
           accepted_at?: string | null
+          location_id?: string | null
           created_at?: string
           deleted_at?: string | null
         }
@@ -185,6 +187,7 @@ export interface Database {
           token?: string
           expires_at?: string
           accepted_at?: string | null
+          location_id?: string | null
           created_at?: string
           deleted_at?: string | null
         }

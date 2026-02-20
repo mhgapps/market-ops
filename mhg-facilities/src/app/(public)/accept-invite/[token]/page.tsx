@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,6 +23,11 @@ interface InvitationData {
   expiresAt: string
 }
 
+interface AcceptResponse {
+  user: unknown
+  session: unknown | null
+}
+
 export default function AcceptInvitePage({
   params,
 }: {
@@ -33,6 +39,7 @@ export default function AcceptInvitePage({
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [accountCreated, setAccountCreated] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
     password: '',
@@ -61,13 +68,11 @@ export default function AcceptInvitePage({
     e.preventDefault()
     setError(null)
 
-    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return
     }
 
-    // Validate password strength
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long')
       return
@@ -76,13 +81,19 @@ export default function AcceptInvitePage({
     setSubmitting(true)
 
     try {
-      await api.post(`/api/invitations/${resolvedParams.token}`, {
-        full_name: formData.fullName,
-        password: formData.password,
-      })
+      const response = await api.post<AcceptResponse>(
+        `/api/invitations/${resolvedParams.token}`,
+        {
+          full_name: formData.fullName,
+          password: formData.password,
+        }
+      )
 
-      // Success - redirect to dashboard
-      router.push('/dashboard')
+      if (response.session) {
+        router.push('/dashboard')
+      } else {
+        setAccountCreated(true)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred. Please try again.')
       console.error(err)
@@ -93,15 +104,15 @@ export default function AcceptInvitePage({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     )
   }
 
   if (error && !invitation) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-muted px-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Invalid Invitation</CardTitle>
@@ -110,7 +121,7 @@ export default function AcceptInvitePage({
           <CardContent>
             <Button
               onClick={() => router.push('/login')}
-              className="w-full"
+              className="w-full min-h-[44px]"
             >
               Go to Login
             </Button>
@@ -120,8 +131,29 @@ export default function AcceptInvitePage({
     )
   }
 
+  if (accountCreated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Account Created</CardTitle>
+            <CardDescription>
+              Your account has been created successfully. Please check your email
+              to verify your address, then log in with your new credentials.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full min-h-[44px]">
+              <Link href="/login">Go to Login</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Accept Invitation</CardTitle>
@@ -145,7 +177,7 @@ export default function AcceptInvitePage({
                 type="email"
                 value={invitation?.email || ''}
                 disabled
-                className="bg-gray-50"
+                className="bg-muted"
               />
             </div>
 
@@ -192,7 +224,7 @@ export default function AcceptInvitePage({
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={submitting}>
+            <Button type="submit" className="w-full min-h-[44px]" disabled={submitting}>
               {submitting ? 'Creating Account...' : 'Accept Invitation'}
             </Button>
           </form>

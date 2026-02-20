@@ -31,13 +31,6 @@ export interface UserFilters {
   status?: 'active' | 'inactive' | 'all'
 }
 
-export interface InviteUserInput {
-  email: string
-  full_name: string
-  role: UserRole
-  location_id?: string
-}
-
 export interface UpdateUserInput {
   full_name?: string
   role?: UserRole
@@ -96,23 +89,6 @@ export function useUser(id: string | null) {
     enabled: !!id,
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
-  })
-}
-
-/**
- * Hook to invite a new user
- */
-export function useInviteUser() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (input: InviteUserInput) => {
-      const response = await api.post<{ user: User }>('/api/users/invite', input)
-      return response.user
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.all })
-    },
   })
 }
 

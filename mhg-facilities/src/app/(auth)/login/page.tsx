@@ -32,8 +32,6 @@ const STRINGS = {
   FORGOT_PASSWORD: 'Forgot password?',
   SIGN_IN: 'Sign in',
   SIGNING_IN: 'Signing in...',
-  NO_ACCOUNT: "Don't have an account?",
-  SIGN_UP: 'Sign up',
   SUCCESS: 'Login successful! Redirecting...',
   ERROR_INVALID_EMAIL: 'Please enter a valid email address',
   ERROR_PASSWORD_REQUIRED: 'Password is required',
@@ -167,15 +165,6 @@ export default function LoginPage() {
             )}
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
-            {STRINGS.NO_ACCOUNT}{' '}
-            <Link
-              href="/signup"
-              className="text-primary hover:underline font-medium"
-            >
-              {STRINGS.SIGN_UP}
-            </Link>
-          </p>
         </CardFooter>
       </form>
     </Card>

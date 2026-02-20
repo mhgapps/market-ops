@@ -1,24 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Building2, Save, AlertCircle } from 'lucide-react'
+import { Building2, Save, AlertCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/use-auth'
+import { useQueryClient } from '@tanstack/react-query'
+import { AUTH_QUERY_KEY } from '@/hooks/use-auth'
+import api from '@/lib/api-client'
 
 export default function TenantSettingsPage() {
-  const [tenantName, setTenantName] = useState('MHG Facilities')
-  const [tenantSlug, setTenantSlug] = useState('mhg-facilities')
-  const tenantPlan = 'professional'
-  const maxUsers = 50
-  const maxLocations = 10
+  const { tenant } = useAuth()
+  const queryClient = useQueryClient()
+  const [tenantName, setTenantName] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
-  const handleSave = () => {
-    // TODO: Call tenant update API
-    toast.success('Tenant settings saved')
+  useEffect(() => {
+    if (tenant?.name) {
+      setTenantName(tenant.name)
+    }
+  }, [tenant?.name])
+
+  const handleSave = async () => {
+    if (!tenantName.trim()) {
+      toast.error('Organization name is required')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      await api.patch('/api/tenant', { name: tenantName.trim() })
+      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY })
+      toast.success('Organization name updated')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update'
+      toast.error(message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const getPlanBadgeColor = (plan: string) => {
@@ -27,8 +50,8 @@ export default function TenantSettingsPage() {
         return 'bg-purple-100 text-purple-800'
       case 'professional':
         return 'bg-blue-100 text-blue-800'
-      case 'basic':
-        return 'bg-gray-100 text-gray-800'
+      case 'starter':
+        return 'bg-green-100 text-green-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -78,8 +101,7 @@ export default function TenantSettingsPage() {
             <Label htmlFor="tenant-slug">Organization Slug</Label>
             <Input
               id="tenant-slug"
-              value={tenantSlug}
-              onChange={(e) => setTenantSlug(e.target.value)}
+              value={tenant?.slug ?? ''}
               placeholder="e.g., acme-corp"
               disabled
             />
@@ -101,8 +123,8 @@ export default function TenantSettingsPage() {
           <div className="space-y-2">
             <Label>Current Plan</Label>
             <div>
-              <Badge className={getPlanBadgeColor(tenantPlan)}>
-                {tenantPlan.charAt(0).toUpperCase() + tenantPlan.slice(1)} Plan
+              <Badge className={getPlanBadgeColor(tenant?.plan ?? 'free')}>
+                {(tenant?.plan ?? 'free').charAt(0).toUpperCase() + (tenant?.plan ?? 'free').slice(1)} Plan
               </Badge>
             </div>
           </div>
@@ -111,7 +133,7 @@ export default function TenantSettingsPage() {
             <div className="space-y-2">
               <Label>Max Users</Label>
               <Input
-                value={maxUsers}
+                value={tenant?.limits?.maxUsers ?? 0}
                 disabled
                 className="bg-gray-50"
               />
@@ -120,7 +142,7 @@ export default function TenantSettingsPage() {
             <div className="space-y-2">
               <Label>Max Locations</Label>
               <Input
-                value={maxLocations}
+                value={tenant?.limits?.maxLocations ?? 0}
                 disabled
                 className="bg-gray-50"
               />
@@ -133,13 +155,14 @@ export default function TenantSettingsPage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-2">
-        <Button variant="outline">
-          Cancel
-        </Button>
-        <Button onClick={handleSave}>
-          <Save className="h-4 w-4 mr-2" />
-          Save Settings
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={isSaving || tenantName.trim() === tenant?.name}>
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          {isSaving ? 'Saving...' : 'Save Settings'}
         </Button>
       </div>
     </div>
