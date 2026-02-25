@@ -1,18 +1,19 @@
-import { getPooledSupabaseClient } from '@/lib/supabase/server-pooled';
-import type { Database } from '@/types/database-extensions';
+import { getPooledSupabaseClient } from "@/lib/supabase/server-pooled";
+import type { Database } from "@/types/database-extensions";
 
-type ComplianceAlert = Database['public']['Tables']['compliance_alerts']['Row'];
-type ComplianceAlertInsert = Database['public']['Tables']['compliance_alerts']['Insert'];
+type ComplianceAlert = Database["public"]["Tables"]["compliance_alerts"]["Row"];
+type ComplianceAlertInsert =
+  Database["public"]["Tables"]["compliance_alerts"]["Insert"];
 
 export class ComplianceAlertDAO {
   async findByDocument(documentId: string): Promise<ComplianceAlert[]> {
     const supabase = await getPooledSupabaseClient();
 
     const { data, error } = await supabase
-      .from('compliance_alerts')
-      .select('*')
-      .eq('document_id', documentId)
-      .order('sent_at', { ascending: false });
+      .from("compliance_alerts")
+      .select("*")
+      .eq("document_id", documentId)
+      .order("sent_at", { ascending: false });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -22,7 +23,7 @@ export class ComplianceAlertDAO {
     const supabase = await getPooledSupabaseClient();
 
     const { data: created, error } = await supabase
-      .from('compliance_alerts')
+      .from("compliance_alerts")
       .insert({
         document_id: data.document_id,
         alert_type: data.alert_type,
@@ -35,7 +36,7 @@ export class ComplianceAlertDAO {
       .single();
 
     if (error) throw new Error(error.message);
-    if (!created) throw new Error('Failed to create compliance alert');
+    if (!created) throw new Error("Failed to create compliance alert");
     return created as ComplianceAlert;
   }
 }

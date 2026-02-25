@@ -1,68 +1,68 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useQueryClient } from '@tanstack/react-query'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
-import { User } from 'lucide-react'
-import { useAuth, AUTH_QUERY_KEY } from '@/hooks/use-auth'
-import api from '@/lib/api-client'
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { User } from "lucide-react";
+import { useAuth, AUTH_QUERY_KEY } from "@/hooks/use-auth";
+import api from "@/lib/api-client";
 
 const profileSchema = z.object({
-  full_name: z.string().min(1, 'Name is required').max(100),
-  phone: z.string().optional().or(z.literal('')),
-  language_preference: z.enum(['en', 'es']),
+  full_name: z.string().min(1, "Name is required").max(100),
+  phone: z.string().optional().or(z.literal("")),
+  language_preference: z.enum(["en", "es"]),
   notification_preferences: z.object({
     email: z.boolean(),
     sms: z.boolean(),
     push: z.boolean(),
   }),
-})
+});
 
-type ProfileFormData = z.infer<typeof profileSchema>
+type ProfileFormData = z.infer<typeof profileSchema>;
 
 const passwordSchema = z
   .object({
-    current_password: z.string().min(1, 'Current password is required'),
-    new_password: z.string().min(8, 'Password must be at least 8 characters'),
+    current_password: z.string().min(1, "Current password is required"),
+    new_password: z.string().min(8, "Password must be at least 8 characters"),
     confirm_password: z.string(),
   })
   .refine((data) => data.new_password === data.confirm_password, {
-    message: 'Passwords do not match',
-    path: ['confirm_password'],
-  })
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
 
-type PasswordFormData = z.infer<typeof passwordSchema>
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export default function ProfilePage() {
-  const queryClient = useQueryClient()
-  const { user, isLoading: loading } = useAuth()
-  const [submitting, setSubmitting] = useState(false)
-  const [profileError, setProfileError] = useState<string | null>(null)
-  const [profileSuccess, setProfileSuccess] = useState(false)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const queryClient = useQueryClient();
+  const { user, isLoading: loading } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   const {
     register: registerProfile,
@@ -72,7 +72,7 @@ export default function ProfilePage() {
     formState: { errors: profileErrors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-  })
+  });
 
   const {
     register: registerPassword,
@@ -80,33 +80,36 @@ export default function ProfilePage() {
     formState: { errors: passwordErrors },
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
-  })
+  });
 
-  const selectedLanguage = watch('language_preference')
-  const notifEmail = watch('notification_preferences.email')
-  const notifSms = watch('notification_preferences.sms')
-  const notifPush = watch('notification_preferences.push')
+  const selectedLanguage = watch("language_preference");
+  const notifEmail = watch("notification_preferences.email");
+  const notifSms = watch("notification_preferences.sms");
+  const notifPush = watch("notification_preferences.push");
 
   // Set form values when user data loads
   useEffect(() => {
     if (user) {
-      setValue('full_name', user.fullName || '')
-      setValue('phone', user.phone || '')
-      setValue('language_preference', user.languagePreference || 'en')
-      setValue('notification_preferences', user.notificationPreferences || {
-        email: true,
-        sms: false,
-        push: false,
-      })
+      setValue("full_name", user.fullName || "");
+      setValue("phone", user.phone || "");
+      setValue("language_preference", user.languagePreference || "en");
+      setValue(
+        "notification_preferences",
+        user.notificationPreferences || {
+          email: true,
+          sms: false,
+          push: false,
+        },
+      );
     }
-  }, [user, setValue])
+  }, [user, setValue]);
 
   async function onSubmitProfile(data: ProfileFormData) {
-    if (!user) return
+    if (!user) return;
 
-    setProfileError(null)
-    setProfileSuccess(false)
-    setSubmitting(true)
+    setProfileError(null);
+    setProfileSuccess(false);
+    setSubmitting(true);
 
     try {
       await api.patch(`/api/users/${user.id}`, {
@@ -114,33 +117,35 @@ export default function ProfilePage() {
         phone: data.phone || undefined,
         language_preference: data.language_preference,
         notification_preferences: data.notification_preferences,
-      })
+      });
 
-      setProfileSuccess(true)
-      setTimeout(() => setProfileSuccess(false), 3000)
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 3000);
 
       // Invalidate auth cache to reload user data
-      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
     } catch (err) {
-      setProfileError(err instanceof Error ? err.message : 'An error occurred')
+      setProfileError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   async function onSubmitPassword(_data: PasswordFormData) {
-    setPasswordError(null)
-    setPasswordSuccess(false)
-    setSubmitting(true)
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    setSubmitting(true);
 
     try {
       // TODO: Implement password change endpoint
       // For now, show a placeholder message
-      throw new Error('Password change functionality not yet implemented')
+      throw new Error("Password change functionality not yet implemented");
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'An error occurred')
+      setPasswordError(
+        err instanceof Error ? err.message : "An error occurred",
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
@@ -149,7 +154,7 @@ export default function ProfilePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
       </div>
-    )
+    );
   }
 
   return (
@@ -169,12 +174,13 @@ export default function ProfilePage() {
             <User className="h-5 w-5" />
             Profile Information
           </CardTitle>
-          <CardDescription>
-            Update your personal information
-          </CardDescription>
+          <CardDescription>Update your personal information</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmitProfile(onSubmitProfile)} className="space-y-6">
+          <form
+            onSubmit={handleSubmitProfile(onSubmitProfile)}
+            className="space-y-6"
+          >
             {profileError && (
               <Alert variant="destructive">
                 <AlertDescription>{profileError}</AlertDescription>
@@ -183,7 +189,9 @@ export default function ProfilePage() {
 
             {profileSuccess && (
               <Alert>
-                <AlertDescription>Profile updated successfully!</AlertDescription>
+                <AlertDescription>
+                  Profile updated successfully!
+                </AlertDescription>
               </Alert>
             )}
 
@@ -192,7 +200,7 @@ export default function ProfilePage() {
               <Input
                 id="email"
                 type="email"
-                value={user?.email || ''}
+                value={user?.email || ""}
                 disabled
                 className="bg-muted"
               />
@@ -207,7 +215,7 @@ export default function ProfilePage() {
               </Label>
               <Input
                 id="full_name"
-                {...registerProfile('full_name')}
+                {...registerProfile("full_name")}
                 placeholder="Enter your full name"
                 disabled={submitting}
               />
@@ -223,7 +231,7 @@ export default function ProfilePage() {
               <Input
                 id="phone"
                 type="tel"
-                {...registerProfile('phone')}
+                {...registerProfile("phone")}
                 placeholder="(555) 123-4567"
                 disabled={submitting}
               />
@@ -234,7 +242,7 @@ export default function ProfilePage() {
               <Select
                 value={selectedLanguage}
                 onValueChange={(value) =>
-                  setValue('language_preference', value as 'en' | 'es')
+                  setValue("language_preference", value as "en" | "es")
                 }
                 disabled={submitting}
               >
@@ -272,7 +280,7 @@ export default function ProfilePage() {
                     id="notif-email"
                     checked={notifEmail}
                     onCheckedChange={(checked) =>
-                      setValue('notification_preferences.email', checked)
+                      setValue("notification_preferences.email", checked)
                     }
                     disabled={submitting}
                   />
@@ -291,7 +299,7 @@ export default function ProfilePage() {
                     id="notif-sms"
                     checked={notifSms}
                     onCheckedChange={(checked) =>
-                      setValue('notification_preferences.sms', checked)
+                      setValue("notification_preferences.sms", checked)
                     }
                     disabled={submitting}
                   />
@@ -310,7 +318,7 @@ export default function ProfilePage() {
                     id="notif-push"
                     checked={notifPush}
                     onCheckedChange={(checked) =>
-                      setValue('notification_preferences.push', checked)
+                      setValue("notification_preferences.push", checked)
                     }
                     disabled={submitting}
                   />
@@ -318,8 +326,12 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
-              {submitting ? 'Saving...' : 'Save Changes'}
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full sm:w-auto"
+            >
+              {submitting ? "Saving..." : "Save Changes"}
             </Button>
           </form>
         </CardContent>
@@ -334,7 +346,10 @@ export default function ProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="space-y-4">
+          <form
+            onSubmit={handleSubmitPassword(onSubmitPassword)}
+            className="space-y-4"
+          >
             {passwordError && (
               <Alert variant="destructive">
                 <AlertDescription>{passwordError}</AlertDescription>
@@ -343,7 +358,9 @@ export default function ProfilePage() {
 
             {passwordSuccess && (
               <Alert>
-                <AlertDescription>Password changed successfully!</AlertDescription>
+                <AlertDescription>
+                  Password changed successfully!
+                </AlertDescription>
               </Alert>
             )}
 
@@ -352,7 +369,7 @@ export default function ProfilePage() {
               <Input
                 id="current_password"
                 type="password"
-                {...registerPassword('current_password')}
+                {...registerPassword("current_password")}
                 disabled={submitting}
               />
               {passwordErrors.current_password && (
@@ -367,7 +384,7 @@ export default function ProfilePage() {
               <Input
                 id="new_password"
                 type="password"
-                {...registerPassword('new_password')}
+                {...registerPassword("new_password")}
                 disabled={submitting}
               />
               {passwordErrors.new_password && (
@@ -382,7 +399,7 @@ export default function ProfilePage() {
               <Input
                 id="confirm_password"
                 type="password"
-                {...registerPassword('confirm_password')}
+                {...registerPassword("confirm_password")}
                 disabled={submitting}
               />
               {passwordErrors.confirm_password && (
@@ -392,12 +409,16 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
-              {submitting ? 'Changing...' : 'Change Password'}
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full sm:w-auto"
+            >
+              {submitting ? "Changing..." : "Change Password"}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

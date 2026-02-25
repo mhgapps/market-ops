@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { TicketCategoryService } from '@/services/ticket-category.service'
-import { requireAuth } from '@/lib/auth/api-auth'
-import { updateCategorySchema } from '@/lib/validations/ticket'
+import { NextRequest, NextResponse } from "next/server";
+import { TicketCategoryService } from "@/services/ticket-category.service";
+import { requireAuth } from "@/lib/auth/api-auth";
+import { updateCategorySchema } from "@/lib/validations/ticket";
 
 /**
  * GET /api/ticket-categories/[id]
@@ -9,28 +9,31 @@ import { updateCategorySchema } from '@/lib/validations/ticket'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { error } = await requireAuth()
-    if (error) return error
+    const { error } = await requireAuth();
+    if (error) return error;
 
-    const { id } = await params
-    const service = new TicketCategoryService()
-    const category = await service.getCategoryById(id)
+    const { id } = await params;
+    const service = new TicketCategoryService();
+    const category = await service.getCategoryById(id);
 
-    return NextResponse.json({ category })
+    return NextResponse.json({ category });
   } catch (error) {
-    console.error('Error fetching category:', error)
+    console.error("Error fetching category:", error);
 
-    if (error instanceof Error && error.message.includes('not found')) {
-      return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch category' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to fetch category",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -40,44 +43,47 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { user, error } = await requireAuth()
-    if (error) return error
+    const { user, error } = await requireAuth();
+    if (error) return error;
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Only managers and admins can update categories
-    if (user.role !== 'manager' && user.role !== 'admin') {
+    if (user.role !== "manager" && user.role !== "admin") {
       return NextResponse.json(
-        { error: 'Only managers and admins can update categories' },
-        { status: 403 }
-      )
+        { error: "Only managers and admins can update categories" },
+        { status: 403 },
+      );
     }
 
-    const { id } = await params
-    const body = await request.json()
+    const { id } = await params;
+    const body = await request.json();
 
     // Validate request body - allow nullable fields
-    const validatedData = updateCategorySchema.parse(body)
+    const validatedData = updateCategorySchema.parse(body);
 
-    const service = new TicketCategoryService()
-    const category = await service.updateCategory(id, validatedData)
+    const service = new TicketCategoryService();
+    const category = await service.updateCategory(id, validatedData);
 
-    return NextResponse.json({ category })
+    return NextResponse.json({ category });
   } catch (error) {
-    console.error('Error updating category:', error)
+    console.error("Error updating category:", error);
 
-    if (error instanceof Error && error.message.includes('not found')) {
-      return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to update category' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to update category",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -87,42 +93,45 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { user, error } = await requireAuth()
-    if (error) return error
+    const { user, error } = await requireAuth();
+    if (error) return error;
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Only managers and admins can delete categories
-    if (user.role !== 'manager' && user.role !== 'admin') {
+    if (user.role !== "manager" && user.role !== "admin") {
       return NextResponse.json(
-        { error: 'Only managers and admins can delete categories' },
-        { status: 403 }
-      )
+        { error: "Only managers and admins can delete categories" },
+        { status: 403 },
+      );
     }
 
-    const { id } = await params
-    const service = new TicketCategoryService()
-    await service.deleteCategory(id)
+    const { id } = await params;
+    const service = new TicketCategoryService();
+    await service.deleteCategory(id);
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting category:', error)
+    console.error("Error deleting category:", error);
 
-    if (error instanceof Error && error.message.includes('not found')) {
-      return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
-    if (error instanceof Error && error.message.includes('Cannot delete')) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error instanceof Error && error.message.includes("Cannot delete")) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete category' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to delete category",
+      },
+      { status: 500 },
+    );
   }
 }

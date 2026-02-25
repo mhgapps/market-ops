@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { TenantService } from '@/services/tenant.service'
-import type { Database } from '@/types/database'
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { TenantService } from "@/services/tenant.service";
+import type { Database } from "@/types/database";
 
-type UserRow = Database['public']['Tables']['users']['Row']
+type UserRow = Database["public"]["Tables"]["users"]["Row"];
 
 /**
  * GET /api/auth/me
@@ -11,64 +11,63 @@ type UserRow = Database['public']['Tables']['users']['Row']
  */
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const supabase = await createClient();
 
     // Get the auth user
     const {
       data: { user: authUser },
       error: authError,
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
 
     if (authError || !authUser) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
     // Try to get user from our users table first
-    let user: UserRow | null = null
+    let user: UserRow | null = null;
     // Look up user by auth ID directly from users table
     const { data: dbUser, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('auth_user_id', authUser.id)
-      .is('deleted_at', null)
-      .single()
+      .from("users")
+      .select("*")
+      .eq("auth_user_id", authUser.id)
+      .is("deleted_at", null)
+      .single();
 
     if (!userError && dbUser) {
-      user = dbUser as UserRow
+      user = dbUser as UserRow;
     } else if (userError) {
-      console.error('Error fetching user from users table:', userError.message, 'authUser.id:', authUser.id)
+      console.error(
+        "Error fetching user from users table:",
+        userError.message,
+        "authUser.id:",
+        authUser.id,
+      );
     }
 
     // Get tenant_id from user record or user metadata
-    const tenantId = user?.tenant_id ?? authUser.user_metadata?.tenant_id
+    const tenantId = user?.tenant_id ?? authUser.user_metadata?.tenant_id;
 
     if (!tenantId) {
-      console.error('No tenant associated with user:', {
+      console.error("No tenant associated with user:", {
         authUserId: authUser.id,
         authUserEmail: authUser.email,
         userFound: !!user,
         userTenantId: user?.tenant_id ?? null,
         userMetadataTenantId: authUser.user_metadata?.tenant_id ?? null,
         userError: userError?.message ?? null,
-      })
+      });
       return NextResponse.json(
-        { error: 'No tenant associated with user. Please contact support.' },
-        { status: 400 }
-      )
+        { error: "No tenant associated with user. Please contact support." },
+        { status: 400 },
+      );
     }
 
     // Get tenant information
-    const tenantService = new TenantService()
-    const tenant = await tenantService.getTenantById(tenantId)
+    const tenantService = new TenantService();
+    const tenant = await tenantService.getTenantById(tenantId);
 
     if (!tenant) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
     // Build response with user and tenant context
@@ -88,11 +87,11 @@ export async function GET() {
         : {
             id: authUser.id,
             email: authUser.email,
-            fullName: authUser.user_metadata?.full_name ?? 'User',
-            role: 'admin',
+            fullName: authUser.user_metadata?.full_name ?? "User",
+            role: "admin",
             phone: null,
             locationId: null,
-            languagePreference: 'en',
+            languagePreference: "en",
             isActive: true,
             notificationPreferences: { email: true, sms: false, push: false },
           },
@@ -110,12 +109,12 @@ export async function GET() {
           storageGb: tenant.storage_limit_gb,
         },
       },
-    })
+    });
   } catch (error) {
-    console.error('Error in /api/auth/me:', error)
+    console.error("Error in /api/auth/me:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

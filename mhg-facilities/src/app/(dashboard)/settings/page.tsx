@@ -1,5 +1,10 @@
-import Link from 'next/link';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from "next/link";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Building2,
   Bell,
@@ -9,63 +14,68 @@ import {
   BarChart3,
   Smartphone,
   ChevronRight,
-} from 'lucide-react';
+} from "lucide-react";
 
 export default function SettingsPage() {
   const settingsSections = [
     {
-      title: 'Tenant Settings',
-      description: 'Manage organization name, branding, and preferences',
+      title: "Tenant Settings",
+      description: "Manage organization name, branding, and preferences",
       icon: Building2,
-      href: '/settings/tenant',
+      href: "/settings/tenant",
     },
     {
-      title: 'Locations',
-      description: 'Manage facility locations and addresses',
+      title: "Locations",
+      description: "Manage facility locations and addresses",
       icon: MapPin,
-      href: '/settings/locations',
+      href: "/settings/locations",
     },
     {
-      title: 'Notifications',
-      description: 'Configure email, SMS, and push notification preferences',
+      title: "Notifications",
+      description: "Configure email, SMS, and push notification preferences",
       icon: Bell,
-      href: '/settings/notifications',
+      href: "/settings/notifications",
     },
     {
-      title: 'Trusted Devices',
-      description: 'Manage devices that can sign in without a password',
+      title: "Trusted Devices",
+      description: "Manage devices that can sign in without a password",
       icon: Smartphone,
-      href: '/settings/devices',
+      href: "/settings/devices",
     },
     {
-      title: 'Categories',
-      description: 'Manage ticket and asset categories',
+      title: "Categories",
+      description: "Manage ticket and asset categories",
       icon: Tags,
-      href: '/settings/categories',
+      href: "/settings/categories",
     },
     {
-      title: 'Team Members',
-      description: 'Invite and manage team members',
+      title: "Team Members",
+      description: "Invite and manage team members",
       icon: Users,
-      href: '/users',
+      href: "/users",
     },
     {
-      title: 'Reports',
-      description: 'View analytics and generate reports',
+      title: "Reports",
+      description: "View analytics and generate reports",
       icon: BarChart3,
-      href: '/reports',
+      href: "/reports",
     },
   ];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+        Settings
+      </h1>
 
       <div className="grid gap-4 md:grid-cols-2">
         {settingsSections.map((section) => {
           const Icon = section.icon;
           return (
-            <Card key={section.href} className="hover:bg-accent transition-colors">
+            <Card
+              key={section.href}
+              className="hover:bg-accent transition-colors"
+            >
               <Link href={section.href}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -74,7 +84,9 @@ export default function SettingsPage() {
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-base">{section.title}</CardTitle>
+                        <CardTitle className="text-base">
+                          {section.title}
+                        </CardTitle>
                         <CardDescription className="text-sm">
                           {section.description}
                         </CardDescription>

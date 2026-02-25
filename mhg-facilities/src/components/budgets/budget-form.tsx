@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -11,67 +11,67 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/loaders'
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/loaders";
 
 // Schema for form
 const budgetFormSchema = z.object({
-  category: z.string().min(1, 'Category is required').max(100),
+  category: z.string().min(1, "Category is required").max(100),
   location_id: z.string().nullable().optional(),
   fiscal_year: z.number().int().min(2020).max(2100),
-  annual_budget: z.number().positive('Budget must be positive'),
+  annual_budget: z.number().positive("Budget must be positive"),
   notes: z.string().max(1000).nullable().optional(),
-})
+});
 
-type BudgetFormValues = z.infer<typeof budgetFormSchema>
+type BudgetFormValues = z.infer<typeof budgetFormSchema>;
 
 interface Location {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 interface Category {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 interface BudgetFormProps {
-  locations: Location[]
-  categories?: Category[]
-  fiscalYearOptions: number[]
-  defaultValues?: Partial<BudgetFormValues>
-  onSubmit: (data: BudgetFormValues) => void | Promise<void>
-  onCancel?: () => void
-  isSubmitting?: boolean
-  mode?: 'create' | 'edit'
+  locations: Location[];
+  categories?: Category[];
+  fiscalYearOptions: number[];
+  defaultValues?: Partial<BudgetFormValues>;
+  onSubmit: (data: BudgetFormValues) => void | Promise<void>;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
+  mode?: "create" | "edit";
 }
 
 // Common budget categories
 const defaultCategories = [
-  'Maintenance',
-  'Repairs',
-  'Equipment',
-  'Utilities',
-  'Supplies',
-  'Cleaning',
-  'Security',
-  'Landscaping',
-  'HVAC',
-  'Plumbing',
-  'Electrical',
-  'Other',
-]
+  "Maintenance",
+  "Repairs",
+  "Equipment",
+  "Utilities",
+  "Supplies",
+  "Cleaning",
+  "Security",
+  "Landscaping",
+  "HVAC",
+  "Plumbing",
+  "Electrical",
+  "Other",
+];
 
 export function BudgetForm({
   locations,
@@ -81,30 +81,30 @@ export function BudgetForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
-  mode = 'create',
+  mode = "create",
 }: BudgetFormProps) {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
   const form = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetFormSchema),
     defaultValues: {
-      category: '',
+      category: "",
       location_id: null,
       fiscal_year: currentYear,
       annual_budget: undefined,
       notes: null,
       ...defaultValues,
     },
-  })
+  });
 
   const handleSubmit = async (data: BudgetFormValues) => {
-    await onSubmit(data)
-  }
+    await onSubmit(data);
+  };
 
   // Use provided categories or defaults
   const categoryOptions = categories?.length
-    ? categories.map(c => c.name)
-    : defaultCategories
+    ? categories.map((c) => c.name)
+    : defaultCategories;
 
   return (
     <Form {...form}>
@@ -120,7 +120,7 @@ export function BudgetForm({
                   <FormLabel>Category *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    value={field.value || ''}
+                    value={field.value || ""}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -151,8 +151,10 @@ export function BudgetForm({
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value === 'tenant-wide' ? null : value)}
-                    value={field.value || 'tenant-wide'}
+                    onValueChange={(value) =>
+                      field.onChange(value === "tenant-wide" ? null : value)
+                    }
+                    value={field.value || "tenant-wide"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -171,7 +173,8 @@ export function BudgetForm({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Leave as &quot;Tenant-wide&quot; for organization-wide budgets
+                    Leave as &quot;Tenant-wide&quot; for organization-wide
+                    budgets
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -187,7 +190,7 @@ export function BudgetForm({
                   <FormLabel>Fiscal Year *</FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(parseInt(value))}
-                    value={field.value?.toString() || ''}
+                    value={field.value?.toString() || ""}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -227,10 +230,10 @@ export function BudgetForm({
                         placeholder="0.00"
                         className="pl-7"
                         {...field}
-                        value={field.value || ''}
+                        value={field.value || ""}
                         onChange={(e) => {
-                          const value = e.target.value
-                          field.onChange(value ? parseFloat(value) : undefined)
+                          const value = e.target.value;
+                          field.onChange(value ? parseFloat(value) : undefined);
                         }}
                       />
                     </div>
@@ -256,7 +259,7 @@ export function BudgetForm({
                       className="resize-none"
                       rows={3}
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -287,14 +290,16 @@ export function BudgetForm({
             {isSubmitting ? (
               <>
                 <Spinner className="mr-2 h-4 w-4" />
-                {mode === 'create' ? 'Creating...' : 'Saving...'}
+                {mode === "create" ? "Creating..." : "Saving..."}
               </>
+            ) : mode === "create" ? (
+              "Create Budget"
             ) : (
-              mode === 'create' ? 'Create Budget' : 'Save Changes'
+              "Save Changes"
             )}
           </Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }

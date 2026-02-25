@@ -1,9 +1,9 @@
-import { BaseDAO } from './base.dao';
-import type { Database } from '@/types/database';
+import { BaseDAO } from "./base.dao";
+import type { Database } from "@/types/database";
 
-type PMSchedule = Database['public']['Tables']['pm_schedules']['Row'];
-type _PMScheduleInsert = Database['public']['Tables']['pm_schedules']['Insert'];
-type PMFrequency = Database['public']['Enums']['pm_frequency'];
+type PMSchedule = Database["public"]["Tables"]["pm_schedules"]["Row"];
+type _PMScheduleInsert = Database["public"]["Tables"]["pm_schedules"]["Insert"];
+type PMFrequency = Database["public"]["Enums"]["pm_frequency"];
 
 export interface PMScheduleFilters {
   asset_id?: string;
@@ -52,20 +52,30 @@ const PM_SCHEDULE_SELECT_WITH_RELATIONS = `
 /**
  * Transform raw Supabase query result with nested relations into flat enriched object
  */
-function transformScheduleWithRelations(raw: PMScheduleWithRelationsRaw): PMScheduleWithRelations {
+function transformScheduleWithRelations(
+  raw: PMScheduleWithRelationsRaw,
+): PMScheduleWithRelations {
   // Get the most recent completion date
   const completions = raw.pm_completions || [];
   const sortedCompletions = completions
-    .filter(c => c.completed_date !== null)
+    .filter((c) => c.completed_date !== null)
     .sort((a, b) => {
-      const dateA = a.completed_date || '';
-      const dateB = b.completed_date || '';
+      const dateA = a.completed_date || "";
+      const dateB = b.completed_date || "";
       return dateB.localeCompare(dateA);
     });
-  const lastCompletedAt = sortedCompletions.length > 0 ? sortedCompletions[0].completed_date : null;
+  const lastCompletedAt =
+    sortedCompletions.length > 0 ? sortedCompletions[0].completed_date : null;
 
   // Remove nested objects and add flat fields
-  const { assets, locations, users, vendors, pm_completions: _pm_completions, ...baseSchedule } = raw;
+  const {
+    assets,
+    locations,
+    users,
+    vendors,
+    pm_completions: _pm_completions,
+    ...baseSchedule
+  } = raw;
 
   return {
     ...baseSchedule,
@@ -77,21 +87,21 @@ function transformScheduleWithRelations(raw: PMScheduleWithRelationsRaw): PMSche
   };
 }
 
-export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
+export class PMScheduleDAO extends BaseDAO<"pm_schedules"> {
   constructor() {
-    super('pm_schedules');
+    super("pm_schedules");
   }
 
   async findActive(): Promise<PMSchedule[]> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true });
+      .from("pm_schedules")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -105,28 +115,30 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     let query = supabase
-      .from('pm_schedules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .is('deleted_at', null);
+      .from("pm_schedules")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .is("deleted_at", null);
 
     if (filters.asset_id !== undefined) {
-      query = query.eq('asset_id', filters.asset_id);
+      query = query.eq("asset_id", filters.asset_id);
     }
 
     if (filters.location_id !== undefined) {
-      query = query.eq('location_id', filters.location_id);
+      query = query.eq("location_id", filters.location_id);
     }
 
     if (filters.frequency !== undefined) {
-      query = query.eq('frequency', filters.frequency);
+      query = query.eq("frequency", filters.frequency);
     }
 
     if (filters.is_active !== undefined) {
-      query = query.eq('is_active', filters.is_active);
+      query = query.eq("is_active", filters.is_active);
     }
 
-    const { data, error } = await query.order('next_due_date', { ascending: true });
+    const { data, error } = await query.order("next_due_date", {
+      ascending: true,
+    });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -136,12 +148,12 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('asset_id', assetId)
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true });
+      .from("pm_schedules")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("asset_id", assetId)
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -151,12 +163,12 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('location_id', locationId)
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true });
+      .from("pm_schedules")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("location_id", locationId)
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -165,16 +177,16 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
   async findDueToday(): Promise<PMSchedule[]> {
     const { supabase, tenantId } = await this.getClient();
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     const { data, error } = await supabase
-      .from('pm_schedules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .eq('next_due_date', today)  // Changed from lte to eq - only items due exactly today
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true });
+      .from("pm_schedules")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .eq("next_due_date", today) // Changed from lte to eq - only items due exactly today
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -183,16 +195,16 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
   async findOverdue(): Promise<PMSchedule[]> {
     const { supabase, tenantId } = await this.getClient();
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     const { data, error } = await supabase
-      .from('pm_schedules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .lt('next_due_date', today)
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true});
+      .from("pm_schedules")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .lt("next_due_date", today)
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -202,23 +214,26 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('frequency', frequency)
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true });
+      .from("pm_schedules")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("frequency", frequency)
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data || [];
   }
 
-  async findWithCompletions(id: string): Promise<PMScheduleWithCompletions | null> {
+  async findWithCompletions(
+    id: string,
+  ): Promise<PMScheduleWithCompletions | null> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
-      .select(`
+      .from("pm_schedules")
+      .select(
+        `
         *,
         pm_completions!pm_completions_schedule_id_fkey(
           id,
@@ -226,14 +241,15 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
           completed_date,
           completed_by
         )
-      `)
-      .eq('id', id)
-      .eq('tenant_id', tenantId)
-      .is('deleted_at', null)
+      `,
+      )
+      .eq("id", id)
+      .eq("tenant_id", tenantId)
+      .is("deleted_at", null)
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
 
@@ -241,7 +257,7 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const result: any = data;
     return {
       ...(result as PMSchedule),
-      completions: result.pm_completions || []
+      completions: result.pm_completions || [],
     } as PMScheduleWithCompletions;
   }
 
@@ -252,17 +268,19 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
+      .from("pm_schedules")
       .select(PM_SCHEDULE_SELECT_WITH_RELATIONS)
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true });
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
 
     return (data || []).map((item) =>
-      transformScheduleWithRelations(item as unknown as PMScheduleWithRelationsRaw)
+      transformScheduleWithRelations(
+        item as unknown as PMScheduleWithRelationsRaw,
+      ),
     );
   }
 
@@ -273,76 +291,88 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
+      .from("pm_schedules")
       .select(PM_SCHEDULE_SELECT_WITH_RELATIONS)
-      .eq('tenant_id', tenantId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+      .eq("tenant_id", tenantId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
 
     if (error) throw new Error(error.message);
 
     return (data || []).map((item) =>
-      transformScheduleWithRelations(item as unknown as PMScheduleWithRelationsRaw)
+      transformScheduleWithRelations(
+        item as unknown as PMScheduleWithRelationsRaw,
+      ),
     );
   }
 
   /**
    * Find PM schedules with combined filters and enriched relations.
    */
-  async findWithFiltersAndRelations(filters: PMScheduleFilters): Promise<PMScheduleWithRelations[]> {
+  async findWithFiltersAndRelations(
+    filters: PMScheduleFilters,
+  ): Promise<PMScheduleWithRelations[]> {
     const { supabase, tenantId } = await this.getClient();
 
     let query = supabase
-      .from('pm_schedules')
+      .from("pm_schedules")
       .select(PM_SCHEDULE_SELECT_WITH_RELATIONS)
-      .eq('tenant_id', tenantId)
-      .is('deleted_at', null);
+      .eq("tenant_id", tenantId)
+      .is("deleted_at", null);
 
     if (filters.asset_id !== undefined) {
-      query = query.eq('asset_id', filters.asset_id);
+      query = query.eq("asset_id", filters.asset_id);
     }
 
     if (filters.location_id !== undefined) {
-      query = query.eq('location_id', filters.location_id);
+      query = query.eq("location_id", filters.location_id);
     }
 
     if (filters.frequency !== undefined) {
-      query = query.eq('frequency', filters.frequency);
+      query = query.eq("frequency", filters.frequency);
     }
 
     if (filters.is_active !== undefined) {
-      query = query.eq('is_active', filters.is_active);
+      query = query.eq("is_active", filters.is_active);
     }
 
-    const { data, error } = await query.order('next_due_date', { ascending: true });
+    const { data, error } = await query.order("next_due_date", {
+      ascending: true,
+    });
 
     if (error) throw new Error(error.message);
 
     return (data || []).map((item) =>
-      transformScheduleWithRelations(item as unknown as PMScheduleWithRelationsRaw)
+      transformScheduleWithRelations(
+        item as unknown as PMScheduleWithRelationsRaw,
+      ),
     );
   }
 
   /**
    * Find a single PM schedule by ID with enriched relations.
    */
-  async findByIdWithRelations(id: string): Promise<PMScheduleWithRelations | null> {
+  async findByIdWithRelations(
+    id: string,
+  ): Promise<PMScheduleWithRelations | null> {
     const { supabase, tenantId } = await this.getClient();
 
     const { data, error } = await supabase
-      .from('pm_schedules')
+      .from("pm_schedules")
       .select(PM_SCHEDULE_SELECT_WITH_RELATIONS)
-      .eq('id', id)
-      .eq('tenant_id', tenantId)
-      .is('deleted_at', null)
+      .eq("id", id)
+      .eq("tenant_id", tenantId)
+      .is("deleted_at", null)
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
 
-    return transformScheduleWithRelations(data as unknown as PMScheduleWithRelationsRaw);
+    return transformScheduleWithRelations(
+      data as unknown as PMScheduleWithRelationsRaw,
+    );
   }
 
   /**
@@ -351,21 +381,23 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
   async findDueTodayWithRelations(): Promise<PMScheduleWithRelations[]> {
     const { supabase, tenantId } = await this.getClient();
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     const { data, error } = await supabase
-      .from('pm_schedules')
+      .from("pm_schedules")
       .select(PM_SCHEDULE_SELECT_WITH_RELATIONS)
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .eq('next_due_date', today)  // Changed from lte to eq - only items due exactly today
-      .is('deleted_at', null)
-      .order('next_due_date', { ascending: true });
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .eq("next_due_date", today) // Changed from lte to eq - only items due exactly today
+      .is("deleted_at", null)
+      .order("next_due_date", { ascending: true });
 
     if (error) throw new Error(error.message);
 
     return (data || []).map((item) =>
-      transformScheduleWithRelations(item as unknown as PMScheduleWithRelationsRaw)
+      transformScheduleWithRelations(
+        item as unknown as PMScheduleWithRelationsRaw,
+      ),
     );
   }
 
@@ -379,15 +411,15 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
   async countOverdue(): Promise<number> {
     const { supabase, tenantId } = await this.getClient();
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     const { count, error } = await supabase
-      .from('pm_schedules')
-      .select('*', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .lt('next_due_date', today)
-      .is('deleted_at', null);
+      .from("pm_schedules")
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .lt("next_due_date", today)
+      .is("deleted_at", null);
 
     if (error) throw new Error(error.message);
     return count ?? 0;
@@ -400,10 +432,10 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     const { count, error } = await supabase
-      .from('pm_schedules')
-      .select('*', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .is('deleted_at', null);
+      .from("pm_schedules")
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .is("deleted_at", null);
 
     if (error) throw new Error(error.message);
     return count ?? 0;
@@ -416,11 +448,11 @@ export class PMScheduleDAO extends BaseDAO<'pm_schedules'> {
     const { supabase, tenantId } = await this.getClient();
 
     const { count, error } = await supabase
-      .from('pm_schedules')
-      .select('*', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .is('deleted_at', null);
+      .from("pm_schedules")
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .is("deleted_at", null);
 
     if (error) throw new Error(error.message);
     return count ?? 0;

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET() {
   try {
@@ -9,13 +9,13 @@ export async function GET() {
     // Placeholder - vendor reports would aggregate vendor performance data
     return NextResponse.json({
       vendors: [],
-      message: 'Vendor reports coming soon',
+      message: "Vendor reports coming soon",
     });
   } catch (error) {
-    console.error('Vendor report error:', error);
+    console.error("Vendor report error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate vendor report' },
-      { status: 500 }
+      { error: "Failed to generate vendor report" },
+      { status: 500 },
     );
   }
 }

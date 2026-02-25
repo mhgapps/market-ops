@@ -1,43 +1,47 @@
-'use client'
+"use client";
 
-import { useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useUsers } from '@/hooks/use-users'
-import api from '@/lib/api-client'
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useUsers } from "@/hooks/use-users";
+import api from "@/lib/api-client";
 
 // Form validation schema
 const locationFormSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
+  name: z.string().min(1, "Name is required").max(100),
   address: z.string().optional(),
   city: z.string().optional(),
-  state: z.string().length(2, 'State must be 2 characters').optional().or(z.literal('')),
+  state: z
+    .string()
+    .length(2, "State must be 2 characters")
+    .optional()
+    .or(z.literal("")),
   zip: z.string().optional(),
   phone: z.string().optional(),
   square_footage: z.string().optional(),
-  manager_id: z.string().optional().or(z.literal('')),
-  status: z.enum(['active', 'temporarily_closed', 'permanently_closed']),
-})
+  manager_id: z.string().optional().or(z.literal("")),
+  status: z.enum(["active", "temporarily_closed", "permanently_closed"]),
+});
 
-type LocationFormData = z.infer<typeof locationFormSchema>
+type LocationFormData = z.infer<typeof locationFormSchema>;
 
 interface LocationFormProps {
-  locationId?: string
-  initialData?: Partial<LocationFormData>
-  onSuccess?: () => void
-  onCancel?: () => void
+  locationId?: string;
+  initialData?: Partial<LocationFormData>;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 export function LocationForm({
@@ -46,18 +50,18 @@ export function LocationForm({
   onSuccess,
   onCancel,
 }: LocationFormProps) {
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Use the useUsers hook to load users
-  const { data: users, isLoading: loadingManagers } = useUsers()
+  const { data: users, isLoading: loadingManagers } = useUsers();
 
   // Filter users to only managers and admins
   const managers = useMemo(() => {
     return (users || []).filter(
-      (u) => u.role === 'manager' || u.role === 'admin'
-    )
-  }, [users])
+      (u) => u.role === "manager" || u.role === "admin",
+    );
+  }, [users]);
 
   const {
     register,
@@ -68,45 +72,47 @@ export function LocationForm({
   } = useForm<LocationFormData>({
     resolver: zodResolver(locationFormSchema),
     defaultValues: {
-      name: initialData?.name || '',
-      address: initialData?.address || '',
-      city: initialData?.city || '',
-      state: initialData?.state || '',
-      zip: initialData?.zip || '',
-      phone: initialData?.phone || '',
-      square_footage: initialData?.square_footage || '',
-      manager_id: initialData?.manager_id || '',
-      status: initialData?.status || 'active',
+      name: initialData?.name || "",
+      address: initialData?.address || "",
+      city: initialData?.city || "",
+      state: initialData?.state || "",
+      zip: initialData?.zip || "",
+      phone: initialData?.phone || "",
+      square_footage: initialData?.square_footage || "",
+      manager_id: initialData?.manager_id || "",
+      status: initialData?.status || "active",
     },
-  })
+  });
 
-  const selectedManagerId = watch('manager_id')
-  const selectedStatus = watch('status')
+  const selectedManagerId = watch("manager_id");
+  const selectedStatus = watch("status");
 
   async function onSubmit(data: LocationFormData) {
-    setError(null)
-    setSubmitting(true)
+    setError(null);
+    setSubmitting(true);
 
     try {
       // Convert square_footage to number if provided
       const payload = {
         ...data,
-        square_footage: data.square_footage ? parseFloat(data.square_footage) : undefined,
+        square_footage: data.square_footage
+          ? parseFloat(data.square_footage)
+          : undefined,
         manager_id: data.manager_id || undefined,
         state: data.state || undefined,
-      }
+      };
 
       if (locationId) {
-        await api.patch(`/api/locations/${locationId}`, payload)
+        await api.patch(`/api/locations/${locationId}`, payload);
       } else {
-        await api.post('/api/locations', payload)
+        await api.post("/api/locations", payload);
       }
 
-      onSuccess?.()
+      onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
@@ -126,7 +132,7 @@ export function LocationForm({
           </Label>
           <Input
             id="name"
-            {...register('name')}
+            {...register("name")}
             placeholder="Enter location name"
           />
           {errors.name && (
@@ -139,7 +145,7 @@ export function LocationForm({
           <Label htmlFor="address">Street Address</Label>
           <Input
             id="address"
-            {...register('address')}
+            {...register("address")}
             placeholder="123 Main St"
           />
         </div>
@@ -147,7 +153,7 @@ export function LocationForm({
         {/* City */}
         <div className="space-y-2">
           <Label htmlFor="city">City</Label>
-          <Input id="city" {...register('city')} placeholder="City" />
+          <Input id="city" {...register("city")} placeholder="City" />
         </div>
 
         {/* State */}
@@ -155,7 +161,7 @@ export function LocationForm({
           <Label htmlFor="state">State</Label>
           <Input
             id="state"
-            {...register('state')}
+            {...register("state")}
             placeholder="CA"
             maxLength={2}
           />
@@ -167,7 +173,7 @@ export function LocationForm({
         {/* ZIP */}
         <div className="space-y-2">
           <Label htmlFor="zip">ZIP Code</Label>
-          <Input id="zip" {...register('zip')} placeholder="12345" />
+          <Input id="zip" {...register("zip")} placeholder="12345" />
         </div>
 
         {/* Phone */}
@@ -175,7 +181,7 @@ export function LocationForm({
           <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"
-            {...register('phone')}
+            {...register("phone")}
             placeholder="(555) 123-4567"
             type="tel"
           />
@@ -186,7 +192,7 @@ export function LocationForm({
           <Label htmlFor="square_footage">Square Footage</Label>
           <Input
             id="square_footage"
-            {...register('square_footage')}
+            {...register("square_footage")}
             placeholder="5000"
             type="number"
             step="1"
@@ -198,8 +204,10 @@ export function LocationForm({
         <div className="space-y-2">
           <Label htmlFor="manager_id">Manager</Label>
           <Select
-            value={selectedManagerId || 'none'}
-            onValueChange={(value) => setValue('manager_id', value === 'none' ? '' : value)}
+            value={selectedManagerId || "none"}
+            onValueChange={(value) =>
+              setValue("manager_id", value === "none" ? "" : value)
+            }
             disabled={loadingManagers}
           >
             <SelectTrigger>
@@ -225,7 +233,10 @@ export function LocationForm({
           <Select
             value={selectedStatus}
             onValueChange={(value) =>
-              setValue('status', value as 'active' | 'temporarily_closed' | 'permanently_closed')
+              setValue(
+                "status",
+                value as "active" | "temporarily_closed" | "permanently_closed",
+              )
             }
           >
             <SelectTrigger>
@@ -233,8 +244,12 @@ export function LocationForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="temporarily_closed">Temporarily Closed</SelectItem>
-              <SelectItem value="permanently_closed">Permanently Closed</SelectItem>
+              <SelectItem value="temporarily_closed">
+                Temporarily Closed
+              </SelectItem>
+              <SelectItem value="permanently_closed">
+                Permanently Closed
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -250,13 +265,13 @@ export function LocationForm({
         <Button type="submit" disabled={submitting}>
           {submitting
             ? locationId
-              ? 'Saving...'
-              : 'Creating...'
+              ? "Saving..."
+              : "Creating..."
             : locationId
-            ? 'Save Changes'
-            : 'Create Location'}
+              ? "Save Changes"
+              : "Create Location"}
         </Button>
       </div>
     </form>
-  )
+  );
 }

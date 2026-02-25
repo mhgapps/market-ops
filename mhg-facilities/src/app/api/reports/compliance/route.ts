@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { ReportService } from '@/services/report.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextResponse } from "next/server";
+import { ReportService } from "@/services/report.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET() {
   try {
@@ -12,10 +12,10 @@ export async function GET() {
 
     return NextResponse.json(report);
   } catch (error) {
-    console.error('Compliance report error:', error);
+    console.error("Compliance report error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate compliance report' },
-      { status: 500 }
+      { error: "Failed to generate compliance report" },
+      { status: 500 },
     );
   }
 }

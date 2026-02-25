@@ -1,8 +1,8 @@
-import { TicketDAO } from '@/dao/ticket.dao';
-import { AssetDAO } from '@/dao/asset.dao';
-import { ComplianceDocumentDAO } from '@/dao/compliance-document.dao';
-import { PMScheduleDAO } from '@/dao/pm-schedule.dao';
-import { LocationDAO } from '@/dao/location.dao';
+import { TicketDAO } from "@/dao/ticket.dao";
+import { AssetDAO } from "@/dao/asset.dao";
+import { ComplianceDocumentDAO } from "@/dao/compliance-document.dao";
+import { PMScheduleDAO } from "@/dao/pm-schedule.dao";
+import { LocationDAO } from "@/dao/location.dao";
 // TicketStatus and TicketPriority are used by the DAO methods but not directly here anymore
 
 // Overview stats
@@ -78,7 +78,11 @@ export interface LocationTicketCount {
 // Activity feed
 export interface ActivityItem {
   id: string;
-  type: 'ticket_created' | 'ticket_completed' | 'compliance_expiring' | 'pm_completed';
+  type:
+    | "ticket_created"
+    | "ticket_completed"
+    | "compliance_expiring"
+    | "pm_completed";
   title: string;
   description: string;
   timestamp: string;
@@ -97,7 +101,7 @@ export class DashboardService {
     private assetDAO = new AssetDAO(),
     private complianceDAO = new ComplianceDocumentDAO(),
     private pmScheduleDAO = new PMScheduleDAO(),
-    private locationDAO = new LocationDAO()
+    private locationDAO = new LocationDAO(),
   ) {}
 
   // ============================================================
@@ -109,16 +113,17 @@ export class DashboardService {
    * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getOverviewStats(): Promise<OverviewStats> {
-    const [openTickets, expiringCompliance, overduePM, activeEmergencies] = await Promise.all([
-      // Count open tickets (not closed or rejected)
-      this.ticketDAO.countByStatusNot(['closed', 'rejected']),
-      // Count compliance documents expiring in 30 days
-      this.complianceDAO.countExpiringSoon(30),
-      // Count overdue PM schedules
-      this.pmScheduleDAO.countOverdue(),
-      // Count active emergency tickets
-      this.ticketDAO.countActiveEmergencies(),
-    ]);
+    const [openTickets, expiringCompliance, overduePM, activeEmergencies] =
+      await Promise.all([
+        // Count open tickets (not closed or rejected)
+        this.ticketDAO.countByStatusNot(["closed", "rejected"]),
+        // Count compliance documents expiring in 30 days
+        this.complianceDAO.countExpiringSoon(30),
+        // Count overdue PM schedules
+        this.pmScheduleDAO.countOverdue(),
+        // Count active emergency tickets
+        this.ticketDAO.countActiveEmergencies(),
+      ]);
 
     return {
       openTickets,
@@ -137,13 +142,14 @@ export class DashboardService {
    * PERFORMANCE: Uses COUNT queries instead of loading all data
    */
   async getTicketStats(): Promise<TicketStats> {
-    const [total, open, inProgress, completed, avgResolutionHours] = await Promise.all([
-      this.ticketDAO.countTotal(),
-      this.ticketDAO.countByStatusNot(['closed', 'rejected']),
-      this.ticketDAO.countByStatus(['in_progress']),
-      this.ticketDAO.countByStatus(['completed', 'closed']),
-      this.ticketDAO.getAverageResolutionHours(),
-    ]);
+    const [total, open, inProgress, completed, avgResolutionHours] =
+      await Promise.all([
+        this.ticketDAO.countTotal(),
+        this.ticketDAO.countByStatusNot(["closed", "rejected"]),
+        this.ticketDAO.countByStatus(["in_progress"]),
+        this.ticketDAO.countByStatus(["completed", "closed"]),
+        this.ticketDAO.getAverageResolutionHours(),
+      ]);
 
     // Convert hours to days
     const averageResolutionDays = Math.round(avgResolutionHours / 24);
@@ -164,10 +170,12 @@ export class DashboardService {
   async getTicketsByStatus(): Promise<StatusCount[]> {
     const statusCounts = await this.ticketDAO.getStatusCounts();
 
-    return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
-      status,
-      count,
-    }));
+    return Object.entries(statusCounts).map(
+      ([status, count]): StatusCount => ({
+        status,
+        count,
+      }),
+    );
   }
 
   /**
@@ -177,10 +185,12 @@ export class DashboardService {
   async getTicketsByPriority(): Promise<PriorityCount[]> {
     const priorityCounts = await this.ticketDAO.getPriorityCounts();
 
-    return Object.entries(priorityCounts).map(([priority, count]): PriorityCount => ({
-      priority,
-      count,
-    }));
+    return Object.entries(priorityCounts).map(
+      ([priority, count]): PriorityCount => ({
+        priority,
+        count,
+      }),
+    );
   }
 
   /**
@@ -196,7 +206,7 @@ export class DashboardService {
     // Get counts grouped by date from database (only fetches created_at column)
     const dateCounts = await this.ticketDAO.getCountsByDate(
       startDate.toISOString(),
-      endDate.toISOString()
+      endDate.toISOString(),
     );
 
     // Initialize date map with zeros for all days in range
@@ -204,7 +214,7 @@ export class DashboardService {
     for (let i = 0; i < days; i++) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateKey = date.toISOString().split('T')[0];
+      const dateKey = date.toISOString().split("T")[0];
       dateMap.set(dateKey, dateCounts[dateKey] || 0);
     }
 
@@ -239,10 +249,10 @@ export class DashboardService {
 
     return {
       total,
-      active: statusCounts['active'] || 0,
-      under_maintenance: statusCounts['under_maintenance'] || 0,
-      retired: statusCounts['retired'] || 0,
-      transferred: statusCounts['transferred'] || 0,
+      active: statusCounts["active"] || 0,
+      under_maintenance: statusCounts["under_maintenance"] || 0,
+      retired: statusCounts["retired"] || 0,
+      transferred: statusCounts["transferred"] || 0,
       expiringWarranties,
     };
   }
@@ -254,10 +264,12 @@ export class DashboardService {
   async getAssetsByStatus(): Promise<StatusCount[]> {
     const statusCounts = await this.assetDAO.getStatusCounts();
 
-    return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
-      status,
-      count,
-    }));
+    return Object.entries(statusCounts).map(
+      ([status, count]): StatusCount => ({
+        status,
+        count,
+      }),
+    );
   }
 
   /**
@@ -278,7 +290,7 @@ export class DashboardService {
   async getComplianceStats(): Promise<ComplianceStats> {
     const [total, active, expiringSoon, expired] = await Promise.all([
       this.complianceDAO.countTotal(),
-      this.complianceDAO.countByStatus('active'),
+      this.complianceDAO.countByStatus("active"),
       this.complianceDAO.countExpiringSoon(30),
       this.complianceDAO.countExpired(),
     ]);
@@ -298,10 +310,12 @@ export class DashboardService {
   async getComplianceByStatus(): Promise<StatusCount[]> {
     const statusCounts = await this.complianceDAO.getStatusCounts();
 
-    return Object.entries(statusCounts).map(([status, count]): StatusCount => ({
-      status,
-      count,
-    }));
+    return Object.entries(statusCounts).map(
+      ([status, count]): StatusCount => ({
+        status,
+        count,
+      }),
+    );
   }
 
   /**
@@ -327,7 +341,10 @@ export class DashboardService {
     ]);
 
     // Calculate completion rate (completed on time vs total due)
-    const completionRate = this.calculateCompletionRate(totalSchedules, overdue);
+    const completionRate = this.calculateCompletionRate(
+      totalSchedules,
+      overdue,
+    );
 
     return {
       totalSchedules,
@@ -406,10 +423,10 @@ export class DashboardService {
         const location = locations.find((l) => l.id === locationId);
         return {
           locationId,
-          locationName: location?.name || 'Unknown',
+          locationName: location?.name || "Unknown",
           ticketCount,
         };
-      }
+      },
     );
   }
 
@@ -423,11 +440,12 @@ export class DashboardService {
    */
   async getRecentActivity(limit: number = 10): Promise<ActivityItem[]> {
     // Fetch only the limited records we need from each source
-    const [recentCreated, recentCompleted, expiringCompliance] = await Promise.all([
-      this.ticketDAO.findRecentCreated(5),
-      this.ticketDAO.findRecentCompleted(5),
-      this.complianceDAO.findRecentExpiring(30, 5),
-    ]);
+    const [recentCreated, recentCompleted, expiringCompliance] =
+      await Promise.all([
+        this.ticketDAO.findRecentCreated(5),
+        this.ticketDAO.findRecentCompleted(5),
+        this.complianceDAO.findRecentExpiring(30, 5),
+      ]);
 
     const activities: ActivityItem[] = [];
 
@@ -435,8 +453,8 @@ export class DashboardService {
     recentCreated.forEach((ticket) => {
       activities.push({
         id: ticket.id,
-        type: 'ticket_created',
-        title: 'New Ticket Created',
+        type: "ticket_created",
+        title: "New Ticket Created",
         description: ticket.title,
         timestamp: ticket.created_at,
         linkUrl: `/tickets/${ticket.id}`,
@@ -447,8 +465,8 @@ export class DashboardService {
     recentCompleted.forEach((ticket) => {
       activities.push({
         id: ticket.id,
-        type: 'ticket_completed',
-        title: 'Ticket Completed',
+        type: "ticket_completed",
+        title: "Ticket Completed",
         description: ticket.title,
         timestamp: ticket.completed_at || ticket.created_at,
         linkUrl: `/tickets/${ticket.id}`,
@@ -459,8 +477,8 @@ export class DashboardService {
     expiringCompliance.forEach((doc) => {
       activities.push({
         id: doc.id,
-        type: 'compliance_expiring',
-        title: 'Compliance Expiring Soon',
+        type: "compliance_expiring",
+        title: "Compliance Expiring Soon",
         description: doc.name,
         timestamp: doc.expiration_date!,
         linkUrl: `/compliance/${doc.id}`,
@@ -471,7 +489,7 @@ export class DashboardService {
     return activities
       .sort(
         (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       )
       .slice(0, limit);
   }

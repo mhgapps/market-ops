@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { DashboardService } from '@/services/dashboard.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextResponse } from "next/server";
+import { DashboardService } from "@/services/dashboard.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET() {
   try {
@@ -12,10 +12,10 @@ export async function GET() {
 
     return NextResponse.json(stats);
   } catch (error) {
-    console.error('Dashboard overview error:', error);
+    console.error("Dashboard overview error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch overview stats' },
-      { status: 500 }
+      { error: "Failed to fetch overview stats" },
+      { status: 500 },
     );
   }
 }

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Select,
@@ -6,26 +6,26 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { X } from 'lucide-react'
-import type { AlertLevel } from '@/services/budget.service'
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import type { AlertLevel } from "@/services/budget.service";
 
 interface Location {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 interface BudgetFiltersProps {
-  fiscalYear: number
-  fiscalYearOptions: number[]
-  onFiscalYearChange: (year: number) => void
-  locationId?: string
-  locations?: Location[]
-  onLocationChange?: (locationId: string | undefined) => void
-  alertLevel?: AlertLevel | 'all'
-  onAlertLevelChange?: (level: AlertLevel | 'all') => void
-  onClearFilters?: () => void
+  fiscalYear: number;
+  fiscalYearOptions: number[];
+  onFiscalYearChange: (year: number) => void;
+  locationId?: string;
+  locations?: Location[];
+  onLocationChange?: (locationId: string | undefined) => void;
+  alertLevel?: AlertLevel | "all";
+  onAlertLevelChange?: (level: AlertLevel | "all") => void;
+  onClearFilters?: () => void;
 }
 
 export function BudgetFilters({
@@ -39,7 +39,7 @@ export function BudgetFilters({
   onAlertLevelChange,
   onClearFilters,
 }: BudgetFiltersProps) {
-  const hasActiveFilters = locationId || (alertLevel && alertLevel !== 'all')
+  const hasActiveFilters = locationId || (alertLevel && alertLevel !== "all");
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
@@ -63,8 +63,10 @@ export function BudgetFilters({
       {/* Location Filter */}
       {onLocationChange && locations.length > 0 && (
         <Select
-          value={locationId || 'all'}
-          onValueChange={(value) => onLocationChange(value === 'all' ? undefined : value)}
+          value={locationId || "all"}
+          onValueChange={(value) =>
+            onLocationChange(value === "all" ? undefined : value)
+          }
         >
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="All Locations" />
@@ -84,8 +86,10 @@ export function BudgetFilters({
       {/* Alert Level Filter */}
       {onAlertLevelChange && (
         <Select
-          value={alertLevel || 'all'}
-          onValueChange={(value) => onAlertLevelChange(value as AlertLevel | 'all')}
+          value={alertLevel || "all"}
+          onValueChange={(value) =>
+            onAlertLevelChange(value as AlertLevel | "all")
+          }
         >
           <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="All Statuses" />
@@ -113,5 +117,5 @@ export function BudgetFilters({
         </Button>
       )}
     </div>
-  )
+  );
 }

@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react'
-import { Spinner } from '@/components/ui/loaders'
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Eye, EyeOff, ArrowLeft, CheckCircle } from "lucide-react";
+import { Spinner } from "@/components/ui/loaders";
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -18,97 +18,102 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { resetPassword } from '../actions'
+} from "@/components/ui/card";
+import { resetPassword } from "../actions";
 
 // String constants for bilingual support
 const STRINGS = {
-  TITLE: 'Set new password',
-  DESCRIPTION: 'Enter your new password below',
-  PASSWORD_LABEL: 'New password',
-  PASSWORD_PLACEHOLDER: 'Create a strong password',
-  CONFIRM_PASSWORD_LABEL: 'Confirm password',
-  CONFIRM_PASSWORD_PLACEHOLDER: 'Confirm your new password',
-  RESET_PASSWORD: 'Reset password',
-  RESETTING: 'Resetting...',
-  BACK_TO_LOGIN: 'Back to login',
-  SUCCESS_TITLE: 'Password reset successful',
-  SUCCESS_DESCRIPTION: 'Your password has been reset. You can now log in with your new password.',
-  GO_TO_LOGIN: 'Go to login',
-  ERROR_INVALID_TOKEN: 'Invalid or expired reset link. Please request a new one.',
-  ERROR_PASSWORD_MIN: 'Password must be at least 8 characters',
-  ERROR_PASSWORD_WEAK: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-  ERROR_PASSWORDS_DONT_MATCH: 'Passwords do not match',
-} as const
+  TITLE: "Set new password",
+  DESCRIPTION: "Enter your new password below",
+  PASSWORD_LABEL: "New password",
+  PASSWORD_PLACEHOLDER: "Create a strong password",
+  CONFIRM_PASSWORD_LABEL: "Confirm password",
+  CONFIRM_PASSWORD_PLACEHOLDER: "Confirm your new password",
+  RESET_PASSWORD: "Reset password",
+  RESETTING: "Resetting...",
+  BACK_TO_LOGIN: "Back to login",
+  SUCCESS_TITLE: "Password reset successful",
+  SUCCESS_DESCRIPTION:
+    "Your password has been reset. You can now log in with your new password.",
+  GO_TO_LOGIN: "Go to login",
+  ERROR_INVALID_TOKEN:
+    "Invalid or expired reset link. Please request a new one.",
+  ERROR_PASSWORD_MIN: "Password must be at least 8 characters",
+  ERROR_PASSWORD_WEAK:
+    "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+  ERROR_PASSWORDS_DONT_MATCH: "Passwords do not match",
+} as const;
 
 // Zod schema for form validation
-const resetPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(8, STRINGS.ERROR_PASSWORD_MIN)
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, STRINGS.ERROR_PASSWORD_WEAK),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: STRINGS.ERROR_PASSWORDS_DONT_MATCH,
-  path: ['confirmPassword'],
-})
+const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, STRINGS.ERROR_PASSWORD_MIN)
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, STRINGS.ERROR_PASSWORD_WEAK),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: STRINGS.ERROR_PASSWORDS_DONT_MATCH,
+    path: ["confirmPassword"],
+  });
 
 type FormErrors = {
-  password?: string
-  confirmPassword?: string
-}
+  password?: string;
+  confirmPassword?: string;
+};
 
 function ResetPasswordForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   // Get the code/token from URL (Supabase sends it as 'code')
-  const code = searchParams.get('code')
+  const code = searchParams.get("code");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setErrors({})
+    event.preventDefault();
+    setErrors({});
 
     if (!code) {
-      toast.error(STRINGS.ERROR_INVALID_TOKEN)
-      return
+      toast.error(STRINGS.ERROR_INVALID_TOKEN);
+      return;
     }
 
-    const formData = new FormData(event.currentTarget)
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
+    const formData = new FormData(event.currentTarget);
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
 
     // Validate with Zod
-    const result = resetPasswordSchema.safeParse({ password, confirmPassword })
+    const result = resetPasswordSchema.safeParse({ password, confirmPassword });
     if (!result.success) {
-      const fieldErrors: FormErrors = {}
+      const fieldErrors: FormErrors = {};
       result.error.issues.forEach((issue) => {
-        const field = issue.path[0] as keyof FormErrors
-        fieldErrors[field] = issue.message
-      })
-      setErrors(fieldErrors)
-      return
+        const field = issue.path[0] as keyof FormErrors;
+        fieldErrors[field] = issue.message;
+      });
+      setErrors(fieldErrors);
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const response = await resetPassword(code, password)
+      const response = await resetPassword(code, password);
 
       if (response.error) {
-        toast.error(response.error)
+        toast.error(response.error);
       } else {
-        setIsSuccess(true)
+        setIsSuccess(true);
       }
     } catch {
-      toast.error('An unexpected error occurred. Please try again.')
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -124,22 +129,21 @@ function ResetPasswordForm() {
         </CardHeader>
 
         <CardFooter>
-          <Button
-            className="w-full"
-            onClick={() => router.push('/login')}
-          >
+          <Button className="w-full" onClick={() => router.push("/login")}>
             {STRINGS.GO_TO_LOGIN}
           </Button>
         </CardFooter>
       </Card>
-    )
+    );
   }
 
   if (!code) {
     return (
       <Card>
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl text-destructive">Invalid Link</CardTitle>
+          <CardTitle className="text-2xl text-destructive">
+            Invalid Link
+          </CardTitle>
           <CardDescription>{STRINGS.ERROR_INVALID_TOKEN}</CardDescription>
         </CardHeader>
 
@@ -156,7 +160,7 @@ function ResetPasswordForm() {
           </Link>
         </CardFooter>
       </Card>
-    )
+    );
   }
 
   return (
@@ -174,7 +178,7 @@ function ResetPasswordForm() {
               <Input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 placeholder={STRINGS.PASSWORD_PLACEHOLDER}
                 autoComplete="new-password"
                 disabled={isLoading}
@@ -200,12 +204,14 @@ function ResetPasswordForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{STRINGS.CONFIRM_PASSWORD_LABEL}</Label>
+            <Label htmlFor="confirmPassword">
+              {STRINGS.CONFIRM_PASSWORD_LABEL}
+            </Label>
             <div className="relative">
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder={STRINGS.CONFIRM_PASSWORD_PLACEHOLDER}
                 autoComplete="new-password"
                 disabled={isLoading}
@@ -226,7 +232,9 @@ function ResetPasswordForm() {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+              <p className="text-sm text-destructive">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
         </CardContent>
@@ -252,19 +260,21 @@ function ResetPasswordForm() {
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Spinner size="md" />
-        </CardContent>
-      </Card>
-    }>
+    <Suspense
+      fallback={
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <Spinner size="md" />
+          </CardContent>
+        </Card>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
-  )
+  );
 }

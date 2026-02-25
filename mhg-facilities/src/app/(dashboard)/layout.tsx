@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Sidebar } from '@/components/layout/sidebar'
-import { BottomNav } from '@/components/layout/bottom-nav'
-import { MoreMenu } from '@/components/layout/more-menu'
-import { NotificationFab } from '@/components/layout/notification-fab'
+import { useState } from "react";
+import { Sidebar } from "@/components/layout/sidebar";
+import { BottomNav } from "@/components/layout/bottom-nav";
+import { MoreMenu } from "@/components/layout/more-menu";
+import { NotificationFab } from "@/components/layout/notification-fab";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -30,13 +30,10 @@ export default function DashboardLayout({
       <BottomNav onMoreClick={() => setMoreMenuOpen(true)} />
 
       {/* More menu (bottom drawer) */}
-      <MoreMenu
-        isOpen={moreMenuOpen}
-        onClose={() => setMoreMenuOpen(false)}
-      />
+      <MoreMenu isOpen={moreMenuOpen} onClose={() => setMoreMenuOpen(false)} />
 
       {/* Notification FAB */}
       <NotificationFab />
     </div>
-  )
+  );
 }

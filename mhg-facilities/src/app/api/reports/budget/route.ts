@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET() {
   try {
@@ -9,13 +9,13 @@ export async function GET() {
     // Placeholder - budget reports would require budget DAO implementation
     return NextResponse.json({
       budgets: [],
-      message: 'Budget reports coming soon',
+      message: "Budget reports coming soon",
     });
   } catch (error) {
-    console.error('Budget report error:', error);
+    console.error("Budget report error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate budget report' },
-      { status: 500 }
+      { error: "Failed to generate budget report" },
+      { status: 500 },
     );
   }
 }

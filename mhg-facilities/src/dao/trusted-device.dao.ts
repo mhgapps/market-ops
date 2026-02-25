@@ -1,26 +1,26 @@
-import { getPooledSupabaseClient } from '@/lib/supabase/server-pooled'
+import { getPooledSupabaseClient } from "@/lib/supabase/server-pooled";
 
 export interface TrustedDevice {
-  id: string
-  tenant_id: string
-  user_id: string
-  auth_user_id: string
-  device_token_hash: string
-  device_name: string | null
-  ip_address: string | null
-  trusted_at: string
-  expires_at: string
-  last_used_at: string
-  revoked_at: string | null
-  deleted_at: string | null
-  created_at: string
-  updated_at: string
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  auth_user_id: string;
+  device_token_hash: string;
+  device_name: string | null;
+  ip_address: string | null;
+  trusted_at: string;
+  expires_at: string;
+  last_used_at: string;
+  revoked_at: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // Helper type for query results
 interface QueryResult<T> {
-  data: T | null
-  error: { message: string; code?: string } | null
+  data: T | null;
+  error: { message: string; code?: string } | null;
 }
 
 /**
@@ -38,23 +38,25 @@ export class TrustedDeviceDAO {
    * Filters out revoked, deleted, and expired records.
    */
   async findByTokenHash(tokenHash: string): Promise<TrustedDevice | null> {
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
 
     const { data, error } = (await supabase
-      .from('trusted_devices')
-      .select('*')
-      .eq('device_token_hash', tokenHash)
-      .is('revoked_at', null)
-      .is('deleted_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .single()) as unknown as QueryResult<TrustedDevice>
+      .from("trusted_devices")
+      .select("*")
+      .eq("device_token_hash", tokenHash)
+      .is("revoked_at", null)
+      .is("deleted_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .single()) as unknown as QueryResult<TrustedDevice>;
 
     if (error) {
-      if (error.code === 'PGRST116') return null
-      throw new Error(`Failed to find trusted device by token hash: ${error.message}`)
+      if (error.code === "PGRST116") return null;
+      throw new Error(
+        `Failed to find trusted device by token hash: ${error.message}`,
+      );
     }
 
-    return data
+    return data;
   }
 
   /**
@@ -62,21 +64,25 @@ export class TrustedDeviceDAO {
    * Used for the device management UI.
    */
   async findByUserId(userId: string): Promise<TrustedDevice[]> {
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
 
     const { data, error } = (await supabase
-      .from('trusted_devices')
-      .select('*')
-      .eq('user_id', userId)
-      .is('revoked_at', null)
-      .is('deleted_at', null)
-      .order('last_used_at', { ascending: false })) as unknown as QueryResult<TrustedDevice[]>
+      .from("trusted_devices")
+      .select("*")
+      .eq("user_id", userId)
+      .is("revoked_at", null)
+      .is("deleted_at", null)
+      .order("last_used_at", { ascending: false })) as unknown as QueryResult<
+      TrustedDevice[]
+    >;
 
     if (error) {
-      throw new Error(`Failed to find trusted devices for user: ${error.message}`)
+      throw new Error(
+        `Failed to find trusted devices for user: ${error.message}`,
+      );
     }
 
-    return data ?? []
+    return data ?? [];
   }
 
   /**
@@ -84,45 +90,47 @@ export class TrustedDeviceDAO {
    * The expires_at defaults to 180 days from now (set by database default).
    */
   async create(data: {
-    tenant_id: string
-    user_id: string
-    auth_user_id: string
-    device_token_hash: string
-    device_name: string | null
-    ip_address: string | null
+    tenant_id: string;
+    user_id: string;
+    auth_user_id: string;
+    device_token_hash: string;
+    device_name: string | null;
+    ip_address: string | null;
   }): Promise<TrustedDevice> {
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
 
     const { data: device, error } = await supabase
-      .from('trusted_devices')
+      .from("trusted_devices")
       .insert(data as never)
       .select()
-      .single()
+      .single();
 
     if (error) {
-      throw new Error(`Failed to create trusted device: ${error.message}`)
+      throw new Error(`Failed to create trusted device: ${error.message}`);
     }
     if (!device) {
-      throw new Error('Failed to create trusted device: no data returned')
+      throw new Error("Failed to create trusted device: no data returned");
     }
 
-    return device as unknown as TrustedDevice
+    return device as unknown as TrustedDevice;
   }
 
   /**
    * Update the last_used_at timestamp when a device is used for authentication.
    */
   async updateLastUsed(id: string): Promise<void> {
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
 
     const { error } = await supabase
-      .from('trusted_devices')
+      .from("trusted_devices")
       .update({ last_used_at: new Date().toISOString() } as never)
-      .eq('id', id)
-      .is('deleted_at', null)
+      .eq("id", id)
+      .is("deleted_at", null);
 
     if (error) {
-      throw new Error(`Failed to update trusted device last_used_at: ${error.message}`)
+      throw new Error(
+        `Failed to update trusted device last_used_at: ${error.message}`,
+      );
     }
   }
 
@@ -132,18 +140,18 @@ export class TrustedDeviceDAO {
    * Scoped by userId to prevent cross-user revocation.
    */
   async revoke(id: string, userId: string): Promise<void> {
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
 
     const { error } = await supabase
-      .from('trusted_devices')
+      .from("trusted_devices")
       .update({ revoked_at: new Date().toISOString() } as never)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .is('revoked_at', null)
-      .is('deleted_at', null)
+      .eq("id", id)
+      .eq("user_id", userId)
+      .is("revoked_at", null)
+      .is("deleted_at", null);
 
     if (error) {
-      throw new Error(`Failed to revoke trusted device: ${error.message}`)
+      throw new Error(`Failed to revoke trusted device: ${error.message}`);
     }
   }
 
@@ -152,17 +160,19 @@ export class TrustedDeviceDAO {
    * Used when a user changes their password or requests a full logout.
    */
   async revokeAllForUser(userId: string): Promise<void> {
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
 
     const { error } = await supabase
-      .from('trusted_devices')
+      .from("trusted_devices")
       .update({ revoked_at: new Date().toISOString() } as never)
-      .eq('user_id', userId)
-      .is('revoked_at', null)
-      .is('deleted_at', null)
+      .eq("user_id", userId)
+      .is("revoked_at", null)
+      .is("deleted_at", null);
 
     if (error) {
-      throw new Error(`Failed to revoke all trusted devices for user: ${error.message}`)
+      throw new Error(
+        `Failed to revoke all trusted devices for user: ${error.message}`,
+      );
     }
   }
 }

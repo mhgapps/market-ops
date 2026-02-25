@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useCallback, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface UseRealtimeSubscriptionOptions {
-  table: string
-  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*'
-  filter?: string
-  enabled?: boolean
-  onInsert?: (payload: unknown) => void
-  onUpdate?: (payload: unknown) => void
-  onDelete?: (payload: unknown) => void
-  invalidateQueries?: readonly (readonly unknown[])[]
+  table: string;
+  event?: "INSERT" | "UPDATE" | "DELETE" | "*";
+  filter?: string;
+  enabled?: boolean;
+  onInsert?: (payload: unknown) => void;
+  onUpdate?: (payload: unknown) => void;
+  onDelete?: (payload: unknown) => void;
+  invalidateQueries?: readonly (readonly unknown[])[];
 }
 
 /**
@@ -22,7 +22,7 @@ interface UseRealtimeSubscriptionOptions {
  */
 export function useRealtimeSubscription({
   table,
-  event = '*',
+  event = "*",
   filter,
   enabled = true,
   onInsert,
@@ -30,72 +30,72 @@ export function useRealtimeSubscription({
   onDelete,
   invalidateQueries = [],
 }: UseRealtimeSubscriptionOptions) {
-  const queryClient = useQueryClient()
-  const channelRef = useRef<RealtimeChannel | null>(null)
+  const queryClient = useQueryClient();
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   // Memoize invalidateQueries to prevent re-subscriptions
   const stableInvalidateQueries = useMemo(
     () => invalidateQueries,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(invalidateQueries)]
-  )
+    [JSON.stringify(invalidateQueries)],
+  );
 
   // Use useCallback for the subscription handler to fix stale closure issue
   const handleChange = useCallback(
     (payload: { eventType: string; new: unknown; old: unknown }) => {
       // Call event-specific callbacks
-      if (payload.eventType === 'INSERT' && onInsert) {
-        onInsert(payload.new)
-      } else if (payload.eventType === 'UPDATE' && onUpdate) {
-        onUpdate(payload.new)
-      } else if (payload.eventType === 'DELETE' && onDelete) {
-        onDelete(payload.old)
+      if (payload.eventType === "INSERT" && onInsert) {
+        onInsert(payload.new);
+      } else if (payload.eventType === "UPDATE" && onUpdate) {
+        onUpdate(payload.new);
+      } else if (payload.eventType === "DELETE" && onDelete) {
+        onDelete(payload.old);
       }
 
       // Invalidate React Query cache for affected queries
       stableInvalidateQueries.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey: queryKey as unknown[] })
-      })
+        queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
+      });
     },
-    [table, onInsert, onUpdate, onDelete, stableInvalidateQueries, queryClient]
-  )
+    [table, onInsert, onUpdate, onDelete, stableInvalidateQueries, queryClient],
+  );
 
   useEffect(() => {
     // Don't subscribe if disabled
     if (!enabled) {
-      return
+      return;
     }
 
-    const supabase = createClient()
+    const supabase = createClient();
 
     // Create a unique channel name
-    const channelName = `realtime:${table}:${event}:${filter || 'all'}:${Date.now()}`
+    const channelName = `realtime:${table}:${event}:${filter || "all"}:${Date.now()}`;
 
     // Subscribe to table changes
     const channel = supabase
       .channel(channelName)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
           event,
-          schema: 'public',
+          schema: "public",
           table,
           filter,
         } as never,
-        handleChange
+        handleChange,
       )
-      .subscribe()
+      .subscribe();
 
-    channelRef.current = channel
+    channelRef.current = channel;
 
     // Cleanup on unmount
     return () => {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-        channelRef.current = null
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
-    }
-  }, [table, event, filter, enabled, handleChange])
+    };
+  }, [table, event, filter, enabled, handleChange]);
 }
 
 /**
@@ -105,14 +105,14 @@ export function useRealtimeSubscription({
  */
 export function useTicketRealtime(ticketId?: string) {
   useRealtimeSubscription({
-    table: 'tickets',
-    event: '*',
+    table: "tickets",
+    event: "*",
     filter: ticketId ? `id=eq.${ticketId}` : undefined,
     enabled: !!ticketId, // Only subscribe if viewing a specific ticket
     invalidateQueries: ticketId
-      ? [['tickets', 'detail', ticketId], ['tickets']]
+      ? [["tickets", "detail", ticketId], ["tickets"]]
       : [],
-  })
+  });
 }
 
 /**
@@ -121,14 +121,14 @@ export function useTicketRealtime(ticketId?: string) {
  */
 export function usePMScheduleRealtime() {
   useRealtimeSubscription({
-    table: 'pm_schedules',
-    event: '*',
+    table: "pm_schedules",
+    event: "*",
     invalidateQueries: [
-      ['pm', 'schedules'],
-      ['pm', 'stats'],
-      ['pm', 'calendar'],
+      ["pm", "schedules"],
+      ["pm", "stats"],
+      ["pm", "calendar"],
     ],
-  })
+  });
 }
 
 /**
@@ -137,13 +137,10 @@ export function usePMScheduleRealtime() {
  */
 export function useAssetRealtime() {
   useRealtimeSubscription({
-    table: 'assets',
-    event: '*',
-    invalidateQueries: [
-      ['assets'],
-      ['asset-stats'],
-    ],
-  })
+    table: "assets",
+    event: "*",
+    invalidateQueries: [["assets"], ["asset-stats"]],
+  });
 }
 
 /**
@@ -152,13 +149,10 @@ export function useAssetRealtime() {
  */
 export function useComplianceRealtime() {
   useRealtimeSubscription({
-    table: 'compliance_documents',
-    event: '*',
-    invalidateQueries: [
-      ['compliance'],
-      ['compliance-stats'],
-    ],
-  })
+    table: "compliance_documents",
+    event: "*",
+    invalidateQueries: [["compliance"], ["compliance-stats"]],
+  });
 }
 
 /**
@@ -167,12 +161,10 @@ export function useComplianceRealtime() {
  */
 export function useUserRealtime() {
   useRealtimeSubscription({
-    table: 'users',
-    event: '*',
-    invalidateQueries: [
-      ['users'],
-    ],
-  })
+    table: "users",
+    event: "*",
+    invalidateQueries: [["users"]],
+  });
 }
 
 /**
@@ -181,12 +173,10 @@ export function useUserRealtime() {
  */
 export function useLocationRealtime() {
   useRealtimeSubscription({
-    table: 'locations',
-    event: '*',
-    invalidateQueries: [
-      ['locations'],
-    ],
-  })
+    table: "locations",
+    event: "*",
+    invalidateQueries: [["locations"]],
+  });
 }
 
 /**
@@ -195,10 +185,8 @@ export function useLocationRealtime() {
  */
 export function useVendorRealtime() {
   useRealtimeSubscription({
-    table: 'vendors',
-    event: '*',
-    invalidateQueries: [
-      ['vendors'],
-    ],
-  })
+    table: "vendors",
+    event: "*",
+    invalidateQueries: [["vendors"]],
+  });
 }

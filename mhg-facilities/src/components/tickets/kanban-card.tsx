@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { forwardRef } from 'react'
-import { AlertTriangle } from 'lucide-react'
-import { priorityColors } from '@/theme/colors'
-import { cn } from '@/lib/utils'
+import { forwardRef } from "react";
+import { AlertTriangle } from "lucide-react";
+import { priorityColors } from "@/theme/colors";
+import { cn } from "@/lib/utils";
 
 interface KanbanCardProps {
-  id: string
-  ticketNumber: number
-  title: string
-  priority: 'low' | 'medium' | 'high' | 'critical'
-  locationName?: string | null
-  isEmergency?: boolean
-  isDragging?: boolean
-  onClick?: () => void
-  className?: string
+  id: string;
+  ticketNumber: number;
+  title: string;
+  priority: "low" | "medium" | "high" | "critical";
+  locationName?: string | null;
+  isEmergency?: boolean;
+  isDragging?: boolean;
+  onClick?: () => void;
+  className?: string;
 }
 
 export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(
@@ -30,26 +30,26 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(
       className,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const priorityConfig = priorityColors[priority]
+    const priorityConfig = priorityColors[priority];
 
     return (
       <div
         ref={ref}
         onClick={onClick}
         className={cn(
-          'group relative cursor-pointer rounded-lg border bg-white transition-all duration-150',
-          'hover:shadow-md hover:border-slate-300',
-          isDragging && 'shadow-lg ring-2 ring-primary/20 rotate-[2deg]',
-          className
+          "group relative cursor-pointer rounded-lg border bg-white transition-all duration-150",
+          "hover:shadow-md hover:border-slate-300",
+          isDragging && "shadow-lg ring-2 ring-primary/20 rotate-[2deg]",
+          className,
         )}
         style={{
-          borderLeftWidth: '3px',
+          borderLeftWidth: "3px",
           borderLeftColor: priorityConfig.border,
           boxShadow: isDragging
-            ? '0 8px 16px -2px rgb(0 0 0 / 0.1)'
-            : '0 1px 2px 0 rgb(0 0 0 / 0.03)',
+            ? "0 8px 16px -2px rgb(0 0 0 / 0.1)"
+            : "0 1px 2px 0 rgb(0 0 0 / 0.03)",
         }}
         {...props}
       >
@@ -80,7 +80,9 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(
                 {locationName}
               </span>
             ) : (
-              <span className="text-[11px] text-slate-400 italic">No location</span>
+              <span className="text-[11px] text-slate-400 italic">
+                No location
+              </span>
             )}
 
             {/* Priority label + Assignee */}
@@ -99,13 +101,12 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(
                 />
                 {priority.charAt(0).toUpperCase() + priority.slice(1)}
               </span>
-
             </div>
           </div>
         </div>
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-KanbanCard.displayName = 'KanbanCard'
+KanbanCard.displayName = "KanbanCard";

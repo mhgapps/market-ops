@@ -1,30 +1,30 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { useCreatePMTemplate } from '@/hooks/use-pm'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Plus } from 'lucide-react'
-import Link from 'next/link'
-import { toast } from 'sonner'
-import { useState } from 'react'
+import { useRouter } from "next/navigation";
+import { useCreatePMTemplate } from "@/hooks/use-pm";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Plus } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export default function PMTemplateNewPage() {
-  const router = useRouter()
-  const createTemplate = useCreatePMTemplate()
+  const router = useRouter();
+  const createTemplate = useCreatePMTemplate();
 
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [estimatedHours, setEstimatedHours] = useState<number | ''>('')
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [estimatedHours, setEstimatedHours] = useState<number | "">("");
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      toast.error('Template name is required')
-      return
+      toast.error("Template name is required");
+      return;
     }
 
     try {
@@ -33,13 +33,13 @@ export default function PMTemplateNewPage() {
         description: description || null,
         category: category || null,
         estimated_duration_hours: estimatedHours || null,
-      })
-      toast.success('Template created successfully')
-      router.push(`/pm/templates/${template.id}`)
+      });
+      toast.success("Template created successfully");
+      router.push(`/pm/templates/${template.id}`);
     } catch (_error) {
-      toast.error('Failed to create template')
+      toast.error("Failed to create template");
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -106,12 +106,16 @@ export default function PMTemplateNewPage() {
               step="0.25"
               min="0"
               value={estimatedHours}
-              onChange={(e) => setEstimatedHours(e.target.value ? parseFloat(e.target.value) : '')}
+              onChange={(e) =>
+                setEstimatedHours(
+                  e.target.value ? parseFloat(e.target.value) : "",
+                )
+              }
               placeholder="e.g., 2.5"
             />
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

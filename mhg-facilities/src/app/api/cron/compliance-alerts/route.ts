@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { ComplianceDocumentService } from '@/services/compliance-document.service';
-import { NotificationService } from '@/services/notification.service';
+import { NextRequest, NextResponse } from "next/server";
+import { ComplianceDocumentService } from "@/services/compliance-document.service";
+import { NotificationService } from "@/services/notification.service";
 
 /**
  * Cron job to send compliance document expiration alerts
@@ -20,35 +20,39 @@ export async function GET(request: NextRequest) {
     // Verify CRON_SECRET is configured
     if (!process.env.CRON_SECRET) {
       return NextResponse.json(
-        { error: 'CRON_SECRET not configured' },
-        { status: 500 }
+        { error: "CRON_SECRET not configured" },
+        { status: 500 },
       );
     }
 
     // Verify this is a legitimate cron request
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const complianceService = new ComplianceDocumentService();
     const notificationService = new NotificationService();
 
     // Get documents expiring at various thresholds (parallel fetch)
-    const [expiringIn30Days, expiringIn14Days, expiringIn7Days, expiringIn1Day, expiredToday] =
-      await Promise.all([
-        complianceService.getExpiringDocuments(30),
-        complianceService.getExpiringDocuments(14),
-        complianceService.getExpiringDocuments(7),
-        complianceService.getExpiringDocuments(1),
-        complianceService.getExpiringDocuments(0),
-      ]);
+    const [
+      expiringIn30Days,
+      expiringIn14Days,
+      expiringIn7Days,
+      expiringIn1Day,
+      expiredToday,
+    ] = await Promise.all([
+      complianceService.getExpiringDocuments(30),
+      complianceService.getExpiringDocuments(14),
+      complianceService.getExpiringDocuments(7),
+      complianceService.getExpiringDocuments(1),
+      complianceService.getExpiringDocuments(0),
+    ]);
 
     // Type for expiring document
-    type ExpiringDoc = Awaited<ReturnType<ComplianceDocumentService['getExpiringDocuments']>>[number];
+    type ExpiringDoc = Awaited<
+      ReturnType<ComplianceDocumentService["getExpiringDocuments"]>
+    >[number];
 
     // Combine all documents that need alerts
     const allExpiringDocs = [
@@ -63,7 +67,10 @@ export async function GET(request: NextRequest) {
     const uniqueDocs = new Map<string, { doc: ExpiringDoc; days: number }>();
     for (const item of allExpiringDocs) {
       // Keep the smallest days value (most urgent)
-      if (!uniqueDocs.has(item.doc.id) || uniqueDocs.get(item.doc.id)!.days > item.days) {
+      if (
+        !uniqueDocs.has(item.doc.id) ||
+        uniqueDocs.get(item.doc.id)!.days > item.days
+      ) {
         uniqueDocs.set(item.doc.id, item);
       }
     }
@@ -96,11 +103,12 @@ export async function GET(request: NextRequest) {
           });
 
           console.log(
-            `Sent compliance alert for document ${doc.id} (${doc.name}): expires in ${days} days`
+            `Sent compliance alert for document ${doc.id} (${doc.name}): expires in ${days} days`,
           );
         }
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        const errorMsg =
+          error instanceof Error ? error.message : "Unknown error";
         errors.push({ documentId: doc.id, error: errorMsg });
         console.error(`Failed to send alert for document ${doc.id}:`, error);
       }
@@ -122,13 +130,13 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Compliance alerts cron job error:', error);
+    console.error("Compliance alerts cron job error:", error);
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -4,30 +4,31 @@
  */
 
 interface SendEmailParams {
-  to: string | string[]
-  subject: string
-  html: string
-  from?: string
-  replyTo?: string
+  to: string | string[];
+  subject: string;
+  html: string;
+  from?: string;
+  replyTo?: string;
 }
 
 interface SendEmailResponse {
-  id: string
-  from: string
-  to: string[]
-  created_at: string
+  id: string;
+  from: string;
+  to: string[];
+  created_at: string;
 }
 
 export class ResendIAO {
-  private apiKey: string
-  private fromEmail: string
+  private apiKey: string;
+  private fromEmail: string;
 
   constructor() {
-    this.apiKey = process.env.RESEND_API_KEY || ''
-    this.fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@mhgfacilities.com'
+    this.apiKey = process.env.RESEND_API_KEY || "";
+    this.fromEmail =
+      process.env.RESEND_FROM_EMAIL || "noreply@mhgfacilities.com";
 
     if (!this.apiKey) {
-      console.warn('RESEND_API_KEY not configured - emails will not be sent')
+      console.warn("RESEND_API_KEY not configured - emails will not be sent");
     }
   }
 
@@ -42,15 +43,15 @@ export class ResendIAO {
     replyTo,
   }: SendEmailParams): Promise<SendEmailResponse | null> {
     if (!this.apiKey) {
-      console.warn('Resend API key not configured, skipping email send')
-      return null
+      console.warn("Resend API key not configured, skipping email send");
+      return null;
     }
 
     try {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
@@ -60,17 +61,17 @@ export class ResendIAO {
           html,
           reply_to: replyTo,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(`Resend API error: ${JSON.stringify(error)}`)
+        const error = await response.json();
+        throw new Error(`Resend API error: ${JSON.stringify(error)}`);
       }
 
-      return await response.json()
+      return await response.json();
     } catch (error) {
-      console.error('Failed to send email via Resend:', error)
-      throw error
+      console.error("Failed to send email via Resend:", error);
+      throw error;
     }
   }
 
@@ -78,14 +79,15 @@ export class ResendIAO {
    * Send ticket assignment notification
    */
   async sendTicketAssignmentEmail(params: {
-    to: string
-    assigneeName: string
-    ticketTitle: string
-    ticketId: string
-    ticketUrl: string
-    assignedBy: string
+    to: string;
+    assigneeName: string;
+    ticketTitle: string;
+    ticketId: string;
+    ticketUrl: string;
+    assignedBy: string;
   }): Promise<SendEmailResponse | null> {
-    const { to, assigneeName, ticketTitle, ticketId, ticketUrl, assignedBy } = params
+    const { to, assigneeName, ticketTitle, ticketId, ticketUrl, assignedBy } =
+      params;
 
     const html = `
       <!DOCTYPE html>
@@ -132,30 +134,38 @@ export class ResendIAO {
           </div>
         </body>
       </html>
-    `
+    `;
 
     return this.sendEmail({
       to,
       subject: `New Ticket Assigned: ${ticketTitle}`,
       html,
-    })
+    });
   }
 
   /**
    * Send ticket status change notification
    */
   async sendTicketStatusChangeEmail(params: {
-    to: string
-    recipientName: string
-    ticketTitle: string
-    ticketId: string
-    oldStatus: string
-    newStatus: string
-    ticketUrl: string
-    changedBy: string
+    to: string;
+    recipientName: string;
+    ticketTitle: string;
+    ticketId: string;
+    oldStatus: string;
+    newStatus: string;
+    ticketUrl: string;
+    changedBy: string;
   }): Promise<SendEmailResponse | null> {
-    const { to, recipientName, ticketTitle, ticketId, oldStatus, newStatus, ticketUrl, changedBy } =
-      params
+    const {
+      to,
+      recipientName,
+      ticketTitle,
+      ticketId,
+      oldStatus,
+      newStatus,
+      ticketUrl,
+      changedBy,
+    } = params;
 
     const html = `
       <!DOCTYPE html>
@@ -211,27 +221,28 @@ export class ResendIAO {
           </div>
         </body>
       </html>
-    `
+    `;
 
     return this.sendEmail({
       to,
       subject: `Ticket Status Updated: ${ticketTitle}`,
       html,
-    })
+    });
   }
 
   /**
    * Send PM schedule due reminder
    */
   async sendPMDueReminderEmail(params: {
-    to: string
-    recipientName: string
-    taskName: string
-    dueDate: string
-    scheduleId: string
-    scheduleUrl: string
+    to: string;
+    recipientName: string;
+    taskName: string;
+    dueDate: string;
+    scheduleId: string;
+    scheduleUrl: string;
   }): Promise<SendEmailResponse | null> {
-    const { to, recipientName, taskName, dueDate, scheduleId, scheduleUrl } = params
+    const { to, recipientName, taskName, dueDate, scheduleId, scheduleUrl } =
+      params;
 
     const html = `
       <!DOCTYPE html>
@@ -281,29 +292,36 @@ export class ResendIAO {
           </div>
         </body>
       </html>
-    `
+    `;
 
     return this.sendEmail({
       to,
       subject: `PM Task Due Soon: ${taskName}`,
       html,
-    })
+    });
   }
 
   /**
    * Send compliance document expiring reminder
    */
   async sendComplianceExpiringEmail(params: {
-    to: string
-    recipientName: string
-    documentName: string
-    expirationDate: string
-    documentId: string
-    documentUrl: string
-    daysUntilExpiration: number
+    to: string;
+    recipientName: string;
+    documentName: string;
+    expirationDate: string;
+    documentId: string;
+    documentUrl: string;
+    daysUntilExpiration: number;
   }): Promise<SendEmailResponse | null> {
-    const { to, recipientName, documentName, expirationDate, documentId, documentUrl, daysUntilExpiration } =
-      params
+    const {
+      to,
+      recipientName,
+      documentName,
+      expirationDate,
+      documentId,
+      documentUrl,
+      daysUntilExpiration,
+    } = params;
 
     const html = `
       <!DOCTYPE html>
@@ -359,12 +377,12 @@ export class ResendIAO {
           </div>
         </body>
       </html>
-    `
+    `;
 
     return this.sendEmail({
       to,
       subject: `Compliance Document Expiring Soon: ${documentName}`,
       html,
-    })
+    });
   }
 }

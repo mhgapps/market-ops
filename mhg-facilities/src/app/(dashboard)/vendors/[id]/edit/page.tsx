@@ -1,34 +1,36 @@
-'use client'
+"use client";
 
-import { useParams, useRouter } from 'next/navigation'
-import { VendorForm } from '@/components/vendors/vendor-form'
-import { useVendor, useUpdateVendor } from '@/hooks/use-vendors'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
-import { PageLoader } from '@/components/ui/loaders'
-import Link from 'next/link'
-import { toast } from 'sonner'
+import { useParams, useRouter } from "next/navigation";
+import { VendorForm } from "@/components/vendors/vendor-form";
+import { useVendor, useUpdateVendor } from "@/hooks/use-vendors";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { PageLoader } from "@/components/ui/loaders";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function EditVendorPage() {
-  const params = useParams()
-  const router = useRouter()
-  const vendorId = params.id as string
+  const params = useParams();
+  const router = useRouter();
+  const vendorId = params.id as string;
 
-  const { data: vendor, isLoading } = useVendor(vendorId)
-  const updateVendor = useUpdateVendor()
+  const { data: vendor, isLoading } = useVendor(vendorId);
+  const updateVendor = useUpdateVendor();
 
-  const handleSubmit = async (data: Parameters<typeof updateVendor.mutateAsync>[0]['data']) => {
+  const handleSubmit = async (
+    data: Parameters<typeof updateVendor.mutateAsync>[0]["data"],
+  ) => {
     try {
-      await updateVendor.mutateAsync({ id: vendorId, data })
-      toast.success('Vendor updated successfully')
-      router.push(`/vendors/${vendorId}`)
+      await updateVendor.mutateAsync({ id: vendorId, data });
+      toast.success("Vendor updated successfully");
+      router.push(`/vendors/${vendorId}`);
     } catch (_error) {
-      toast.error('Failed to update vendor')
+      toast.error("Failed to update vendor");
     }
-  }
+  };
 
   if (isLoading) {
-    return <PageLoader />
+    return <PageLoader />;
   }
 
   if (!vendor) {
@@ -46,7 +48,7 @@ export default function EditVendorPage() {
           The vendor you are looking for does not exist or has been deleted.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -87,5 +89,5 @@ export default function EditVendorPage() {
         mode="edit"
       />
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PMScheduleService } from '@/services/pm-schedule.service';
-import { TicketService } from '@/services/ticket.service';
+import { NextRequest, NextResponse } from "next/server";
+import { PMScheduleService } from "@/services/pm-schedule.service";
+import { TicketService } from "@/services/ticket.service";
 // NotificationService available for future PM notification implementation
 // import { NotificationService } from '@/services/notification.service';
 
@@ -15,18 +15,15 @@ export async function GET(request: NextRequest) {
     // Verify CRON_SECRET is configured
     if (!process.env.CRON_SECRET) {
       return NextResponse.json(
-        { error: 'CRON_SECRET not configured' },
-        { status: 500 }
+        { error: "CRON_SECRET not configured" },
+        { status: 500 },
       );
     }
 
     // Verify this is a legitimate cron request
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const pmService = new PMScheduleService();
@@ -53,8 +50,13 @@ export async function GET(request: NextRequest) {
           const lastGenerated = new Date(schedule.last_generated_at);
           const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
           if (lastGenerated > twentyFourHoursAgo) {
-            skipped.push({ scheduleId: schedule.id, reason: 'Already generated within 24 hours' });
-            console.log(`Skipping PM schedule ${schedule.id}: already generated within 24 hours`);
+            skipped.push({
+              scheduleId: schedule.id,
+              reason: "Already generated within 24 hours",
+            });
+            console.log(
+              `Skipping PM schedule ${schedule.id}: already generated within 24 hours`,
+            );
             continue;
           }
         }
@@ -62,19 +64,26 @@ export async function GET(request: NextRequest) {
         // PM schedules must have an assigned_to user to generate tickets
         // because submitted_by is a UUID FK on the tickets table
         if (!schedule.assigned_to) {
-          skipped.push({ scheduleId: schedule.id, reason: 'No assigned_to user on schedule' });
-          console.log(`Skipping PM schedule ${schedule.id}: no assigned_to user`);
+          skipped.push({
+            scheduleId: schedule.id,
+            reason: "No assigned_to user on schedule",
+          });
+          console.log(
+            `Skipping PM schedule ${schedule.id}: no assigned_to user`,
+          );
           continue;
         }
 
         // Create ticket from PM schedule (use assigned user as submitter)
         const ticket = await ticketService.createTicket({
           title: `PM: ${schedule.name}`,
-          description: schedule.description || `Preventive maintenance task: ${schedule.name}`,
+          description:
+            schedule.description ||
+            `Preventive maintenance task: ${schedule.name}`,
           category_id: undefined, // PM tickets don't need a category
-          location_id: schedule.location_id || '', // PM schedules should have location
+          location_id: schedule.location_id || "", // PM schedules should have location
           asset_id: schedule.asset_id || undefined,
-          priority: 'medium', // PM tasks default to medium priority
+          priority: "medium", // PM tasks default to medium priority
           is_emergency: false,
           submitted_by: schedule.assigned_to,
         });
@@ -89,16 +98,26 @@ export async function GET(request: NextRequest) {
 
         // Assign to the designated user
         try {
-          await ticketService.assignTicket(ticket.id, schedule.assigned_to, schedule.assigned_to);
+          await ticketService.assignTicket(
+            ticket.id,
+            schedule.assigned_to,
+            schedule.assigned_to,
+          );
         } catch (assignError) {
           console.error(`Failed to assign ticket ${ticket.id}:`, assignError);
         }
 
-        console.log(`Generated PM ticket ${ticket.id} from schedule ${schedule.id}`);
+        console.log(
+          `Generated PM ticket ${ticket.id} from schedule ${schedule.id}`,
+        );
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        const errorMsg =
+          error instanceof Error ? error.message : "Unknown error";
         errors.push({ scheduleId: schedule.id, error: errorMsg });
-        console.error(`Failed to generate ticket for PM schedule ${schedule.id}:`, error);
+        console.error(
+          `Failed to generate ticket for PM schedule ${schedule.id}:`,
+          error,
+        );
       }
     }
 
@@ -113,14 +132,13 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('PM generation cron job error:', error);
+    console.error("PM generation cron job error:", error);
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -1,61 +1,64 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from '@/components/ui/form'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const commentSchema = z.object({
   comment: z
     .string()
-    .min(1, 'Comment cannot be empty')
-    .max(5000, 'Comment cannot exceed 5000 characters'),
-})
+    .min(1, "Comment cannot be empty")
+    .max(5000, "Comment cannot exceed 5000 characters"),
+});
 
-type CommentFormValues = z.infer<typeof commentSchema>
+type CommentFormValues = z.infer<typeof commentSchema>;
 
 interface CommentFormProps {
-  onSubmit: (data: { comment: string; is_internal: boolean }) => void | Promise<void>
-  placeholder?: string
+  onSubmit: (data: {
+    comment: string;
+    is_internal: boolean;
+  }) => void | Promise<void>;
+  placeholder?: string;
 }
 
 export function CommentForm({
   onSubmit,
-  placeholder = 'Add a comment...',
+  placeholder = "Add a comment...",
 }: CommentFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<CommentFormValues>({
     resolver: zodResolver(commentSchema),
     defaultValues: {
-      comment: '',
+      comment: "",
     },
-  })
+  });
 
   const handleSubmit = async (values: CommentFormValues) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       await onSubmit({
         comment: values.comment,
         is_internal: false,
-      })
+      });
 
-      form.reset()
+      form.reset();
     } catch (error) {
-      console.error('Error submitting comment:', error)
+      console.error("Error submitting comment:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -79,10 +82,10 @@ export function CommentForm({
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting} size="sm">
-            {isSubmitting ? 'Posting...' : 'Post'}
+            {isSubmitting ? "Posting..." : "Post"}
           </Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }

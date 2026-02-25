@@ -1,45 +1,45 @@
-import { TicketDAO, type TicketFilters } from '@/dao/ticket.dao'
-import { TicketCategoryDAO } from '@/dao/ticket-category.dao'
-import { UserDAO } from '@/dao/user.dao'
-import { LocationDAO } from '@/dao/location.dao'
-import { NotificationService } from './notification.service'
-import type { Database, TicketStatus, TicketPriority } from '@/types/database'
+import { TicketDAO, type TicketFilters } from "@/dao/ticket.dao";
+import { TicketCategoryDAO } from "@/dao/ticket-category.dao";
+import { UserDAO } from "@/dao/user.dao";
+import { LocationDAO } from "@/dao/location.dao";
+import { NotificationService } from "./notification.service";
+import type { Database, TicketStatus, TicketPriority } from "@/types/database";
 
-type Ticket = Database['public']['Tables']['tickets']['Row']
+type Ticket = Database["public"]["Tables"]["tickets"]["Row"];
 
 export interface CreateTicketInput {
-  title: string
-  description?: string | null
-  category_id?: string | null
-  location_id: string
-  asset_id?: string | null
-  priority?: TicketPriority
-  is_emergency?: boolean
-  submitted_by: string
+  title: string;
+  description?: string | null;
+  category_id?: string | null;
+  location_id: string;
+  asset_id?: string | null;
+  priority?: TicketPriority;
+  is_emergency?: boolean;
+  submitted_by: string;
 }
 
 export interface UpdateTicketInput {
-  title?: string
-  description?: string
-  category_id?: string
-  priority?: TicketPriority
-  due_date?: string
+  title?: string;
+  description?: string;
+  category_id?: string;
+  priority?: TicketPriority;
+  due_date?: string;
 }
 
 // Re-export TicketFilters and PaginatedResult for consumers
-export type { TicketFilters, PaginatedResult } from '@/dao/ticket.dao'
+export type { TicketFilters, PaginatedResult } from "@/dao/ticket.dao";
 
 export interface TicketStats {
-  total: number
-  by_status: Record<TicketStatus, number>
-  by_priority: Record<TicketPriority, number>
-  overdue: number
+  total: number;
+  by_status: Record<TicketStatus, number>;
+  by_priority: Record<TicketPriority, number>;
+  overdue: number;
 }
 
 export interface EmergencyStats {
-  active: number
-  resolved_30_days: number
-  total_30_days: number
+  active: number;
+  resolved_30_days: number;
+  total_30_days: number;
 }
 
 /**
@@ -58,7 +58,7 @@ export class TicketService {
     private categoryDAO = new TicketCategoryDAO(),
     private userDAO = new UserDAO(),
     private locationDAO = new LocationDAO(),
-    private notificationService = new NotificationService()
+    private notificationService = new NotificationService(),
   ) {}
 
   // ============================================================
@@ -72,7 +72,7 @@ export class TicketService {
    * @param limit Maximum number of records to return (default: 100)
    */
   async getAllTickets(filters?: TicketFilters, limit = 100): Promise<Ticket[]> {
-    return this.ticketDAO.findAllWithFilters(filters, limit)
+    return this.ticketDAO.findAllWithFilters(filters, limit);
   }
 
   /**
@@ -81,25 +81,25 @@ export class TicketService {
    * @param filters Optional filters including page and pageSize
    */
   async getAllTicketsPaginated(filters?: TicketFilters) {
-    return this.ticketDAO.findAllWithFiltersPaginated(filters)
+    return this.ticketDAO.findAllWithFiltersPaginated(filters);
   }
 
   /**
    * Get ticket by ID with all relations
    */
   async getTicketById(id: string) {
-    const ticket = await this.ticketDAO.findWithRelations(id)
+    const ticket = await this.ticketDAO.findWithRelations(id);
     if (!ticket) {
-      throw new Error('Ticket not found')
+      throw new Error("Ticket not found");
     }
-    return ticket
+    return ticket;
   }
 
   /**
    * Get tickets for a specific location
    */
   async getTicketsByLocation(locationId: string) {
-    return this.ticketDAO.findByLocation(locationId)
+    return this.ticketDAO.findByLocation(locationId);
   }
 
   /**
@@ -109,14 +109,14 @@ export class TicketService {
     const [submitted, assigned] = await Promise.all([
       this.ticketDAO.findBySubmitter(userId),
       this.ticketDAO.findByAssignee(userId),
-    ])
+    ]);
 
     // Combine and deduplicate
-    const ticketMap = new Map<string, Ticket>()
-    submitted.forEach(t => ticketMap.set(t.id, t))
-    assigned.forEach(t => ticketMap.set(t.id, t))
+    const ticketMap = new Map<string, Ticket>();
+    submitted.forEach((t) => ticketMap.set(t.id, t));
+    assigned.forEach((t) => ticketMap.set(t.id, t));
 
-    return Array.from(ticketMap.values())
+    return Array.from(ticketMap.values());
   }
 
   /**
@@ -125,38 +125,34 @@ export class TicketService {
    */
   async getTicketStats(): Promise<TicketStats> {
     // Fetch all counts in parallel using COUNT queries
-    const [
-      total,
-      statusCounts,
-      priorityCounts,
-      overdueCount,
-    ] = await Promise.all([
-      this.ticketDAO.countTotal(),
-      this.ticketDAO.getStatusCounts(),
-      this.ticketDAO.getPriorityCounts(),
-      this.ticketDAO.countOverdue(),
-    ])
+    const [total, statusCounts, priorityCounts, overdueCount] =
+      await Promise.all([
+        this.ticketDAO.countTotal(),
+        this.ticketDAO.getStatusCounts(),
+        this.ticketDAO.getPriorityCounts(),
+        this.ticketDAO.countOverdue(),
+      ]);
 
     const stats: TicketStats = {
       total,
       by_status: {
-        submitted: statusCounts['submitted'] || 0,
-        in_progress: statusCounts['in_progress'] || 0,
-        completed: statusCounts['completed'] || 0,
-        closed: statusCounts['closed'] || 0,
-        rejected: statusCounts['rejected'] || 0,
-        on_hold: statusCounts['on_hold'] || 0,
+        submitted: statusCounts["submitted"] || 0,
+        in_progress: statusCounts["in_progress"] || 0,
+        completed: statusCounts["completed"] || 0,
+        closed: statusCounts["closed"] || 0,
+        rejected: statusCounts["rejected"] || 0,
+        on_hold: statusCounts["on_hold"] || 0,
       },
       by_priority: {
-        low: priorityCounts['low'] || 0,
-        medium: priorityCounts['medium'] || 0,
-        high: priorityCounts['high'] || 0,
-        critical: priorityCounts['critical'] || 0,
+        low: priorityCounts["low"] || 0,
+        medium: priorityCounts["medium"] || 0,
+        high: priorityCounts["high"] || 0,
+        critical: priorityCounts["critical"] || 0,
       },
       overdue: overdueCount,
-    }
+    };
 
-    return stats
+    return stats;
   }
 
   // ============================================================
@@ -168,27 +164,27 @@ export class TicketService {
    */
   async createTicket(data: CreateTicketInput): Promise<Ticket> {
     // Validate location exists
-    const location = await this.locationDAO.findById(data.location_id)
+    const location = await this.locationDAO.findById(data.location_id);
     if (!location) {
-      throw new Error('Location not found')
+      throw new Error("Location not found");
     }
 
     // Validate category if provided
     if (data.category_id) {
-      const category = await this.categoryDAO.findById(data.category_id)
+      const category = await this.categoryDAO.findById(data.category_id);
       if (!category) {
-        throw new Error('Category not found')
+        throw new Error("Category not found");
       }
     }
 
     // Validate submitter exists
-    const submitter = await this.userDAO.findById(data.submitted_by)
+    const submitter = await this.userDAO.findById(data.submitted_by);
     if (!submitter) {
-      throw new Error('Submitter user not found')
+      throw new Error("Submitter user not found");
     }
 
     // Get next ticket number
-    const ticketNumber = await this.ticketDAO.getNextTicketNumber()
+    const ticketNumber = await this.ticketDAO.getNextTicketNumber();
 
     // Create ticket
     const ticket = await this.ticketDAO.createTicket({
@@ -198,13 +194,13 @@ export class TicketService {
       category_id: data.category_id ?? null,
       location_id: data.location_id,
       asset_id: data.asset_id ?? null,
-      priority: data.priority ?? 'medium',
-      status: 'submitted',
+      priority: data.priority ?? "medium",
+      status: "submitted",
       submitted_by: data.submitted_by,
       is_emergency: data.is_emergency ?? false,
-    })
+    });
 
-    return ticket
+    return ticket;
   }
 
   /**
@@ -212,17 +208,17 @@ export class TicketService {
    */
   async updateTicket(id: string, data: UpdateTicketInput): Promise<Ticket> {
     // Verify ticket exists
-    await this.getTicketById(id)
+    await this.getTicketById(id);
 
     // Validate category if provided
     if (data.category_id) {
-      const category = await this.categoryDAO.findById(data.category_id)
+      const category = await this.categoryDAO.findById(data.category_id);
       if (!category) {
-        throw new Error('Category not found')
+        throw new Error("Category not found");
       }
     }
 
-    return this.ticketDAO.updateTicket(id, data)
+    return this.ticketDAO.updateTicket(id, data);
   }
 
   // ============================================================
@@ -232,31 +228,39 @@ export class TicketService {
   /**
    * Assign ticket to staff member
    */
-  async assignTicket(id: string, assigneeId: string, assignerId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+  async assignTicket(
+    id: string,
+    assigneeId: string,
+    assignerId: string,
+  ): Promise<Ticket> {
+    const ticket = await this.getTicketById(id);
 
     // Validate assignee exists and is staff
-    const assignee = await this.userDAO.findById(assigneeId)
+    const assignee = await this.userDAO.findById(assigneeId);
     if (!assignee) {
-      throw new Error('Assignee not found')
+      throw new Error("Assignee not found");
     }
 
-    if (assignee.role !== 'staff' && assignee.role !== 'manager' && assignee.role !== 'admin') {
-      throw new Error('Can only assign to staff, manager, or admin users')
+    if (
+      assignee.role !== "staff" &&
+      assignee.role !== "manager" &&
+      assignee.role !== "admin"
+    ) {
+      throw new Error("Can only assign to staff, manager, or admin users");
     }
 
     // Valid states for assignment
-    const validStates: TicketStatus[] = ['submitted', 'in_progress']
+    const validStates: TicketStatus[] = ["submitted", "in_progress"];
     if (!validStates.includes(ticket.status)) {
-      throw new Error(`Cannot assign ticket in ${ticket.status} status`)
+      throw new Error(`Cannot assign ticket in ${ticket.status} status`);
     }
 
     const updatedTicket = await this.ticketDAO.updateTicket(id, {
       assigned_to: assigneeId,
-    })
+    });
 
     // Send notification to assignee (async, don't await)
-    const assigner = await this.userDAO.findById(assignerId)
+    const assigner = await this.userDAO.findById(assignerId);
     if (assigner) {
       this.notificationService
         .notifyTicketAssignment({
@@ -264,10 +268,12 @@ export class TicketService {
           assignedBy: assigner,
           assignee,
         })
-        .catch((err) => console.error('Failed to send ticket assignment notification:', err))
+        .catch((err) =>
+          console.error("Failed to send ticket assignment notification:", err),
+        );
     }
 
-    return updatedTicket
+    return updatedTicket;
   }
 
   /**
@@ -275,79 +281,89 @@ export class TicketService {
    * Note: A ticket can have both a staff assignee AND a vendor
    * Staff member can oversee vendor work
    */
-  async assignToVendor(id: string, vendorId: string, _assignerId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+  async assignToVendor(
+    id: string,
+    vendorId: string,
+    _assignerId: string,
+  ): Promise<Ticket> {
+    const ticket = await this.getTicketById(id);
 
     // Valid states for vendor assignment
-    const validStates: TicketStatus[] = ['submitted', 'in_progress']
+    const validStates: TicketStatus[] = ["submitted", "in_progress"];
     if (!validStates.includes(ticket.status)) {
-      throw new Error(`Cannot assign ticket to vendor in ${ticket.status} status`)
+      throw new Error(
+        `Cannot assign ticket to vendor in ${ticket.status} status`,
+      );
     }
 
     return this.ticketDAO.updateTicket(id, {
       vendor_id: vendorId,
-    })
+    });
   }
 
   /**
    * Start work on ticket (submitted → in_progress)
    */
   async startWork(id: string, userId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
     // Must be assigned to this user or user must be admin/manager
-    const user = await this.userDAO.findById(userId)
+    const user = await this.userDAO.findById(userId);
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
 
-    const isAssigned = ticket.assigned_to === userId
-    const isManagerOrAdmin = user.role === 'manager' || user.role === 'admin'
+    const isAssigned = ticket.assigned_to === userId;
+    const isManagerOrAdmin = user.role === "manager" || user.role === "admin";
 
     if (!isAssigned && !isManagerOrAdmin) {
-      throw new Error('You are not assigned to this ticket')
+      throw new Error("You are not assigned to this ticket");
     }
 
     // Valid states for starting work
-    const validStates: TicketStatus[] = ['submitted']
+    const validStates: TicketStatus[] = ["submitted"];
     if (!validStates.includes(ticket.status)) {
-      throw new Error(`Cannot start work on ticket in ${ticket.status} status`)
+      throw new Error(`Cannot start work on ticket in ${ticket.status} status`);
     }
 
     return this.ticketDAO.updateTicket(id, {
-      status: 'in_progress',
+      status: "in_progress",
       started_at: new Date().toISOString(),
-    })
+    });
   }
 
   /**
    * Complete ticket (in_progress → completed)
    */
-  async completeTicket(id: string, userId: string, actualCost?: number): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+  async completeTicket(
+    id: string,
+    userId: string,
+    actualCost?: number,
+  ): Promise<Ticket> {
+    const ticket = await this.getTicketById(id);
 
-    if (ticket.status !== 'in_progress') {
-      throw new Error('Only in-progress tickets can be completed')
+    if (ticket.status !== "in_progress") {
+      throw new Error("Only in-progress tickets can be completed");
     }
 
     // Must be assigned to this user or user must be admin/manager
-    const user = await this.userDAO.findById(userId)
+    const user = await this.userDAO.findById(userId);
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
 
-    const isAssigned = ticket.assigned_to === userId
-    const isManagerOrAdmin = user.role === 'manager' || user.role === 'admin'
+    const isAssigned = ticket.assigned_to === userId;
+    const isManagerOrAdmin = user.role === "manager" || user.role === "admin";
 
     if (!isAssigned && !isManagerOrAdmin) {
-      throw new Error('You are not assigned to this ticket')
+      throw new Error("You are not assigned to this ticket");
     }
 
     return this.ticketDAO.updateTicket(id, {
-      status: 'completed',
+      status: "completed",
       completed_at: new Date().toISOString(),
       actual_cost: actualCost ?? null,
-    })
+    });
   }
 
   /**
@@ -356,25 +372,25 @@ export class TicketService {
    * Note: This does not change status, just sets the verified_at timestamp
    */
   async verifyCompletion(id: string, userId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
-    if (ticket.status !== 'completed') {
-      throw new Error('Only completed tickets can be verified')
+    if (ticket.status !== "completed") {
+      throw new Error("Only completed tickets can be verified");
     }
 
     // Verify user is manager or admin
-    const user = await this.userDAO.findById(userId)
+    const user = await this.userDAO.findById(userId);
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
 
-    if (user.role !== 'manager' && user.role !== 'admin') {
-      throw new Error('Only managers and admins can verify ticket completion')
+    if (user.role !== "manager" && user.role !== "admin") {
+      throw new Error("Only managers and admins can verify ticket completion");
     }
 
     return this.ticketDAO.updateTicket(id, {
       verified_at: new Date().toISOString(),
-    })
+    });
   }
 
   /**
@@ -385,54 +401,58 @@ export class TicketService {
   async closeTicket(
     id: string,
     _userId: string,
-    options?: { cost?: number; notes?: string }
+    options?: { cost?: number; notes?: string },
   ): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
     // Allow closing from in_progress or completed
-    if (ticket.status !== 'in_progress' && ticket.status !== 'completed') {
-      throw new Error('Only in-progress or completed tickets can be closed')
+    if (ticket.status !== "in_progress" && ticket.status !== "completed") {
+      throw new Error("Only in-progress or completed tickets can be closed");
     }
 
     return this.ticketDAO.updateTicket(id, {
-      status: 'closed',
+      status: "closed",
       closed_at: new Date().toISOString(),
       actual_cost: options?.cost,
       resolution_notes: options?.notes,
-    })
+    });
   }
 
   /**
    * Reject ticket
    * Can reject from submitted or in_progress
    */
-  async rejectTicket(id: string, userId: string, reason: string): Promise<Ticket> {
+  async rejectTicket(
+    id: string,
+    userId: string,
+    reason: string,
+  ): Promise<Ticket> {
     if (!reason || reason.trim().length === 0) {
-      throw new Error('Rejection reason is required')
+      throw new Error("Rejection reason is required");
     }
 
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
     // Can only reject from early stages
-    const validStates: TicketStatus[] = ['submitted', 'in_progress']
+    const validStates: TicketStatus[] = ["submitted", "in_progress"];
     if (!validStates.includes(ticket.status)) {
-      throw new Error(`Cannot reject ticket in ${ticket.status} status`)
+      throw new Error(`Cannot reject ticket in ${ticket.status} status`);
     }
 
     // Verify user is manager or admin
-    const user = await this.userDAO.findById(userId)
+    const user = await this.userDAO.findById(userId);
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
 
-    if (user.role !== 'manager' && user.role !== 'admin') {
-      throw new Error('Only managers and admins can reject tickets')
+    if (user.role !== "manager" && user.role !== "admin") {
+      throw new Error("Only managers and admins can reject tickets");
     }
 
     return this.ticketDAO.updateTicket(id, {
-      status: 'rejected',
+      status: "rejected",
       // Store reason in description or we could add a rejection_reason field
-    })
+    });
   }
 
   /**
@@ -440,20 +460,20 @@ export class TicketService {
    */
   async putOnHold(id: string, userId: string, reason: string): Promise<Ticket> {
     if (!reason || reason.trim().length === 0) {
-      throw new Error('Hold reason is required')
+      throw new Error("Hold reason is required");
     }
 
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
     // Can put on hold from most active states
-    const validStates: TicketStatus[] = ['submitted', 'in_progress']
+    const validStates: TicketStatus[] = ["submitted", "in_progress"];
     if (!validStates.includes(ticket.status)) {
-      throw new Error(`Cannot put ticket on hold in ${ticket.status} status`)
+      throw new Error(`Cannot put ticket on hold in ${ticket.status} status`);
     }
 
     return this.ticketDAO.updateTicket(id, {
-      status: 'on_hold',
-    })
+      status: "on_hold",
+    });
   }
 
   /**
@@ -461,54 +481,61 @@ export class TicketService {
    * Returns to previous appropriate state
    */
   async resumeFromHold(id: string, _userId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
-    if (ticket.status !== 'on_hold') {
-      throw new Error('Only on-hold tickets can be resumed')
+    if (ticket.status !== "on_hold") {
+      throw new Error("Only on-hold tickets can be resumed");
     }
 
     // Determine appropriate status to return to
     // If was in_progress (has started_at), return to in_progress
     // Otherwise return to submitted
-    const newStatus: TicketStatus =
-      ticket.started_at ? 'in_progress' : 'submitted'
+    const newStatus: TicketStatus = ticket.started_at
+      ? "in_progress"
+      : "submitted";
 
     return this.ticketDAO.updateTicket(id, {
       status: newStatus,
-    })
+    });
   }
 
   /**
    * Set ticket status directly (admin/manager only)
    * Allows moving tickets to any status for flexibility
    */
-  async setStatus(id: string, userId: string, newStatus: TicketStatus): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+  async setStatus(
+    id: string,
+    userId: string,
+    newStatus: TicketStatus,
+  ): Promise<Ticket> {
+    const ticket = await this.getTicketById(id);
 
     // Verify user is manager or admin
-    const user = await this.userDAO.findById(userId)
+    const user = await this.userDAO.findById(userId);
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
 
-    if (user.role !== 'manager' && user.role !== 'admin') {
-      throw new Error('Only managers and admins can directly change ticket status')
+    if (user.role !== "manager" && user.role !== "admin") {
+      throw new Error(
+        "Only managers and admins can directly change ticket status",
+      );
     }
 
     // Build update object with appropriate timestamps
-    const now = new Date().toISOString()
-    const updates: Partial<Ticket> = { status: newStatus }
+    const now = new Date().toISOString();
+    const updates: Partial<Ticket> = { status: newStatus };
 
     // Set relevant timestamps based on new status
-    if (newStatus === 'in_progress' && !ticket.started_at) {
-      updates.started_at = now
-    } else if (newStatus === 'completed' && !ticket.completed_at) {
-      updates.completed_at = now
-    } else if (newStatus === 'closed' && !ticket.closed_at) {
-      updates.closed_at = now
+    if (newStatus === "in_progress" && !ticket.started_at) {
+      updates.started_at = now;
+    } else if (newStatus === "completed" && !ticket.completed_at) {
+      updates.completed_at = now;
+    } else if (newStatus === "closed" && !ticket.closed_at) {
+      updates.closed_at = now;
     }
 
-    return this.ticketDAO.updateTicket(id, updates)
+    return this.ticketDAO.updateTicket(id, updates);
   }
 
   // ============================================================
@@ -521,42 +548,42 @@ export class TicketService {
   async checkForDuplicates(
     locationId: string,
     assetId: string | null,
-    title: string
+    title: string,
   ): Promise<Ticket[]> {
-    return this.ticketDAO.checkDuplicate(locationId, assetId, title)
+    return this.ticketDAO.checkDuplicate(locationId, assetId, title);
   }
 
   /**
    * Mark ticket as duplicate of another
    */
   async markAsDuplicate(id: string, originalTicketId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
-    const original = await this.getTicketById(originalTicketId)
+    const ticket = await this.getTicketById(id);
+    const original = await this.getTicketById(originalTicketId);
 
     if (ticket.id === original.id) {
-      throw new Error('Cannot mark ticket as duplicate of itself')
+      throw new Error("Cannot mark ticket as duplicate of itself");
     }
 
     return this.ticketDAO.updateTicket(id, {
       is_duplicate: true,
       merged_into_ticket_id: originalTicketId,
-      status: 'closed',
+      status: "closed",
       closed_at: new Date().toISOString(),
-    })
+    });
   }
 
   /**
    * Merge multiple tickets into one target ticket
    */
   async mergeTickets(targetId: string, sourceIds: string[]): Promise<Ticket> {
-    const target = await this.getTicketById(targetId)
+    const target = await this.getTicketById(targetId);
 
     // Mark all source tickets as duplicates
     await Promise.all(
-      sourceIds.map(sourceId => this.markAsDuplicate(sourceId, targetId))
-    )
+      sourceIds.map((sourceId) => this.markAsDuplicate(sourceId, targetId)),
+    );
 
-    return target
+    return target;
   }
 
   // ============================================================
@@ -567,19 +594,23 @@ export class TicketService {
    * Create emergency ticket with elevated priority
    * Emergencies skip the approval workflow and are immediately actionable
    */
-  async createEmergencyTicket(data: Omit<CreateTicketInput, 'is_emergency' | 'priority'> & { priority?: 'high' | 'critical' }): Promise<Ticket> {
+  async createEmergencyTicket(
+    data: Omit<CreateTicketInput, "is_emergency" | "priority"> & {
+      priority?: "high" | "critical";
+    },
+  ): Promise<Ticket> {
     return this.createTicket({
       ...data,
       is_emergency: true,
-      priority: data.priority ?? 'critical',
-    })
+      priority: data.priority ?? "critical",
+    });
   }
 
   /**
    * Get active emergency tickets (not closed/rejected)
    */
   async getActiveEmergencies(): Promise<Ticket[]> {
-    return this.ticketDAO.findActiveEmergencies()
+    return this.ticketDAO.findActiveEmergencies();
   }
 
   /**
@@ -590,13 +621,13 @@ export class TicketService {
       this.ticketDAO.countActiveEmergencies(),
       this.ticketDAO.countResolvedEmergencies(30),
       this.ticketDAO.countTotalEmergencies(30),
-    ])
+    ]);
 
     return {
       active,
       resolved_30_days: resolved30Days,
       total_30_days: total30Days,
-    }
+    };
   }
 
   /**
@@ -604,62 +635,76 @@ export class TicketService {
    * Sets status to in_progress with contained_at timestamp
    */
   async containEmergency(id: string, userId: string): Promise<Ticket> {
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
     if (!ticket.is_emergency) {
-      throw new Error('Only emergency tickets can be contained')
+      throw new Error("Only emergency tickets can be contained");
     }
 
     // Emergencies can only be contained from active states
-    const validStates: TicketStatus[] = ['submitted']
+    const validStates: TicketStatus[] = ["submitted"];
     if (!validStates.includes(ticket.status)) {
-      throw new Error(`Cannot contain emergency in ${ticket.status} status`)
+      throw new Error(`Cannot contain emergency in ${ticket.status} status`);
     }
 
     // Verify user has permission (manager or admin)
-    const user = await this.userDAO.findById(userId)
+    const user = await this.userDAO.findById(userId);
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
 
-    if (user.role !== 'manager' && user.role !== 'admin' && user.role !== 'staff') {
-      throw new Error('You do not have permission to contain emergencies')
+    if (
+      user.role !== "manager" &&
+      user.role !== "admin" &&
+      user.role !== "staff"
+    ) {
+      throw new Error("You do not have permission to contain emergencies");
     }
 
-    return this.ticketDAO.markContained(id)
+    return this.ticketDAO.markContained(id);
   }
 
   /**
    * Mark emergency as resolved
    * Sets status to closed with resolution notes
    */
-  async resolveEmergency(id: string, userId: string, resolutionNotes: string): Promise<Ticket> {
+  async resolveEmergency(
+    id: string,
+    userId: string,
+    resolutionNotes: string,
+  ): Promise<Ticket> {
     if (!resolutionNotes || resolutionNotes.trim().length === 0) {
-      throw new Error('Resolution notes are required')
+      throw new Error("Resolution notes are required");
     }
 
-    const ticket = await this.getTicketById(id)
+    const ticket = await this.getTicketById(id);
 
     if (!ticket.is_emergency) {
-      throw new Error('Only emergency tickets can be resolved this way')
+      throw new Error("Only emergency tickets can be resolved this way");
     }
 
     // Emergencies can be resolved from contained or in_progress status
-    const validStates: TicketStatus[] = ['in_progress', 'completed']
+    const validStates: TicketStatus[] = ["in_progress", "completed"];
     if (!validStates.includes(ticket.status)) {
-      throw new Error(`Cannot resolve emergency in ${ticket.status} status. Must be contained first.`)
+      throw new Error(
+        `Cannot resolve emergency in ${ticket.status} status. Must be contained first.`,
+      );
     }
 
     // Verify user has permission (manager or admin)
-    const user = await this.userDAO.findById(userId)
+    const user = await this.userDAO.findById(userId);
     if (!user) {
-      throw new Error('User not found')
+      throw new Error("User not found");
     }
 
-    if (user.role !== 'manager' && user.role !== 'admin' && user.role !== 'staff') {
-      throw new Error('You do not have permission to resolve emergencies')
+    if (
+      user.role !== "manager" &&
+      user.role !== "admin" &&
+      user.role !== "staff"
+    ) {
+      throw new Error("You do not have permission to resolve emergencies");
     }
 
-    return this.ticketDAO.markResolved(id, resolutionNotes)
+    return this.ticketDAO.markResolved(id, resolutionNotes);
   }
 }

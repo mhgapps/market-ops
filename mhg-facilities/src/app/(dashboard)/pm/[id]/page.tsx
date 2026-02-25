@@ -1,13 +1,29 @@
-'use client';
+"use client";
 
-import { use } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Edit, Calendar, Clock, Wrench, DollarSign, User, Building, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { usePMSchedule } from '@/hooks/use-pm';
+import { use } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Edit,
+  Calendar,
+  Clock,
+  Wrench,
+  DollarSign,
+  User,
+  Building,
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { usePMSchedule } from "@/hooks/use-pm";
 
 interface PMDetailPageProps {
   params: Promise<{ id: string }>;
@@ -28,8 +44,10 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
               </Link>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Schedule Details</h1>
-                          </div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Schedule Details
+              </h1>
+            </div>
           </div>
         </div>
         <DetailLoading />
@@ -48,14 +66,18 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
               </Link>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Schedule Details</h1>
-                          </div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Schedule Details
+              </h1>
+            </div>
           </div>
         </div>
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
-              {error ? 'Failed to load schedule. Please try again.' : 'Schedule not found'}
+              {error
+                ? "Failed to load schedule. Please try again."
+                : "Schedule not found"}
             </p>
           </CardContent>
         </Card>
@@ -63,12 +85,14 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
     );
   }
 
-  const getStatusVariant = (isActive: boolean): 'default' | 'secondary' => {
-    return isActive ? 'default' : 'secondary';
+  const getStatusVariant = (isActive: boolean): "default" | "secondary" => {
+    return isActive ? "default" : "secondary";
   };
 
   const formatFrequency = (frequency: string): string => {
-    return frequency.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    return frequency
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   return (
@@ -82,8 +106,10 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Schedule Details</h1>
-                      </div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Schedule Details
+            </h1>
+          </div>
         </div>
         <Button asChild>
           <Link href={`/pm/${id}/edit`}>
@@ -99,10 +125,12 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <CardTitle className="text-2xl">{schedule.name}</CardTitle>
-              <CardDescription>{schedule.description || 'No description'}</CardDescription>
+              <CardDescription>
+                {schedule.description || "No description"}
+              </CardDescription>
             </div>
             <Badge variant={getStatusVariant(schedule.is_active)}>
-              {schedule.is_active ? 'Active' : 'Inactive'}
+              {schedule.is_active ? "Active" : "Inactive"}
             </Badge>
           </div>
         </CardHeader>
@@ -142,8 +170,10 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
                 <p className="text-sm font-medium">Frequency</p>
                 <p className="text-sm text-muted-foreground">
                   {formatFrequency(schedule.frequency)}
-                  {schedule.day_of_week !== null && ` (Day ${schedule.day_of_week})`}
-                  {schedule.day_of_month !== null && ` (Day ${schedule.day_of_month})`}
+                  {schedule.day_of_week !== null &&
+                    ` (Day ${schedule.day_of_week})`}
+                  {schedule.day_of_month !== null &&
+                    ` (Day ${schedule.day_of_month})`}
                 </p>
               </div>
             </div>
@@ -155,7 +185,7 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
                 <p className="text-sm text-muted-foreground">
                   {schedule.next_due_date
                     ? new Date(schedule.next_due_date).toLocaleDateString()
-                    : 'Not scheduled'}
+                    : "Not scheduled"}
                 </p>
               </div>
             </div>
@@ -167,7 +197,7 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
                 <p className="text-sm text-muted-foreground">
                   {schedule.last_generated_at
                     ? new Date(schedule.last_generated_at).toLocaleDateString()
-                    : 'Never'}
+                    : "Never"}
                 </p>
               </div>
             </div>
@@ -177,7 +207,9 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
               <div>
                 <p className="text-sm font-medium">Assigned To</p>
                 <p className="text-sm text-muted-foreground">
-                  {schedule.assigned_to_name || schedule.assigned_to || 'Unassigned'}
+                  {schedule.assigned_to_name ||
+                    schedule.assigned_to ||
+                    "Unassigned"}
                 </p>
               </div>
             </div>
@@ -206,7 +238,7 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
                 <p className="text-sm text-muted-foreground">
                   {schedule.estimated_cost !== null
                     ? `$${Number(schedule.estimated_cost).toFixed(2)}`
-                    : 'Not specified'}
+                    : "Not specified"}
                 </p>
               </div>
             </div>
@@ -221,7 +253,10 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
                 <div>
                   <p className="text-sm font-medium">Template</p>
                   <p className="text-sm text-muted-foreground">
-                    <Link href={`/pm/templates/${schedule.template_id}`} className="hover:underline text-primary">
+                    <Link
+                      href={`/pm/templates/${schedule.template_id}`}
+                      className="hover:underline text-primary"
+                    >
                       View Template
                     </Link>
                   </p>
@@ -250,12 +285,18 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
                     <CheckCircle className="h-5 w-5 text-green-500" />
                     <div>
                       <p className="text-sm font-medium">
-                        Scheduled: {new Date(completion.scheduled_date).toLocaleDateString()}
+                        Scheduled:{" "}
+                        {new Date(
+                          completion.scheduled_date,
+                        ).toLocaleDateString()}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Completed: {completion.completed_date
-                          ? new Date(completion.completed_date).toLocaleDateString()
-                          : 'Pending'}
+                        Completed:{" "}
+                        {completion.completed_date
+                          ? new Date(
+                              completion.completed_date,
+                            ).toLocaleDateString()
+                          : "Pending"}
                       </p>
                     </div>
                   </div>

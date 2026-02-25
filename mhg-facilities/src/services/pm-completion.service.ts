@@ -1,4 +1,4 @@
-import { PMCompletionDAO } from '@/dao/pm-completion.dao';
+import { PMCompletionDAO } from "@/dao/pm-completion.dao";
 
 interface PMCompletion {
   id: string;
@@ -13,17 +13,15 @@ interface PMCompletion {
 }
 
 export class PMCompletionService {
-  constructor(
-    private completionDAO = new PMCompletionDAO()
-  ) {}
+  constructor(private completionDAO = new PMCompletionDAO()) {}
 
   async recordCompletion(
     scheduleId: string,
     ticketId: string,
     userId: string,
-    checklistResults?: Record<string, unknown>
+    checklistResults?: Record<string, unknown>,
   ): Promise<PMCompletion> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     return await this.completionDAO.create({
       schedule_id: scheduleId,
@@ -45,10 +43,14 @@ export class PMCompletionService {
 
     const cutoffDate = new Date();
     cutoffDate.setMonth(cutoffDate.getMonth() - months);
-    const cutoffStr = cutoffDate.toISOString().split('T')[0];
+    const cutoffStr = cutoffDate.toISOString().split("T")[0];
 
-    const recentCompletions = completions.filter(c => c.scheduled_date >= cutoffStr);
-    const completedCount = recentCompletions.filter(c => c.completed_date !== null).length;
+    const recentCompletions = completions.filter(
+      (c) => c.scheduled_date >= cutoffStr,
+    );
+    const completedCount = recentCompletions.filter(
+      (c) => c.completed_date !== null,
+    ).length;
 
     if (recentCompletions.length === 0) return 100;
 

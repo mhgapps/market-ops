@@ -1,19 +1,34 @@
-import { Suspense } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Edit, FileText, Calendar, DollarSign, Building2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { StatusBadge } from '@/components/compliance/status-badge';
-import { ExpirationCountdown } from '@/components/compliance/expiration-countdown';
-import { ConditionalBanner } from '@/components/compliance/conditional-banner';
-import { FailedInspectionBanner } from '@/components/compliance/failed-inspection-banner';
+import { Suspense } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Edit,
+  FileText,
+  Calendar,
+  DollarSign,
+  Building2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { StatusBadge } from "@/components/compliance/status-badge";
+import { ExpirationCountdown } from "@/components/compliance/expiration-countdown";
+import { ConditionalBanner } from "@/components/compliance/conditional-banner";
+import { FailedInspectionBanner } from "@/components/compliance/failed-inspection-banner";
 
 interface ComplianceDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ComplianceDetailPage({ params }: ComplianceDetailPageProps) {
+export default async function ComplianceDetailPage({
+  params,
+}: ComplianceDetailPageProps) {
   const { id } = await params;
 
   return (
@@ -27,10 +42,10 @@ export default async function ComplianceDetailPage({ params }: ComplianceDetailP
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Document Details</h1>
-            <p className="text-muted-foreground">
-              View and manage document
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Document Details
+            </h1>
+            <p className="text-muted-foreground">View and manage document</p>
           </div>
         </div>
         <Button asChild>
@@ -58,7 +73,14 @@ async function ComplianceDetail({ id }: { id: string }) {
     name: string;
     document_type_name: string;
     location_name: string;
-    status: 'active' | 'expiring_soon' | 'expired' | 'pending_renewal' | 'conditional' | 'failed_inspection' | 'suspended';
+    status:
+      | "active"
+      | "expiring_soon"
+      | "expired"
+      | "pending_renewal"
+      | "conditional"
+      | "failed_inspection"
+      | "suspended";
     issue_date: string;
     expiration_date: string;
     issuing_authority: string;
@@ -72,16 +94,16 @@ async function ComplianceDetail({ id }: { id: string }) {
     reinspection_date: string | null;
   } = {
     id,
-    name: 'Business License',
-    document_type_name: 'License',
-    location_name: 'Main Location',
-    status: 'active',
-    issue_date: '2024-01-01',
-    expiration_date: '2025-01-01',
-    issuing_authority: 'City of Los Angeles',
-    document_number: 'BL-123456',
-    renewal_cost: '500.00',
-    notes: 'Annual business license renewal',
+    name: "Business License",
+    document_type_name: "License",
+    location_name: "Main Location",
+    status: "active",
+    issue_date: "2024-01-01",
+    expiration_date: "2025-01-01",
+    issuing_authority: "City of Los Angeles",
+    document_number: "BL-123456",
+    renewal_cost: "500.00",
+    notes: "Annual business license renewal",
     conditional_requirements: null,
     conditional_deadline: null,
     failed_inspection_date: null,
@@ -92,23 +114,25 @@ async function ComplianceDetail({ id }: { id: string }) {
   return (
     <>
       {/* Conditional/Failed Inspection Banners */}
-      {document.status === 'conditional' && document.conditional_requirements && document.conditional_deadline && (
-        <ConditionalBanner
-          requirements={document.conditional_requirements}
-          deadline={document.conditional_deadline}
-        />
-      )}
+      {document.status === "conditional" &&
+        document.conditional_requirements &&
+        document.conditional_deadline && (
+          <ConditionalBanner
+            requirements={document.conditional_requirements}
+            deadline={document.conditional_deadline}
+          />
+        )}
 
-      {document.status === 'failed_inspection' &&
-       document.corrective_action &&
-       document.reinspection_date &&
-       document.failed_inspection_date && (
-        <FailedInspectionBanner
-          correctiveAction={document.corrective_action}
-          reinspectionDate={document.reinspection_date}
-          failedDate={document.failed_inspection_date}
-        />
-      )}
+      {document.status === "failed_inspection" &&
+        document.corrective_action &&
+        document.reinspection_date &&
+        document.failed_inspection_date && (
+          <FailedInspectionBanner
+            correctiveAction={document.corrective_action}
+            reinspectionDate={document.reinspection_date}
+            failedDate={document.failed_inspection_date}
+          />
+        )}
 
       {/* Main Info Card */}
       <Card>
@@ -129,7 +153,7 @@ async function ComplianceDetail({ id }: { id: string }) {
               <div>
                 <p className="text-sm font-medium">Location</p>
                 <p className="text-sm text-muted-foreground">
-                  {document.location_name || 'All Locations'}
+                  {document.location_name || "All Locations"}
                 </p>
               </div>
             </div>
@@ -139,7 +163,7 @@ async function ComplianceDetail({ id }: { id: string }) {
               <div>
                 <p className="text-sm font-medium">Document Number</p>
                 <p className="text-sm text-muted-foreground">
-                  {document.document_number || 'N/A'}
+                  {document.document_number || "N/A"}
                 </p>
               </div>
             </div>
@@ -149,7 +173,9 @@ async function ComplianceDetail({ id }: { id: string }) {
               <div>
                 <p className="text-sm font-medium">Issue Date</p>
                 <p className="text-sm text-muted-foreground">
-                  {document.issue_date ? new Date(document.issue_date).toLocaleDateString() : 'N/A'}
+                  {document.issue_date
+                    ? new Date(document.issue_date).toLocaleDateString()
+                    : "N/A"}
                 </p>
               </div>
             </div>
@@ -161,7 +187,9 @@ async function ComplianceDetail({ id }: { id: string }) {
                 <p className="text-sm text-muted-foreground">
                   {new Date(document.expiration_date).toLocaleDateString()}
                 </p>
-                <ExpirationCountdown expirationDate={document.expiration_date} />
+                <ExpirationCountdown
+                  expirationDate={document.expiration_date}
+                />
               </div>
             </div>
           </div>
@@ -173,7 +201,7 @@ async function ComplianceDetail({ id }: { id: string }) {
             <div>
               <p className="text-sm font-medium mb-1">Issuing Authority</p>
               <p className="text-sm text-muted-foreground">
-                {document.issuing_authority || 'N/A'}
+                {document.issuing_authority || "N/A"}
               </p>
             </div>
 
@@ -182,7 +210,9 @@ async function ComplianceDetail({ id }: { id: string }) {
               <div>
                 <p className="text-sm font-medium">Renewal Cost</p>
                 <p className="text-sm text-muted-foreground">
-                  {document.renewal_cost ? `$${parseFloat(document.renewal_cost).toFixed(2)}` : 'N/A'}
+                  {document.renewal_cost
+                    ? `$${parseFloat(document.renewal_cost).toFixed(2)}`
+                    : "N/A"}
                 </p>
               </div>
             </div>
@@ -207,7 +237,9 @@ async function ComplianceDetail({ id }: { id: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Attachments</CardTitle>
-          <CardDescription>Document files and related attachments</CardDescription>
+          <CardDescription>
+            Document files and related attachments
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">

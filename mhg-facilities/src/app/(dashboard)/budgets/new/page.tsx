@@ -1,44 +1,48 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { BudgetForm } from '@/components/budgets'
-import { toast } from 'sonner'
-import { useCreateBudget, useFiscalYearOptions } from '@/hooks/use-budgets'
-import { useLocations } from '@/hooks/use-locations'
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BudgetForm } from "@/components/budgets";
+import { toast } from "sonner";
+import { useCreateBudget, useFiscalYearOptions } from "@/hooks/use-budgets";
+import { useLocations } from "@/hooks/use-locations";
 
 export default function NewBudgetPage() {
-  const router = useRouter()
-  const fiscalYearOptions = useFiscalYearOptions()
+  const router = useRouter();
+  const fiscalYearOptions = useFiscalYearOptions();
 
-  const { data: locationsData, isLoading: locationsLoading } = useLocations()
-  const locations = (locationsData || []).map(loc => ({ id: loc.id, name: loc.name }))
+  const { data: locationsData, isLoading: locationsLoading } = useLocations();
+  const locations = (locationsData || []).map((loc) => ({
+    id: loc.id,
+    name: loc.name,
+  }));
 
-  const createBudget = useCreateBudget()
+  const createBudget = useCreateBudget();
 
   const handleSubmit = async (data: {
-    category: string
-    location_id?: string | null
-    fiscal_year: number
-    annual_budget: number
-    notes?: string | null
+    category: string;
+    location_id?: string | null;
+    fiscal_year: number;
+    annual_budget: number;
+    notes?: string | null;
   }) => {
     try {
-      await createBudget.mutateAsync(data)
-      toast.success('Budget created', {
+      await createBudget.mutateAsync(data);
+      toast.success("Budget created", {
         description: `The budget for ${data.category} has been created successfully.`,
-      })
-      router.push('/budgets')
+      });
+      router.push("/budgets");
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create budget'
-      toast.error('Error', {
-        description: message.includes('already exists')
-          ? 'A budget with this category, location, and fiscal year already exists.'
+      const message =
+        error instanceof Error ? error.message : "Failed to create budget";
+      toast.error("Error", {
+        description: message.includes("already exists")
+          ? "A budget with this category, location, and fiscal year already exists."
           : message,
-      })
+      });
     }
-  }
+  };
 
   if (locationsLoading) {
     return (
@@ -53,7 +57,7 @@ export default function NewBudgetPage() {
           <div className="h-96 bg-muted rounded-lg" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -78,5 +82,5 @@ export default function NewBudgetPage() {
         />
       </div>
     </div>
-  )
+  );
 }

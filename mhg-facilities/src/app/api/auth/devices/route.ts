@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { DeviceAuthService } from '@/services/device-auth.service'
-import { requireAuth } from '@/lib/auth/api-auth'
+import { NextRequest, NextResponse } from "next/server";
+import { DeviceAuthService } from "@/services/device-auth.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 /**
  * GET /api/auth/devices
@@ -10,18 +10,18 @@ import { requireAuth } from '@/lib/auth/api-auth'
  */
 export async function GET(request: NextRequest) {
   try {
-    const { user, error } = await requireAuth()
-    if (error) return error
+    const { user, error } = await requireAuth();
+    if (error) return error;
 
-    const deviceAuthService = new DeviceAuthService()
+    const deviceAuthService = new DeviceAuthService();
 
     // Hash the current cookie token to identify the current device
-    const deviceToken = request.cookies.get('device_token')?.value
+    const deviceToken = request.cookies.get("device_token")?.value;
     const currentTokenHash = deviceToken
       ? deviceAuthService.hashToken(deviceToken)
-      : undefined
+      : undefined;
 
-    const rawDevices = await deviceAuthService.listDevices(user!.id)
+    const rawDevices = await deviceAuthService.listDevices(user!.id);
 
     // Format the devices and mark the current one
     const devices = rawDevices.map((device) => ({
@@ -33,15 +33,17 @@ export async function GET(request: NextRequest) {
       is_current: currentTokenHash
         ? device.device_token_hash === currentTokenHash
         : false,
-    }))
+    }));
 
-    return NextResponse.json({ devices })
+    return NextResponse.json({ devices });
   } catch (error) {
-    console.error('Error in GET /api/auth/devices:', error)
+    console.error("Error in GET /api/auth/devices:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Something went wrong' },
-      { status: 500 }
-    )
+      {
+        error: error instanceof Error ? error.message : "Something went wrong",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -53,27 +55,29 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE() {
   try {
-    const { user, error } = await requireAuth()
-    if (error) return error
+    const { user, error } = await requireAuth();
+    if (error) return error;
 
-    const deviceAuthService = new DeviceAuthService()
-    await deviceAuthService.revokeAllDevices(user!.id)
+    const deviceAuthService = new DeviceAuthService();
+    await deviceAuthService.revokeAllDevices(user!.id);
 
-    const response = NextResponse.json({ success: true })
-    response.cookies.set('device_token', '', {
+    const response = NextResponse.json({ success: true });
+    response.cookies.set("device_token", "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 0,
-      path: '/',
-    })
+      path: "/",
+    });
 
-    return response
+    return response;
   } catch (error) {
-    console.error('Error in DELETE /api/auth/devices:', error)
+    console.error("Error in DELETE /api/auth/devices:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Something went wrong' },
-      { status: 500 }
-    )
+      {
+        error: error instanceof Error ? error.message : "Something went wrong",
+      },
+      { status: 500 },
+    );
   }
 }

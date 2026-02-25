@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/use-auth'
-import { Button } from '@/components/ui/button'
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,29 +12,29 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Menu, Bell, LogOut, User, Settings } from 'lucide-react'
+} from "@/components/ui/dropdown-menu";
+import { Menu, Bell, LogOut, User, Settings } from "lucide-react";
 
 interface HeaderProps {
-  onMenuClick: () => void
+  onMenuClick: () => void;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
-  const { user, logout } = useAuth()
-  const router = useRouter()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    setIsLoggingOut(true)
+    setIsLoggingOut(true);
     try {
-      await logout()
-      router.push('/login')
+      await logout();
+      router.push("/login");
     } catch (error) {
-      console.error('Logout failed:', error)
+      console.error("Logout failed:", error);
     } finally {
-      setIsLoggingOut(false)
+      setIsLoggingOut(false);
     }
-  }
+  };
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-card px-4 md:px-6">
@@ -53,7 +53,12 @@ export function Header({ onMenuClick }: HeaderProps) {
       <div className="flex-1" />
 
       {/* Notifications */}
-      <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative"
+        aria-label="Notifications"
+      >
         <Bell className="h-5 w-5" />
         {/* Notification badge - uncomment when implementing notifications */}
         {/* <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
@@ -67,7 +72,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Button variant="ghost" className="relative h-9 w-9 rounded-full">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
               <span className="text-sm font-medium text-muted-foreground">
-                {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
+                {user?.fullName?.charAt(0)?.toUpperCase() ?? "U"}
               </span>
             </div>
           </Button>
@@ -75,9 +80,11 @@ export function Header({ onMenuClick }: HeaderProps) {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user?.fullName ?? 'User'}</p>
+              <p className="text-sm font-medium leading-none">
+                {user?.fullName ?? "User"}
+              </p>
               <p className="text-xs leading-none text-muted-foreground">
-                {user?.email ?? ''}
+                {user?.email ?? ""}
               </p>
             </div>
           </DropdownMenuLabel>
@@ -101,10 +108,10 @@ export function Header({ onMenuClick }: HeaderProps) {
             className="text-destructive focus:text-destructive"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+            <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
-  )
+  );
 }

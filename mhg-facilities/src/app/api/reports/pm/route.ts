@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { ReportService } from '@/services/report.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextRequest, NextResponse } from "next/server";
+import { ReportService } from "@/services/report.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,13 +8,13 @@ export async function GET(request: NextRequest) {
     if (authError) return authError;
 
     const searchParams = request.nextUrl.searchParams;
-    const startDate = searchParams.get('start_date');
-    const endDate = searchParams.get('end_date');
+    const startDate = searchParams.get("start_date");
+    const endDate = searchParams.get("end_date");
 
     if (!startDate || !endDate) {
       return NextResponse.json(
-        { error: 'Date range required' },
-        { status: 400 }
+        { error: "Date range required" },
+        { status: 400 },
       );
     }
 
@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(report);
   } catch (error) {
-    console.error('PM report error:', error);
+    console.error("PM report error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate PM report' },
-      { status: 500 }
+      { error: "Failed to generate PM report" },
+      { status: 500 },
     );
   }
 }

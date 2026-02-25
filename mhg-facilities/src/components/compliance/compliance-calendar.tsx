@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useComplianceCalendar } from '@/hooks/use-compliance';
-import { useState } from 'react';
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useComplianceCalendar } from "@/hooks/use-compliance";
+import { useState } from "react";
 
 interface ComplianceCalendarProps {
   locationId?: string;
 }
 
-export function ComplianceCalendar({ locationId: _locationId }: ComplianceCalendarProps) {
+export function ComplianceCalendar({
+  locationId: _locationId,
+}: ComplianceCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const month = selectedDate.getMonth() + 1;
   const year = selectedDate.getFullYear();
@@ -19,11 +21,14 @@ export function ComplianceCalendar({ locationId: _locationId }: ComplianceCalend
 
   // Create a map of dates with expirations
   const expirationDates = new Set<string>();
-  const dateDetails: Record<string, Array<{ name: string; status: string }>> = {};
+  const dateDetails: Record<
+    string,
+    Array<{ name: string; status: string }>
+  > = {};
 
   if (calendarData) {
     calendarData.forEach((doc) => {
-      const dateKey = new Date(doc.expiration_date).toISOString().split('T')[0];
+      const dateKey = new Date(doc.expiration_date).toISOString().split("T")[0];
       expirationDates.add(dateKey);
 
       if (!dateDetails[dateKey]) {
@@ -38,16 +43,16 @@ export function ComplianceCalendar({ locationId: _locationId }: ComplianceCalend
 
   const modifiers = {
     expiring: (date: Date) => {
-      const dateKey = date.toISOString().split('T')[0];
+      const dateKey = date.toISOString().split("T")[0];
       return expirationDates.has(dateKey);
     },
   };
 
   const modifiersClassNames = {
-    expiring: 'bg-amber-100 text-amber-900 font-bold',
+    expiring: "bg-amber-100 text-amber-900 font-bold",
   };
 
-  const selectedDateKey = selectedDate.toISOString().split('T')[0];
+  const selectedDateKey = selectedDate.toISOString().split("T")[0];
   const selectedDateDocs = dateDetails[selectedDateKey] || [];
 
   return (
@@ -74,10 +79,10 @@ export function ComplianceCalendar({ locationId: _locationId }: ComplianceCalend
       <Card>
         <CardHeader>
           <CardTitle>
-            {selectedDate.toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric'
+            {selectedDate.toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
             })}
           </CardTitle>
         </CardHeader>
@@ -87,22 +92,33 @@ export function ComplianceCalendar({ locationId: _locationId }: ComplianceCalend
           ) : selectedDateDocs.length > 0 ? (
             <div className="space-y-3">
               {selectedDateDocs.map((doc, index) => (
-                <div key={index} className="flex items-center justify-between rounded-lg border p-3">
+                <div
+                  key={index}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
                   <span className="text-sm font-medium">{doc.name}</span>
-                  <Badge variant={
-                    doc.status === 'expired' ? 'destructive' :
-                    doc.status === 'expiring_soon' ? 'warning' :
-                    'default'
-                  }>
-                    {doc.status === 'expired' ? 'Expired' :
-                     doc.status === 'expiring_soon' ? 'Expiring' :
-                     doc.status}
+                  <Badge
+                    variant={
+                      doc.status === "expired"
+                        ? "destructive"
+                        : doc.status === "expiring_soon"
+                          ? "warning"
+                          : "default"
+                    }
+                  >
+                    {doc.status === "expired"
+                      ? "Expired"
+                      : doc.status === "expiring_soon"
+                        ? "Expiring"
+                        : doc.status}
                   </Badge>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No documents expiring on this date</p>
+            <p className="text-sm text-muted-foreground">
+              No documents expiring on this date
+            </p>
           )}
         </CardContent>
       </Card>

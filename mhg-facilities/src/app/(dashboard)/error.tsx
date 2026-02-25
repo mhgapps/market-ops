@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 
 export default function DashboardError({
   error,
@@ -13,7 +13,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Dashboard error:', error);
+    console.error("Dashboard error:", error);
   }, [error]);
 
   return (
@@ -23,7 +23,8 @@ export default function DashboardError({
           <AlertTriangle className="h-10 w-10 text-destructive mx-auto" />
           <h2 className="text-xl font-semibold">Error Loading Dashboard</h2>
           <p className="text-sm text-muted-foreground">
-            {error.message || 'An unexpected error occurred while loading the dashboard.'}
+            {error.message ||
+              "An unexpected error occurred while loading the dashboard."}
           </p>
           <Button onClick={reset} className="w-full">
             Retry

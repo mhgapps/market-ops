@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { ReportService } from '@/services/report.service';
-import type { AssetReportFilters } from '@/services/report.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextRequest, NextResponse } from "next/server";
+import { ReportService } from "@/services/report.service";
+import type { AssetReportFilters } from "@/services/report.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,19 +13,19 @@ export async function GET(request: NextRequest) {
     const filters: AssetReportFilters = {};
 
     // Status filter
-    const statusParam = searchParams.get('status');
+    const statusParam = searchParams.get("status");
     if (statusParam) {
-      filters.status = statusParam.split(',');
+      filters.status = statusParam.split(",");
     }
 
     // Category filter
-    const categoryId = searchParams.get('category_id');
+    const categoryId = searchParams.get("category_id");
     if (categoryId) {
       filters.categoryId = categoryId;
     }
 
     // Location filter
-    const locationId = searchParams.get('location_id');
+    const locationId = searchParams.get("location_id");
     if (locationId) {
       filters.locationId = locationId;
     }
@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(report);
   } catch (error) {
-    console.error('Asset report error:', error);
+    console.error("Asset report error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate asset report' },
-      { status: 500 }
+      { error: "Failed to generate asset report" },
+      { status: 500 },
     );
   }
 }

@@ -1,22 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-import { requireAuth } from '@/lib/auth/api-auth';
-import { PMScheduleService } from '@/services/pm-schedule.service';
+import { requireAuth } from "@/lib/auth/api-auth";
+import { PMScheduleService } from "@/services/pm-schedule.service";
 
 export async function POST(_request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
     const service = new PMScheduleService();
     const tickets = await service.generateTickets();
 
-    return NextResponse.json({ tickets, count: tickets.length }, { status: 201 });
-  } catch (error) {
-    console.error('Error generating PM tickets:', error);
     return NextResponse.json(
-      { error: 'Failed to generate PM tickets' },
-      { status: 500 }
+      { tickets, count: tickets.length },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Error generating PM tickets:", error);
+    return NextResponse.json(
+      { error: "Failed to generate PM tickets" },
+      { status: 500 },
     );
   }
 }

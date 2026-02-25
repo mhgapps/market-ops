@@ -1,6 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   FileImage,
   FileText,
@@ -9,64 +9,64 @@ import {
   Calendar,
   User,
   Paperclip,
-} from 'lucide-react'
-import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
+} from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
-type AttachmentType = 'photo' | 'invoice' | 'quote' | 'other'
+type AttachmentType = "photo" | "invoice" | "quote" | "other";
 
 interface Attachment {
-  id: string
-  ticket_id: string
-  file_path: string
-  file_name: string
-  file_size: number
-  mime_type: string
-  attachment_type: AttachmentType
+  id: string;
+  ticket_id: string;
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  attachment_type: AttachmentType;
   uploaded_by: {
-    id: string
-    full_name: string
-  }
-  uploaded_at: string
+    id: string;
+    full_name: string;
+  };
+  uploaded_at: string;
 }
 
 interface AttachmentGalleryProps {
-  attachments: Attachment[]
-  onDownload?: (attachment: Attachment) => void | Promise<void>
-  onDelete?: (attachmentId: string) => void | Promise<void>
-  canDelete?: boolean
-  className?: string
+  attachments: Attachment[];
+  onDownload?: (attachment: Attachment) => void | Promise<void>;
+  onDelete?: (attachmentId: string) => void | Promise<void>;
+  canDelete?: boolean;
+  className?: string;
 }
 
 const attachmentTypeConfig: Record<
   AttachmentType,
   {
-    label: string
-    icon: React.ComponentType<{ className?: string }>
-    badgeClass: string
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badgeClass: string;
   }
 > = {
   photo: {
-    label: 'Photo',
+    label: "Photo",
     icon: FileImage,
-    badgeClass: 'bg-blue-100 text-blue-800',
+    badgeClass: "bg-blue-100 text-blue-800",
   },
   invoice: {
-    label: 'Invoice',
+    label: "Invoice",
     icon: FileText,
-    badgeClass: 'bg-green-100 text-green-800',
+    badgeClass: "bg-green-100 text-green-800",
   },
   quote: {
-    label: 'Quote',
+    label: "Quote",
     icon: FileText,
-    badgeClass: 'bg-purple-100 text-purple-800',
+    badgeClass: "bg-purple-100 text-purple-800",
   },
   other: {
-    label: 'Document',
+    label: "Document",
     icon: FileText,
-    badgeClass: 'bg-gray-100 text-gray-800',
+    badgeClass: "bg-gray-100 text-gray-800",
   },
-}
+};
 
 export function AttachmentGallery({
   attachments,
@@ -79,36 +79,43 @@ export function AttachmentGallery({
     return (
       <div
         className={cn(
-          'flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center',
-          className
+          "flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center",
+          className,
         )}
       >
         <Paperclip className="h-12 w-12 text-gray-400" />
-        <h3 className="mt-4 text-sm font-medium text-gray-900">No attachments</h3>
+        <h3 className="mt-4 text-sm font-medium text-gray-900">
+          No attachments
+        </h3>
         <p className="mt-1 text-sm text-gray-500">
           Upload photos, invoices, or documents related to this ticket.
         </p>
       </div>
-    )
+    );
   }
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
-  }
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  };
 
   const isImage = (mimeType: string) => {
-    return mimeType.startsWith('image/')
-  }
+    return mimeType.startsWith("image/");
+  };
 
   return (
-    <div className={cn('grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3', className)}>
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3",
+        className,
+      )}
+    >
       {attachments.map((attachment) => {
-        const config = attachmentTypeConfig[attachment.attachment_type]
-        const Icon = config.icon
+        const config = attachmentTypeConfig[attachment.attachment_type];
+        const Icon = config.icon;
 
         return (
           <Card key={attachment.id} className="overflow-hidden hover:shadow-md">
@@ -158,7 +165,7 @@ export function AttachmentGallery({
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-600">
                     <Calendar className="h-3 w-3" />
-                    {format(new Date(attachment.uploaded_at), 'MMM d, yyyy')}
+                    {format(new Date(attachment.uploaded_at), "MMM d, yyyy")}
                   </div>
                 </div>
 
@@ -188,8 +195,8 @@ export function AttachmentGallery({
               </div>
             </CardContent>
           </Card>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

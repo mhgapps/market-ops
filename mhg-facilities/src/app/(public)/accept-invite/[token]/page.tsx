@@ -1,89 +1,95 @@
-'use client'
+"use client";
 
-import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import api from '@/lib/api-client'
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import api from "@/lib/api-client";
 
 interface InvitationData {
-  email: string
-  role: string
-  tenantName: string
-  expiresAt: string
+  email: string;
+  role: string;
+  tenantName: string;
+  expiresAt: string;
 }
 
 interface AcceptResponse {
-  user: unknown
-  session: unknown | null
+  user: unknown;
+  session: unknown | null;
 }
 
 export default function AcceptInvitePage({
   params,
 }: {
-  params: Promise<{ token: string }>
+  params: Promise<{ token: string }>;
 }) {
-  const resolvedParams = use(params)
-  const router = useRouter()
-  const [invitation, setInvitation] = useState<InvitationData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [accountCreated, setAccountCreated] = useState(false)
+  const resolvedParams = use(params);
+  const router = useRouter();
+  const [invitation, setInvitation] = useState<InvitationData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [accountCreated, setAccountCreated] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
-  })
+    fullName: "",
+  });
 
   useEffect(() => {
     async function loadInvitation() {
       try {
         const data = await api.get<{ invitation: InvitationData }>(
-          `/api/invitations/${resolvedParams.token}`
-        )
-        setInvitation(data.invitation)
+          `/api/invitations/${resolvedParams.token}`,
+        );
+        setInvitation(data.invitation);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Invalid or expired invitation')
-        console.error(err)
+        setError(
+          err instanceof Error ? err.message : "Invalid or expired invitation",
+        );
+        console.error(err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    loadInvitation()
-  }, [resolvedParams.token])
+    loadInvitation();
+  }, [resolvedParams.token]);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
       const response = await api.post<AcceptResponse>(
         `/api/invitations/${resolvedParams.token}`,
-        { full_name: formData.fullName }
-      )
+        { full_name: formData.fullName },
+      );
 
       if (response.session) {
-        router.push('/set-password')
+        router.push("/set-password");
       } else {
-        setAccountCreated(true)
+        setAccountCreated(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.')
-      console.error(err)
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred. Please try again.",
+      );
+      console.error(err);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
@@ -92,7 +98,7 @@ export default function AcceptInvitePage({
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
-    )
+    );
   }
 
   if (error && !invitation) {
@@ -105,7 +111,7 @@ export default function AcceptInvitePage({
           </CardHeader>
           <CardContent>
             <Button
-              onClick={() => router.push('/login')}
+              onClick={() => router.push("/login")}
               className="w-full min-h-[44px]"
             >
               Go to Login
@@ -113,7 +119,7 @@ export default function AcceptInvitePage({
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   if (accountCreated) {
@@ -133,7 +139,7 @@ export default function AcceptInvitePage({
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -142,8 +148,9 @@ export default function AcceptInvitePage({
         <CardHeader>
           <CardTitle>Accept Invitation</CardTitle>
           <CardDescription>
-            You&apos;ve been invited to join <strong>{invitation?.tenantName}</strong> as
-            a <strong>{invitation?.role}</strong>
+            You&apos;ve been invited to join{" "}
+            <strong>{invitation?.tenantName}</strong> as a{" "}
+            <strong>{invitation?.role}</strong>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,7 +166,7 @@ export default function AcceptInvitePage({
               <Input
                 id="email"
                 type="email"
-                value={invitation?.email || ''}
+                value={invitation?.email || ""}
                 disabled
                 className="bg-muted"
               />
@@ -179,12 +186,16 @@ export default function AcceptInvitePage({
               />
             </div>
 
-            <Button type="submit" className="w-full min-h-[44px]" disabled={submitting}>
-              {submitting ? 'Joining...' : 'Join Team'}
+            <Button
+              type="submit"
+              className="w-full min-h-[44px]"
+              disabled={submitting}
+            >
+              {submitting ? "Joining..." : "Join Team"}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

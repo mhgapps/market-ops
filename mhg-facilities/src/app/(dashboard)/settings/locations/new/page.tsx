@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { LocationForm } from '@/components/locations/location-form'
+} from "@/components/ui/card";
+import { LocationForm } from "@/components/locations/location-form";
 
 export default function NewLocationPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <div className="space-y-6">
@@ -22,7 +22,7 @@ export default function NewLocationPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push('/settings/locations')}
+          onClick={() => router.push("/settings/locations")}
           className="mb-2"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -44,11 +44,11 @@ export default function NewLocationPage() {
         </CardHeader>
         <CardContent>
           <LocationForm
-            onSuccess={() => router.push('/settings/locations')}
-            onCancel={() => router.push('/settings/locations')}
+            onSuccess={() => router.push("/settings/locations")}
+            onCancel={() => router.push("/settings/locations")}
           />
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api-client';
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api-client";
 import type {
   OverviewStats,
   TicketStats,
@@ -10,17 +10,22 @@ import type {
   ComplianceStats,
   PMStats,
   ActivityItem,
-} from '@/services/dashboard.service';
+} from "@/services/dashboard.service";
 
 // Query keys
 export const dashboardKeys = {
-  all: ['dashboard'] as const,
-  overview: () => [...dashboardKeys.all, 'overview'] as const,
-  tickets: (days?: number, includeBreakdown?: boolean) => [...dashboardKeys.all, 'tickets', days, includeBreakdown] as const,
-  assets: (includeBreakdown?: boolean) => [...dashboardKeys.all, 'assets', includeBreakdown] as const,
-  compliance: (includeBreakdown?: boolean) => [...dashboardKeys.all, 'compliance', includeBreakdown] as const,
-  pm: (includeOverdue?: boolean) => [...dashboardKeys.all, 'pm', includeOverdue] as const,
-  activity: (limit?: number) => [...dashboardKeys.all, 'activity', limit] as const,
+  all: ["dashboard"] as const,
+  overview: () => [...dashboardKeys.all, "overview"] as const,
+  tickets: (days?: number, includeBreakdown?: boolean) =>
+    [...dashboardKeys.all, "tickets", days, includeBreakdown] as const,
+  assets: (includeBreakdown?: boolean) =>
+    [...dashboardKeys.all, "assets", includeBreakdown] as const,
+  compliance: (includeBreakdown?: boolean) =>
+    [...dashboardKeys.all, "compliance", includeBreakdown] as const,
+  pm: (includeOverdue?: boolean) =>
+    [...dashboardKeys.all, "pm", includeOverdue] as const,
+  activity: (limit?: number) =>
+    [...dashboardKeys.all, "activity", limit] as const,
 };
 
 // Overview stats
@@ -28,13 +33,16 @@ export function useOverviewStats() {
   return useQuery({
     queryKey: dashboardKeys.overview(),
     queryFn: async () => {
-      return api.get<OverviewStats>('/api/dashboard/overview');
+      return api.get<OverviewStats>("/api/dashboard/overview");
     },
   });
 }
 
 // Ticket stats
-export function useTicketStats(days: number = 30, includeBreakdown: boolean = false) {
+export function useTicketStats(
+  days: number = 30,
+  includeBreakdown: boolean = false,
+) {
   return useQuery({
     queryKey: dashboardKeys.tickets(days, includeBreakdown),
     queryFn: async () => {
@@ -115,7 +123,7 @@ export function useRecentActivity(limit: number = 10) {
         limit: limit.toString(),
       });
       return api.get<{ activities: ActivityItem[] }>(
-        `/api/dashboard/activity?${params.toString()}`
+        `/api/dashboard/activity?${params.toString()}`,
       );
     },
   });

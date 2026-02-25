@@ -1,20 +1,20 @@
-import { Suspense } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { Suspense } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Plus, FileText, Clock, Wrench } from 'lucide-react'
-import { PMTemplateService } from '@/services/pm-template.service'
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, FileText, Clock, Wrench } from "lucide-react";
+import { PMTemplateService } from "@/services/pm-template.service";
 
 async function TemplatesList() {
-  const service = new PMTemplateService()
-  const templates = await service.getAllTemplates()
+  const service = new PMTemplateService();
+  const templates = await service.getAllTemplates();
 
   if (templates.length === 0) {
     return (
@@ -33,16 +33,19 @@ async function TemplatesList() {
           </Button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   // Group templates by category
-  const byCategory = templates.reduce((acc, template) => {
-    const category = template.category || 'General'
-    if (!acc[category]) acc[category] = []
-    acc[category].push(template)
-    return acc
-  }, {} as Record<string, typeof templates>)
+  const byCategory = templates.reduce(
+    (acc, template) => {
+      const category = template.category || "General";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(template);
+      return acc;
+    },
+    {} as Record<string, typeof templates>,
+  );
 
   return (
     <div className="space-y-6">
@@ -72,12 +75,15 @@ async function TemplatesList() {
                       </div>
                     )}
 
-                    {template.checklist && typeof template.checklist === 'object' && (
-                      <div className="text-sm text-muted-foreground">
-                        {Object.keys(template.checklist).length} checklist{' '}
-                        {Object.keys(template.checklist).length === 1 ? 'item' : 'items'}
-                      </div>
-                    )}
+                    {template.checklist &&
+                      typeof template.checklist === "object" && (
+                        <div className="text-sm text-muted-foreground">
+                          {Object.keys(template.checklist).length} checklist{" "}
+                          {Object.keys(template.checklist).length === 1
+                            ? "item"
+                            : "items"}
+                        </div>
+                      )}
 
                     {template.default_vendor_id && (
                       <Badge variant="secondary">Default Vendor Assigned</Badge>
@@ -90,7 +96,7 @@ async function TemplatesList() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export default function PMTemplatesPage() {
@@ -123,5 +129,5 @@ export default function PMTemplatesPage() {
         <TemplatesList />
       </Suspense>
     </div>
-  )
+  );
 }

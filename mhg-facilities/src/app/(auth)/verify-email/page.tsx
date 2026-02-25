@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import { useEffect, useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Mail, CheckCircle, XCircle } from 'lucide-react'
-import { Spinner } from '@/components/ui/loaders'
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Mail, CheckCircle, XCircle } from "lucide-react";
+import { Spinner } from "@/components/ui/loaders";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,80 +14,84 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { verifyEmail } from '../actions'
+} from "@/components/ui/card";
+import { verifyEmail } from "../actions";
 
 // String constants for bilingual support
 const STRINGS = {
-  TITLE: 'Verify your email',
-  DESCRIPTION: 'Check your inbox and click the verification link to activate your account',
-  VERIFYING_TITLE: 'Verifying...',
-  VERIFYING_DESCRIPTION: 'Please wait while we verify your email',
-  SUCCESS_TITLE: 'Email verified!',
-  SUCCESS_DESCRIPTION: 'Your email has been verified. You can now sign in to your account.',
-  ERROR_TITLE: 'Verification failed',
-  ERROR_DESCRIPTION: 'The verification link is invalid or has expired.',
-  GO_TO_LOGIN: 'Go to login',
-  RESEND_LINK: 'Resend verification email',
-  SENT_TO: 'Verification email sent to',
-  CHECK_SPAM: 'Make sure to check your spam folder',
-  BACK_TO_LOGIN: 'Back to login',
-} as const
+  TITLE: "Verify your email",
+  DESCRIPTION:
+    "Check your inbox and click the verification link to activate your account",
+  VERIFYING_TITLE: "Verifying...",
+  VERIFYING_DESCRIPTION: "Please wait while we verify your email",
+  SUCCESS_TITLE: "Email verified!",
+  SUCCESS_DESCRIPTION:
+    "Your email has been verified. You can now sign in to your account.",
+  ERROR_TITLE: "Verification failed",
+  ERROR_DESCRIPTION: "The verification link is invalid or has expired.",
+  GO_TO_LOGIN: "Go to login",
+  RESEND_LINK: "Resend verification email",
+  SENT_TO: "Verification email sent to",
+  CHECK_SPAM: "Make sure to check your spam folder",
+  BACK_TO_LOGIN: "Back to login",
+} as const;
 
 function VerifyEmailContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [status, setStatus] = useState<'pending' | 'verifying' | 'success' | 'error'>('pending')
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<
+    "pending" | "verifying" | "success" | "error"
+  >("pending");
 
   // Get params from URL
-  const email = searchParams.get('email')
-  const token = searchParams.get('token')
-  const tokenHash = searchParams.get('token_hash')
-  const type = searchParams.get('type')
+  const email = searchParams.get("email");
+  const token = searchParams.get("token");
+  const tokenHash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
 
     async function verifyEmailToken(verificationToken: string) {
-      if (!isMounted) return
-      setStatus('verifying')
+      if (!isMounted) return;
+      setStatus("verifying");
 
       try {
-        const response = await verifyEmail(verificationToken)
+        const response = await verifyEmail(verificationToken);
 
-        if (!isMounted) return
+        if (!isMounted) return;
         if (response.error) {
-          setStatus('error')
+          setStatus("error");
         } else {
-          setStatus('success')
+          setStatus("success");
           // Redirect to login after a short delay
           setTimeout(() => {
             if (isMounted) {
-              router.push('/login')
+              router.push("/login");
             }
-          }, 3000)
+          }, 3000);
         }
       } catch {
         if (isMounted) {
-          setStatus('error')
+          setStatus("error");
         }
       }
     }
 
     // If there's a token_hash and type, this is a verification callback
-    if (tokenHash && type === 'email') {
-      verifyEmailToken(tokenHash)
+    if (tokenHash && type === "email") {
+      verifyEmailToken(tokenHash);
     } else if (token) {
-      verifyEmailToken(token)
+      verifyEmailToken(token);
     }
 
     return () => {
-      isMounted = false
-    }
-  }, [tokenHash, token, type, router])
+      isMounted = false;
+    };
+  }, [tokenHash, token, type, router]);
 
   // Verifying state
-  if (status === 'verifying') {
+  if (status === "verifying") {
     return (
       <Card>
         <CardHeader className="space-y-1 text-center">
@@ -98,11 +102,11 @@ function VerifyEmailContent() {
           <CardDescription>{STRINGS.VERIFYING_DESCRIPTION}</CardDescription>
         </CardHeader>
       </Card>
-    )
+    );
   }
 
   // Success state
-  if (status === 'success') {
+  if (status === "success") {
     return (
       <Card>
         <CardHeader className="space-y-1 text-center">
@@ -119,11 +123,11 @@ function VerifyEmailContent() {
           </Link>
         </CardFooter>
       </Card>
-    )
+    );
   }
 
   // Error state
-  if (status === 'error') {
+  if (status === "error") {
     return (
       <Card>
         <CardHeader className="space-y-1 text-center">
@@ -140,7 +144,7 @@ function VerifyEmailContent() {
           </Link>
         </CardFooter>
       </Card>
-    )
+    );
   }
 
   // Pending state (waiting for user to check email)
@@ -165,9 +169,7 @@ function VerifyEmailContent() {
       </CardHeader>
 
       <CardContent className="text-center">
-        <p className="text-sm text-muted-foreground">
-          {STRINGS.CHECK_SPAM}
-        </p>
+        <p className="text-sm text-muted-foreground">{STRINGS.CHECK_SPAM}</p>
       </CardContent>
 
       <CardFooter>
@@ -178,19 +180,21 @@ function VerifyEmailContent() {
         </Link>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Spinner size="md" />
-        </CardContent>
-      </Card>
-    }>
+    <Suspense
+      fallback={
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <Spinner size="md" />
+          </CardContent>
+        </Card>
+      }
+    >
       <VerifyEmailContent />
     </Suspense>
-  )
+  );
 }

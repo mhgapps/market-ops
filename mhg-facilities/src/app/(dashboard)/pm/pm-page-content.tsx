@@ -1,24 +1,34 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Plus, List, CalendarDays, Calendar, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PMScheduleList } from './pm-schedule-list';
-import { PMCalendar } from '@/components/pm/pm-calendar';
-import { usePMStats } from '@/hooks/use-pm';
+import { useState } from "react";
+import Link from "next/link";
+import {
+  Plus,
+  List,
+  CalendarDays,
+  Calendar,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PMScheduleList } from "./pm-schedule-list";
+import { PMCalendar } from "@/components/pm/pm-calendar";
+import { usePMStats } from "@/hooks/use-pm";
 
 export function PMPageContent() {
-  const [activeTab, setActiveTab] = useState<'list' | 'calendar'>('list');
+  const [activeTab, setActiveTab] = useState<"list" | "calendar">("list");
   const { data: stats, isLoading: statsLoading } = usePMStats();
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Preventive Maintenance</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Preventive Maintenance
+        </h1>
         <div className="flex items-center gap-2">
           <Button asChild>
             <Link href="/pm/new">
@@ -33,7 +43,10 @@ export function PMPageContent() {
       <StatsCards stats={stats} loading={statsLoading} />
 
       {/* Tabs for List/Calendar View */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'list' | 'calendar')}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as "list" | "calendar")}
+      >
         <TabsList className="grid w-full max-w-[300px] grid-cols-2">
           <TabsTrigger value="list" className="flex items-center gap-2">
             <List className="h-4 w-4" />
@@ -89,16 +102,28 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
           <span className="font-semibold">{data.total}</span>
           <span className="text-sm text-muted-foreground">Total</span>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${data.due_today > 0 ? 'bg-amber-50' : ''}`}>
-          <Clock className={`h-4 w-4 ${data.due_today > 0 ? 'text-amber-600' : 'text-muted-foreground'}`} />
-          <span className={`font-semibold ${data.due_today > 0 ? 'text-amber-700' : ''}`}>
+        <div
+          className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${data.due_today > 0 ? "bg-amber-50" : ""}`}
+        >
+          <Clock
+            className={`h-4 w-4 ${data.due_today > 0 ? "text-amber-600" : "text-muted-foreground"}`}
+          />
+          <span
+            className={`font-semibold ${data.due_today > 0 ? "text-amber-700" : ""}`}
+          >
             {data.due_today}
           </span>
           <span className="text-sm text-muted-foreground">Due Today</span>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${data.overdue > 0 ? 'bg-red-50' : ''}`}>
-          <AlertCircle className={`h-4 w-4 ${data.overdue > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
-          <span className={`font-semibold ${data.overdue > 0 ? 'text-red-600' : ''}`}>
+        <div
+          className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${data.overdue > 0 ? "bg-red-50" : ""}`}
+        >
+          <AlertCircle
+            className={`h-4 w-4 ${data.overdue > 0 ? "text-destructive" : "text-muted-foreground"}`}
+          />
+          <span
+            className={`font-semibold ${data.overdue > 0 ? "text-red-600" : ""}`}
+          >
             {data.overdue}
           </span>
           <span className="text-sm text-muted-foreground">Overdue</span>

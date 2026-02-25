@@ -1,28 +1,34 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { ComplianceForm } from '@/components/compliance/compliance-form'
-import { useCreateComplianceDocument } from '@/hooks/use-compliance'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { toast } from 'sonner'
+import { useRouter } from "next/navigation";
+import { ComplianceForm } from "@/components/compliance/compliance-form";
+import { useCreateComplianceDocument } from "@/hooks/use-compliance";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function NewCompliancePage() {
-  const router = useRouter()
-  const createDocument = useCreateComplianceDocument()
+  const router = useRouter();
+  const createDocument = useCreateComplianceDocument();
 
   const handleSubmit = async (data: {
-    name: string
-    document_type_id?: string
-    location_id?: string
-    issue_date?: string
-    expiration_date: string
-    issuing_authority?: string
-    document_number?: string
-    renewal_cost?: string
-    notes?: string
+    name: string;
+    document_type_id?: string;
+    location_id?: string;
+    issue_date?: string;
+    expiration_date: string;
+    issuing_authority?: string;
+    document_number?: string;
+    renewal_cost?: string;
+    notes?: string;
   }) => {
     try {
       const document = await createDocument.mutateAsync({
@@ -35,13 +41,13 @@ export default function NewCompliancePage() {
         document_number: data.document_number || null,
         renewal_cost: data.renewal_cost ? parseFloat(data.renewal_cost) : null,
         notes: data.notes || null,
-      })
-      toast.success('Document created successfully')
-      router.push(`/compliance/${document.id}`)
+      });
+      toast.success("Document created successfully");
+      router.push(`/compliance/${document.id}`);
     } catch (_error) {
-      toast.error('Failed to create document')
+      toast.error("Failed to create document");
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -69,5 +75,5 @@ export default function NewCompliancePage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

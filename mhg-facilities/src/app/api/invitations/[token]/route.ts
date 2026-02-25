@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { InvitationService } from '@/services/invitation.service'
-import { DeviceAuthService } from '@/services/device-auth.service'
-import { acceptInviteSchema } from '@/lib/validations/user'
+import { NextRequest, NextResponse } from "next/server";
+import { InvitationService } from "@/services/invitation.service";
+import { DeviceAuthService } from "@/services/device-auth.service";
+import { acceptInviteSchema } from "@/lib/validations/user";
 
 /**
  * GET /api/invitations/[token]
@@ -10,19 +10,19 @@ import { acceptInviteSchema } from '@/lib/validations/user'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ token: string }> }
+  { params }: { params: Promise<{ token: string }> },
 ) {
   try {
-    const { token } = await params
+    const { token } = await params;
 
-    const invitationService = new InvitationService()
-    const invitation = await invitationService.getInvitationByToken(token)
+    const invitationService = new InvitationService();
+    const invitation = await invitationService.getInvitationByToken(token);
 
     if (!invitation) {
       return NextResponse.json(
-        { error: 'Invalid or expired invitation' },
-        { status: 404 }
-      )
+        { error: "Invalid or expired invitation" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({
@@ -32,13 +32,18 @@ export async function GET(
         tenantName: invitation.tenant_name,
         expiresAt: invitation.expires_at,
       },
-    })
+    });
   } catch (error) {
-    console.error('Error in GET /api/invitations/[token]:', error)
+    console.error("Error in GET /api/invitations/[token]:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to validate invitation' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to validate invitation",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -52,42 +57,49 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ token: string }> }
+  { params }: { params: Promise<{ token: string }> },
 ) {
   try {
-    const { token } = await params
-    const body = await request.json()
+    const { token } = await params;
+    const body = await request.json();
 
     // Validate request body (password no longer required)
     const validation = acceptInviteSchema.safeParse({
       token,
       ...body,
-    })
+    });
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.format() },
-        { status: 400 }
-      )
+        { error: "Validation failed", details: validation.error.format() },
+        { status: 400 },
+      );
     }
 
-    const invitationService = new InvitationService()
+    const invitationService = new InvitationService();
     const { user, session } = await invitationService.acceptInvitation({
       token,
       full_name: validation.data.full_name,
-    })
+    });
 
-    const userRecord = user as { id: string; email: string; full_name: string; role: string; tenant_id: string; auth_user_id: string }
+    const userRecord = user as {
+      id: string;
+      email: string;
+      full_name: string;
+      role: string;
+      tenant_id: string;
+      auth_user_id: string;
+    };
 
     // Trust the device automatically for the new user
-    const deviceAuthService = new DeviceAuthService()
-    const userAgent = request.headers.get('user-agent') || ''
+    const deviceAuthService = new DeviceAuthService();
+    const userAgent = request.headers.get("user-agent") || "";
     const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      request.headers.get('x-real-ip') ||
-      '0.0.0.0'
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "0.0.0.0";
 
-    let rawToken: string | null = null
+    let rawToken: string | null = null;
     if (userRecord.auth_user_id) {
       rawToken = await deviceAuthService.trustDevice({
         userId: userRecord.id,
@@ -95,7 +107,7 @@ export async function POST(
         authUserId: userRecord.auth_user_id,
         userAgent,
         ip,
-      })
+      });
     }
 
     const response = NextResponse.json(
@@ -109,36 +121,41 @@ export async function POST(
         },
         session,
       },
-      { status: 201 }
-    )
+      { status: 201 },
+    );
 
     // Set the device_token cookie if trust succeeded
     if (rawToken) {
-      response.cookies.set('device_token', rawToken, {
+      response.cookies.set("device_token", rawToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: 180 * 24 * 60 * 60, // 180 days in seconds
-        path: '/',
-      })
+        path: "/",
+      });
     }
 
-    return response
+    return response;
   } catch (error) {
-    console.error('Error in POST /api/invitations/[token]:', error)
+    console.error("Error in POST /api/invitations/[token]:", error);
 
     if (error instanceof Error) {
-      if (error.message.includes('Invalid or expired')) {
-        return NextResponse.json({ error: error.message }, { status: 404 })
+      if (error.message.includes("Invalid or expired")) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
       }
-      if (error.message.includes('already exists')) {
-        return NextResponse.json({ error: error.message }, { status: 409 })
+      if (error.message.includes("already exists")) {
+        return NextResponse.json({ error: error.message }, { status: 409 });
       }
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to accept invitation' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to accept invitation",
+      },
+      { status: 500 },
+    );
   }
 }

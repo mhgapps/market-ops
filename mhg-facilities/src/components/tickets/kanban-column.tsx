@@ -1,19 +1,19 @@
-'use client'
+"use client";
 
-import { ReactNode } from 'react'
-import { Droppable } from '@hello-pangea/dnd'
-import { statusColors } from '@/theme/colors'
-import { cn } from '@/lib/utils'
-import type { TicketStatus } from '@/types/database'
+import { ReactNode } from "react";
+import { Droppable } from "@hello-pangea/dnd";
+import { statusColors } from "@/theme/colors";
+import { cn } from "@/lib/utils";
+import type { TicketStatus } from "@/types/database";
 
 interface KanbanColumnProps {
-  status: TicketStatus
-  count: number
-  children: ReactNode
+  status: TicketStatus;
+  count: number;
+  children: ReactNode;
 }
 
 export function KanbanColumn({ status, count, children }: KanbanColumnProps) {
-  const config = statusColors[status]
+  const config = statusColors[status];
 
   return (
     <div className="flex flex-col min-w-[280px] max-w-[320px] flex-1">
@@ -41,10 +41,10 @@ export function KanbanColumn({ status, count, children }: KanbanColumnProps) {
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              'flex-1 rounded-lg p-2 min-h-[200px] transition-colors duration-200',
+              "flex-1 rounded-lg p-2 min-h-[200px] transition-colors duration-200",
               snapshot.isDraggingOver
-                ? 'bg-blue-50/70 ring-2 ring-blue-200/50 ring-inset'
-                : 'bg-slate-50/50'
+                ? "bg-blue-50/70 ring-2 ring-blue-200/50 ring-inset"
+                : "bg-slate-50/50",
             )}
           >
             <div className="space-y-2">
@@ -69,5 +69,5 @@ export function KanbanColumn({ status, count, children }: KanbanColumnProps) {
         )}
       </Droppable>
     </div>
-  )
+  );
 }

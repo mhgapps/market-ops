@@ -1,10 +1,10 @@
 interface InvitationEmailData {
-  recipientName: string
-  recipientEmail: string
-  tenantName: string
-  role: string
-  inviteLink: string
-  inviterName: string
+  recipientName: string;
+  recipientEmail: string;
+  tenantName: string;
+  role: string;
+  inviteLink: string;
+  inviterName: string;
 }
 
 /**
@@ -12,13 +12,20 @@ interface InvitationEmailData {
  * Uses inline styles for maximum email client compatibility
  */
 export function generateInvitationEmail(data: InvitationEmailData): {
-  subject: string
-  html: string
-  text: string
+  subject: string;
+  html: string;
+  text: string;
 } {
-  const { recipientName, recipientEmail, tenantName, role, inviteLink, inviterName } = data
+  const {
+    recipientName,
+    recipientEmail,
+    tenantName,
+    role,
+    inviteLink,
+    inviterName,
+  } = data;
 
-  const subject = `You've been invited to join ${tenantName} on MHG Facilities`
+  const subject = `You've been invited to join ${tenantName} on MHG Facilities`;
 
   const html = `
 <!DOCTYPE html>
@@ -46,7 +53,7 @@ export function generateInvitationEmail(data: InvitationEmailData): {
               <h2 style="margin: 0 0 20px; color: #1a1a1a; font-size: 24px; font-weight: 600;">You've been invited!</h2>
 
               <p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-                Hi${recipientName ? ` ${recipientName}` : ''},
+                Hi${recipientName ? ` ${recipientName}` : ""},
               </p>
 
               <p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
@@ -106,12 +113,12 @@ export function generateInvitationEmail(data: InvitationEmailData): {
   </table>
 </body>
 </html>
-  `
+  `;
 
   const text = `
 You've been invited to join ${tenantName} on MHG Facilities
 
-Hi${recipientName ? ` ${recipientName}` : ''},
+Hi${recipientName ? ` ${recipientName}` : ""},
 
 ${inviterName} has invited you to join ${tenantName} on MHG Facilities as a ${role}.
 
@@ -127,7 +134,7 @@ If you didn't expect this invitation, you can safely ignore this email.
 This email was sent to ${recipientEmail}
 
 © 2026 MHG Facilities. All rights reserved.
-  `.trim()
+  `.trim();
 
-  return { subject, html, text }
+  return { subject, html, text };
 }

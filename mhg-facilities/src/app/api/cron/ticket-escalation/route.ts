@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { TicketService } from '@/services/ticket.service';
-import { NotificationService } from '@/services/notification.service';
-import { UserDAO } from '@/dao/user.dao';
+import { NextRequest, NextResponse } from "next/server";
+import { TicketService } from "@/services/ticket.service";
+import { NotificationService } from "@/services/notification.service";
+import { UserDAO } from "@/dao/user.dao";
 
 /**
  * Cron job to escalate overdue tickets
@@ -21,18 +21,15 @@ export async function GET(request: NextRequest) {
     // Verify CRON_SECRET is configured
     if (!process.env.CRON_SECRET) {
       return NextResponse.json(
-        { error: 'CRON_SECRET not configured' },
-        { status: 500 }
+        { error: "CRON_SECRET not configured" },
+        { status: 500 },
       );
     }
 
     // Verify this is a legitimate cron request
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const ticketService = new TicketService();
@@ -46,7 +43,7 @@ export async function GET(request: NextRequest) {
     // A future migration could add escalated_at to tickets for proper tracking.
     const [activeTickets, managers, admins] = await Promise.all([
       ticketService.getAllTickets({
-        status: ['submitted'],
+        status: ["submitted"],
       }),
       notificationService.getManagers(),
       notificationService.getAdminUsers(),
@@ -68,22 +65,23 @@ export async function GET(request: NextRequest) {
 
     for (const ticket of activeTickets) {
       const createdAt = new Date(ticket.created_at);
-      const hoursSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      const hoursSinceCreated =
+        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
 
       // Determine if ticket should be escalated based on priority
       let shouldEscalate = false;
-      let escalationReason = '';
+      let escalationReason = "";
 
-      if (ticket.priority === 'critical' && hoursSinceCreated > 2) {
+      if (ticket.priority === "critical" && hoursSinceCreated > 2) {
         shouldEscalate = true;
         escalationReason = `Critical ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
-      } else if (ticket.priority === 'high' && hoursSinceCreated > 4) {
+      } else if (ticket.priority === "high" && hoursSinceCreated > 4) {
         shouldEscalate = true;
         escalationReason = `High priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
-      } else if (ticket.priority === 'medium' && hoursSinceCreated > 8) {
+      } else if (ticket.priority === "medium" && hoursSinceCreated > 8) {
         shouldEscalate = true;
         escalationReason = `Medium priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
-      } else if (ticket.priority === 'low' && hoursSinceCreated > 24) {
+      } else if (ticket.priority === "low" && hoursSinceCreated > 24) {
         shouldEscalate = true;
         escalationReason = `Low priority ticket without response for ${Math.floor(hoursSinceCreated)} hours`;
       }
@@ -98,12 +96,12 @@ export async function GET(request: NextRequest) {
       ...new Set(
         ticketsToEscalate
           .map((t) => t.ticket.submitted_by)
-          .filter((id): id is string => id !== null && id !== undefined)
+          .filter((id): id is string => id !== null && id !== undefined),
       ),
     ];
 
     const submitterUsers = await Promise.all(
-      uniqueSubmitterIds.map((id) => userDAO.findById(id).catch(() => null))
+      uniqueSubmitterIds.map((id) => userDAO.findById(id).catch(() => null)),
     );
 
     // Create a map for quick lookup
@@ -118,7 +116,7 @@ export async function GET(request: NextRequest) {
         if (notifyUsers.length > 0) {
           // Get the user who submitted the ticket from the pre-fetched map
           const submittedBy = ticket.submitted_by
-            ? submitterMap.get(ticket.submitted_by) ?? null
+            ? (submitterMap.get(ticket.submitted_by) ?? null)
             : null;
 
           // Send escalation notifications - skip if no user found (system escalation)
@@ -141,7 +139,8 @@ export async function GET(request: NextRequest) {
           console.log(`Escalated ticket ${ticket.id}: ${escalationReason}`);
         }
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        const errorMsg =
+          error instanceof Error ? error.message : "Unknown error";
         errors.push({ ticketId: ticket.id, error: errorMsg });
         console.error(`Failed to escalate ticket ${ticket.id}:`, error);
       }
@@ -156,13 +155,13 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Ticket escalation cron job error:', error);
+    console.error("Ticket escalation cron job error:", error);
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

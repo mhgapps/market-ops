@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/api-auth'
-import { AssetCategoryService } from '@/services/asset-category.service'
+import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/api-auth";
+import { AssetCategoryService } from "@/services/asset-category.service";
 
 /**
  * GET /api/asset-categories/tree
@@ -8,18 +8,18 @@ import { AssetCategoryService } from '@/services/asset-category.service'
  */
 export async function GET() {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
-    const service = new AssetCategoryService()
-    const tree = await service.getCategoryTree()
+    const service = new AssetCategoryService();
+    const tree = await service.getCategoryTree();
 
-    return NextResponse.json({ tree })
+    return NextResponse.json({ tree });
   } catch (error) {
-    console.error('Error fetching asset category tree:', error)
+    console.error("Error fetching asset category tree:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch asset category tree' },
-      { status: 500 }
-    )
+      { error: "Failed to fetch asset category tree" },
+      { status: 500 },
+    );
   }
 }

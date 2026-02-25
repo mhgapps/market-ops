@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { TicketAttachmentService } from '@/services/ticket-attachment.service'
-import { TicketService } from '@/services/ticket.service'
-import { requireAuth } from '@/lib/auth/api-auth'
-import { uploadAttachmentSchema } from '@/lib/validations/ticket'
+import { NextRequest, NextResponse } from "next/server";
+import { TicketAttachmentService } from "@/services/ticket-attachment.service";
+import { TicketService } from "@/services/ticket.service";
+import { requireAuth } from "@/lib/auth/api-auth";
+import { uploadAttachmentSchema } from "@/lib/validations/ticket";
 
 /**
  * GET /api/tickets/[id]/attachments
@@ -10,23 +10,28 @@ import { uploadAttachmentSchema } from '@/lib/validations/ticket'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { error } = await requireAuth()
-    if (error) return error
+    const { error } = await requireAuth();
+    if (error) return error;
 
-    const { id } = await params
-    const service = new TicketAttachmentService()
-    const attachments = await service.getAttachments(id)
+    const { id } = await params;
+    const service = new TicketAttachmentService();
+    const attachments = await service.getAttachments(id);
 
-    return NextResponse.json({ attachments })
+    return NextResponse.json({ attachments });
   } catch (error) {
-    console.error('Error fetching attachments:', error)
+    console.error("Error fetching attachments:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch attachments' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch attachments",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -40,52 +45,54 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { user, error } = await requireAuth()
-    if (error) return error
+    const { user, error } = await requireAuth();
+    if (error) return error;
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params
-    const formData = await request.formData()
-    const file = formData.get('file') as File | null
-    const attachmentType = formData.get('attachment_type') as string
+    const { id } = await params;
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    const attachmentType = formData.get("attachment_type") as string;
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'File is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
 
     // Validate attachment type
     const validatedData = uploadAttachmentSchema.parse({
       attachment_type: attachmentType,
-    })
+    });
 
-    const service = new TicketAttachmentService()
+    const service = new TicketAttachmentService();
     const attachment = await service.uploadAttachment({
       ticket_id: id,
       file,
       user_id: user.id,
       attachment_type: validatedData.attachment_type,
-    })
+    });
 
-    return NextResponse.json({ attachment }, { status: 201 })
+    return NextResponse.json({ attachment }, { status: 201 });
   } catch (error) {
-    console.error('Error uploading attachment:', error)
+    console.error("Error uploading attachment:", error);
 
-    if (error instanceof Error && error.message.includes('not found')) {
-      return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to upload attachment' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload attachment",
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -95,54 +102,62 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { user, error } = await requireAuth()
-    if (error) return error
+    const { user, error } = await requireAuth();
+    if (error) return error;
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params
+    const { id } = await params;
 
     // Verify ownership: submitter, assignee, or manager/admin
-    const ticketService = new TicketService()
-    const ticket = await ticketService.getTicketById(id)
-    const isSubmitter = ticket.submitted_by === user.id
-    const isAssignee = ticket.assigned_to === user.id
-    const isManagerOrAdmin = user.role === 'manager' || user.role === 'admin'
+    const ticketService = new TicketService();
+    const ticket = await ticketService.getTicketById(id);
+    const isSubmitter = ticket.submitted_by === user.id;
+    const isAssignee = ticket.assigned_to === user.id;
+    const isManagerOrAdmin = user.role === "manager" || user.role === "admin";
     if (!isSubmitter && !isAssignee && !isManagerOrAdmin) {
       return NextResponse.json(
-        { error: 'Forbidden: you do not have permission to delete attachments on this ticket' },
-        { status: 403 }
-      )
+        {
+          error:
+            "Forbidden: you do not have permission to delete attachments on this ticket",
+        },
+        { status: 403 },
+      );
     }
 
-    const { searchParams } = new URL(request.url)
-    const attachmentId = searchParams.get('attachment_id')
+    const { searchParams } = new URL(request.url);
+    const attachmentId = searchParams.get("attachment_id");
 
     if (!attachmentId) {
       return NextResponse.json(
-        { error: 'Attachment ID is required' },
-        { status: 400 }
-      )
+        { error: "Attachment ID is required" },
+        { status: 400 },
+      );
     }
 
-    const service = new TicketAttachmentService()
-    await service.deleteAttachment(attachmentId, user.id, user.role)
+    const service = new TicketAttachmentService();
+    await service.deleteAttachment(attachmentId, user.id, user.role);
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting attachment:', error)
+    console.error("Error deleting attachment:", error);
 
-    if (error instanceof Error && error.message.includes('not found')) {
-      return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete attachment' },
-      { status: 500 }
-    )
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete attachment",
+      },
+      { status: 500 },
+    );
   }
 }

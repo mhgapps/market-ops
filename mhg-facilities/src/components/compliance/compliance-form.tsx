@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -11,25 +11,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { useComplianceTypes } from '@/hooks/use-compliance';
-import { useLocations } from '@/hooks/use-locations';
+} from "@/components/ui/select";
+import { useComplianceTypes } from "@/hooks/use-compliance";
+import { useLocations } from "@/hooks/use-locations";
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(200),
+  name: z.string().min(1, "Name is required").max(200),
   document_type_id: z.string().optional(),
-  location_id: z.string().min(1, 'Location is required'),
+  location_id: z.string().min(1, "Location is required"),
   issue_date: z.string().optional(),
-  expiration_date: z.string().min(1, 'Expiration date is required'),
+  expiration_date: z.string().min(1, "Expiration date is required"),
   issuing_authority: z.string().max(200).optional(),
   document_number: z.string().max(100).optional(),
   renewal_cost: z.string().optional(),
@@ -44,22 +44,26 @@ interface ComplianceFormProps {
   isSubmitting?: boolean;
 }
 
-export function ComplianceForm({ initialData, onSubmit, isSubmitting }: ComplianceFormProps) {
+export function ComplianceForm({
+  initialData,
+  onSubmit,
+  isSubmitting,
+}: ComplianceFormProps) {
   const { data: types } = useComplianceTypes();
   const { data: locations, isLoading: locationsLoading } = useLocations();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialData?.name || '',
-      document_type_id: initialData?.document_type_id || '',
-      location_id: initialData?.location_id || '',
-      issue_date: initialData?.issue_date || '',
-      expiration_date: initialData?.expiration_date || '',
-      issuing_authority: initialData?.issuing_authority || '',
-      document_number: initialData?.document_number || '',
-      renewal_cost: initialData?.renewal_cost || '',
-      notes: initialData?.notes || '',
+      name: initialData?.name || "",
+      document_type_id: initialData?.document_type_id || "",
+      location_id: initialData?.location_id || "",
+      issue_date: initialData?.issue_date || "",
+      expiration_date: initialData?.expiration_date || "",
+      issuing_authority: initialData?.issuing_authority || "",
+      document_number: initialData?.document_number || "",
+      renewal_cost: initialData?.renewal_cost || "",
+      notes: initialData?.notes || "",
     },
   });
 
@@ -88,7 +92,10 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Document Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
@@ -122,7 +129,13 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={locationsLoading ? "Loading locations..." : "Select location"} />
+                    <SelectValue
+                      placeholder={
+                        locationsLoading
+                          ? "Loading locations..."
+                          : "Select location"
+                      }
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -209,7 +222,12 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
               <FormItem>
                 <FormLabel>Renewal Cost ($)</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,7 +243,11 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea placeholder="Additional information..." className="min-h-[100px]" {...field} />
+                <Textarea
+                  placeholder="Additional information..."
+                  className="min-h-[100px]"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -234,7 +256,7 @@ export function ComplianceForm({ initialData, onSubmit, isSubmitting }: Complian
 
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Document'}
+            {isSubmitting ? "Saving..." : "Save Document"}
           </Button>
         </div>
       </form>

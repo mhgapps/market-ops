@@ -1,11 +1,15 @@
-import { PMScheduleDAO, type PMScheduleFilters, type PMScheduleWithRelations } from '@/dao/pm-schedule.dao';
-import { PMTemplateDAO } from '@/dao/pm-template.dao';
-import { PMCompletionDAO } from '@/dao/pm-completion.dao';
-import { TicketService } from './ticket.service';
-import type { Database } from '@/types/database';
+import {
+  PMScheduleDAO,
+  type PMScheduleFilters,
+  type PMScheduleWithRelations,
+} from "@/dao/pm-schedule.dao";
+import { PMTemplateDAO } from "@/dao/pm-template.dao";
+import { PMCompletionDAO } from "@/dao/pm-completion.dao";
+import { TicketService } from "./ticket.service";
+import type { Database } from "@/types/database";
 
-type PMSchedule = Database['public']['Tables']['pm_schedules']['Row'];
-type PMFrequency = Database['public']['Enums']['pm_frequency'];
+type PMSchedule = Database["public"]["Tables"]["pm_schedules"]["Row"];
+type PMFrequency = Database["public"]["Enums"]["pm_frequency"];
 
 // Re-export enriched type for API consumers
 export type { PMScheduleWithRelations };
@@ -65,14 +69,16 @@ export class PMScheduleService {
     private scheduleDAO = new PMScheduleDAO(),
     private templateDAO = new PMTemplateDAO(),
     private ticketService = new TicketService(),
-    private completionDAO = new PMCompletionDAO()
+    private completionDAO = new PMCompletionDAO(),
   ) {}
 
   /**
    * Get all PM schedules with enriched relation data.
    * Returns flat objects with asset_name, location_name, assigned_to_name, vendor_name, last_completed_at.
    */
-  async getAllSchedules(filters?: PMScheduleFilters): Promise<PMScheduleWithRelations[]> {
+  async getAllSchedules(
+    filters?: PMScheduleFilters,
+  ): Promise<PMScheduleWithRelations[]> {
     // If no filters provided, return all schedules with relations
     if (!filters) {
       return await this.scheduleDAO.findAllWithRelations();
@@ -142,7 +148,7 @@ export class PMScheduleService {
     // Filter to only schedules due within the specified month
     const calendarItems: PMCalendarItem[] = [];
 
-    all.forEach(schedule => {
+    all.forEach((schedule) => {
       if (!schedule.next_due_date) return;
 
       const dueDate = new Date(schedule.next_due_date);
@@ -160,8 +166,8 @@ export class PMScheduleService {
 
     // Sort by due date
     return calendarItems.sort((a, b) => {
-      const dateA = a.next_due_date || '';
-      const dateB = b.next_due_date || '';
+      const dateA = a.next_due_date || "";
+      const dateB = b.next_due_date || "";
       return dateA.localeCompare(dateB);
     });
   }
@@ -183,21 +189,21 @@ export class PMScheduleService {
 
   async createSchedule(data: CreatePMScheduleInput): Promise<PMSchedule> {
     if (!data.name || data.name.trim().length === 0) {
-      throw new Error('Schedule name is required');
+      throw new Error("Schedule name is required");
     }
 
     if (!data.asset_id && !data.location_id) {
-      throw new Error('Either asset_id or location_id is required');
+      throw new Error("Either asset_id or location_id is required");
     }
 
     if (data.asset_id && data.location_id) {
-      throw new Error('Cannot specify both asset_id and location_id');
+      throw new Error("Cannot specify both asset_id and location_id");
     }
 
     if (data.template_id) {
       const template = await this.templateDAO.findById(data.template_id);
       if (!template) {
-        throw new Error('PM template not found');
+        throw new Error("PM template not found");
       }
     }
 
@@ -205,7 +211,7 @@ export class PMScheduleService {
       data.frequency,
       data.day_of_week ?? null,
       data.day_of_month ?? null,
-      data.month_of_year ?? null
+      data.month_of_year ?? null,
     );
 
     return await this.scheduleDAO.create({
@@ -227,61 +233,88 @@ export class PMScheduleService {
     });
   }
 
-  async updateSchedule(id: string, data: UpdatePMScheduleInput): Promise<PMSchedule> {
+  async updateSchedule(
+    id: string,
+    data: UpdatePMScheduleInput,
+  ): Promise<PMSchedule> {
     const existing = await this.scheduleDAO.findById(id);
     if (!existing) {
-      throw new Error('PM schedule not found');
+      throw new Error("PM schedule not found");
     }
 
-    if (data.name !== undefined && (!data.name || data.name.trim().length === 0)) {
-      throw new Error('Schedule name is required');
+    if (
+      data.name !== undefined &&
+      (!data.name || data.name.trim().length === 0)
+    ) {
+      throw new Error("Schedule name is required");
     }
 
     if (data.template_id) {
       const template = await this.templateDAO.findById(data.template_id);
       if (!template) {
-        throw new Error('PM template not found');
+        throw new Error("PM template not found");
       }
     }
 
     // XOR validation for asset_id/location_id
-    const finalAssetId = data.asset_id !== undefined ? data.asset_id : existing.asset_id;
-    const finalLocationId = data.location_id !== undefined ? data.location_id : existing.location_id;
+    const finalAssetId =
+      data.asset_id !== undefined ? data.asset_id : existing.asset_id;
+    const finalLocationId =
+      data.location_id !== undefined ? data.location_id : existing.location_id;
 
     if (!finalAssetId && !finalLocationId) {
-      throw new Error('Either asset_id or location_id is required');
+      throw new Error("Either asset_id or location_id is required");
     }
 
     if (finalAssetId && finalLocationId) {
-      throw new Error('Cannot specify both asset_id and location_id');
+      throw new Error("Cannot specify both asset_id and location_id");
     }
 
     const updateData: Record<string, unknown> = {};
-    if (data.template_id !== undefined) updateData.template_id = data.template_id;
+    if (data.template_id !== undefined)
+      updateData.template_id = data.template_id;
     if (data.name !== undefined) updateData.name = data.name.trim();
-    if (data.description !== undefined) updateData.description = data.description?.trim() || null;
+    if (data.description !== undefined)
+      updateData.description = data.description?.trim() || null;
     if (data.asset_id !== undefined) updateData.asset_id = data.asset_id;
-    if (data.location_id !== undefined) updateData.location_id = data.location_id;
+    if (data.location_id !== undefined)
+      updateData.location_id = data.location_id;
     if (data.frequency !== undefined) updateData.frequency = data.frequency;
-    if (data.day_of_week !== undefined) updateData.day_of_week = data.day_of_week;
-    if (data.day_of_month !== undefined) updateData.day_of_month = data.day_of_month;
-    if (data.month_of_year !== undefined) updateData.month_of_year = data.month_of_year;
-    if (data.assigned_to !== undefined) updateData.assigned_to = data.assigned_to;
+    if (data.day_of_week !== undefined)
+      updateData.day_of_week = data.day_of_week;
+    if (data.day_of_month !== undefined)
+      updateData.day_of_month = data.day_of_month;
+    if (data.month_of_year !== undefined)
+      updateData.month_of_year = data.month_of_year;
+    if (data.assigned_to !== undefined)
+      updateData.assigned_to = data.assigned_to;
     if (data.vendor_id !== undefined) updateData.vendor_id = data.vendor_id;
-    if (data.estimated_cost !== undefined) updateData.estimated_cost = data.estimated_cost;
+    if (data.estimated_cost !== undefined)
+      updateData.estimated_cost = data.estimated_cost;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
-    if (data.last_generated_at !== undefined) updateData.last_generated_at = data.last_generated_at;
+    if (data.last_generated_at !== undefined)
+      updateData.last_generated_at = data.last_generated_at;
 
     // If next_due_date is explicitly provided, use it; otherwise recalculate if frequency params changed
     if (data.next_due_date !== undefined) {
       updateData.next_due_date = data.next_due_date;
-    } else if (data.frequency !== undefined || data.day_of_week !== undefined ||
-        data.day_of_month !== undefined || data.month_of_year !== undefined) {
+    } else if (
+      data.frequency !== undefined ||
+      data.day_of_week !== undefined ||
+      data.day_of_month !== undefined ||
+      data.month_of_year !== undefined
+    ) {
       const newNextDueDate = this.calculateNextDueDateFromFrequency(
         data.frequency || existing.frequency,
-        data.day_of_week !== undefined ? data.day_of_week : existing.day_of_week,
-        data.day_of_month !== undefined ? data.day_of_month : existing.day_of_month,
-        data.month_of_year !== undefined ? data.month_of_year : existing.month_of_year
+        data.day_of_week !== undefined
+          ? data.day_of_week
+          : existing.day_of_week,
+        data.day_of_month !== undefined
+          ? data.day_of_month
+          : existing.day_of_month,
+        data.month_of_year !== undefined
+          ? data.month_of_year
+          : existing.month_of_year,
       );
       updateData.next_due_date = newNextDueDate;
     }
@@ -292,7 +325,7 @@ export class PMScheduleService {
   async deleteSchedule(id: string): Promise<void> {
     const existing = await this.scheduleDAO.findById(id);
     if (!existing) {
-      throw new Error('PM schedule not found');
+      throw new Error("PM schedule not found");
     }
 
     await this.scheduleDAO.softDelete(id);
@@ -306,14 +339,16 @@ export class PMScheduleService {
     return await this.scheduleDAO.update(id, { is_active: false });
   }
 
-  async generateTickets(): Promise<Array<{ schedule_id: string; message: string }>> {
+  async generateTickets(): Promise<
+    Array<{ schedule_id: string; message: string }>
+  > {
     const due = await this.scheduleDAO.findDueToday();
 
     const tickets: Array<{ schedule_id: string; message: string }> = [];
     for (const schedule of due) {
       tickets.push({
         schedule_id: schedule.id,
-        message: `Generated ticket for PM schedule: ${schedule.name}`
+        message: `Generated ticket for PM schedule: ${schedule.name}`,
       });
     }
 
@@ -324,14 +359,14 @@ export class PMScheduleService {
     scheduleId: string,
     ticketId: string,
     userId: string,
-    checklistResults?: Record<string, unknown>
+    checklistResults?: Record<string, unknown>,
   ) {
     const schedule = await this.scheduleDAO.findById(scheduleId);
     if (!schedule) {
-      throw new Error('PM schedule not found');
+      throw new Error("PM schedule not found");
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     const completion = await this.completionDAO.create({
       schedule_id: scheduleId,
@@ -357,7 +392,7 @@ export class PMScheduleService {
       schedule.frequency,
       schedule.day_of_week,
       schedule.day_of_month,
-      schedule.month_of_year
+      schedule.month_of_year,
     );
   }
 
@@ -365,15 +400,15 @@ export class PMScheduleService {
     frequency: PMFrequency,
     dayOfWeek: number | null,
     dayOfMonth: number | null,
-    monthOfYear: number | null
+    monthOfYear: number | null,
   ): string {
     const now = new Date();
 
     switch (frequency) {
-      case 'daily':
+      case "daily":
         now.setDate(now.getDate() + 1);
         break;
-      case 'weekly':
+      case "weekly":
         if (dayOfWeek !== null && dayOfWeek >= 0 && dayOfWeek <= 6) {
           // Find next occurrence of specified day (0=Sunday, 6=Saturday)
           const currentDay = now.getDay();
@@ -384,7 +419,7 @@ export class PMScheduleService {
           now.setDate(now.getDate() + 7);
         }
         break;
-      case 'biweekly':
+      case "biweekly":
         if (dayOfWeek !== null && dayOfWeek >= 0 && dayOfWeek <= 6) {
           // Find next occurrence of specified day, then add a week for biweekly
           const currentDay = now.getDay();
@@ -395,15 +430,19 @@ export class PMScheduleService {
           now.setDate(now.getDate() + 14);
         }
         break;
-      case 'monthly':
+      case "monthly":
         now.setMonth(now.getMonth() + 1);
         if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
           // Get last day of the new month to handle month-end properly
-          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          const lastDay = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+          ).getDate();
           now.setDate(Math.min(dayOfMonth, lastDay));
         }
         break;
-      case 'quarterly':
+      case "quarterly":
         if (monthOfYear !== null && monthOfYear >= 1 && monthOfYear <= 12) {
           // Find the next quarter occurrence that aligns with the target month pattern
           const currentMonth = now.getMonth(); // 0-indexed
@@ -412,9 +451,14 @@ export class PMScheduleService {
           // Calculate the next occurrence based on quarterly intervals from target month
           // e.g., if target is March (2), occurrences are Mar, Jun, Sep, Dec (months 2, 5, 8, 11)
           const quarterOffset = targetMonth % 3; // Which position in quarter
-          const possibleMonths = [quarterOffset, quarterOffset + 3, quarterOffset + 6, quarterOffset + 9];
+          const possibleMonths = [
+            quarterOffset,
+            quarterOffset + 3,
+            quarterOffset + 6,
+            quarterOffset + 9,
+          ];
 
-          let nextMonth = possibleMonths.find(m => m > currentMonth);
+          let nextMonth = possibleMonths.find((m) => m > currentMonth);
           let yearOffset = 0;
 
           if (nextMonth === undefined) {
@@ -430,11 +474,15 @@ export class PMScheduleService {
         }
         // Apply day of month if specified
         if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
-          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          const lastDay = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+          ).getDate();
           now.setDate(Math.min(dayOfMonth, lastDay));
         }
         break;
-      case 'semi_annually':
+      case "semi_annually":
         if (monthOfYear !== null && monthOfYear >= 1 && monthOfYear <= 12) {
           // Find the next occurrence of the target month or 6 months after
           const currentMonth = now.getMonth(); // 0-indexed
@@ -462,22 +510,30 @@ export class PMScheduleService {
         }
         // Apply day of month if specified
         if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
-          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          const lastDay = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+          ).getDate();
           now.setDate(Math.min(dayOfMonth, lastDay));
         }
         break;
-      case 'annually':
+      case "annually":
         now.setFullYear(now.getFullYear() + 1);
         if (monthOfYear && monthOfYear >= 1 && monthOfYear <= 12) {
           now.setMonth(monthOfYear - 1);
         }
         if (dayOfMonth && dayOfMonth >= 1 && dayOfMonth <= 31) {
-          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          const lastDay = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+          ).getDate();
           now.setDate(Math.min(dayOfMonth, lastDay));
         }
         break;
     }
 
-    return now.toISOString().split('T')[0];
+    return now.toISOString().split("T")[0];
   }
 }

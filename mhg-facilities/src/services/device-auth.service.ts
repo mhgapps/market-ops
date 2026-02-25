@@ -1,7 +1,7 @@
-import { TrustedDeviceDAO } from '@/dao/trusted-device.dao'
-import type { TrustedDevice } from '@/dao/trusted-device.dao'
-import { getPooledSupabaseClient } from '@/lib/supabase/server-pooled'
-import { randomBytes, createHash } from 'crypto'
+import { TrustedDeviceDAO } from "@/dao/trusted-device.dao";
+import type { TrustedDevice } from "@/dao/trusted-device.dao";
+import { getPooledSupabaseClient } from "@/lib/supabase/server-pooled";
+import { randomBytes, createHash } from "crypto";
 
 /**
  * Device Auth Service - Business logic for trusted device authentication
@@ -25,15 +25,15 @@ export class DeviceAuthService {
    * the raw token to be set as an httpOnly cookie.
    */
   async trustDevice(params: {
-    userId: string
-    tenantId: string
-    authUserId: string
-    userAgent: string
-    ip: string
+    userId: string;
+    tenantId: string;
+    authUserId: string;
+    userAgent: string;
+    ip: string;
   }): Promise<string> {
-    const rawToken = randomBytes(32).toString('hex')
-    const tokenHash = this.hashToken(rawToken)
-    const deviceName = this.parseDeviceName(params.userAgent)
+    const rawToken = randomBytes(32).toString("hex");
+    const tokenHash = this.hashToken(rawToken);
+    const deviceName = this.parseDeviceName(params.userAgent);
 
     await this.deviceDAO.create({
       tenant_id: params.tenantId,
@@ -42,9 +42,9 @@ export class DeviceAuthService {
       device_token_hash: tokenHash,
       device_name: deviceName,
       ip_address: params.ip,
-    })
+    });
 
-    return rawToken
+    return rawToken;
   }
 
   /**
@@ -53,29 +53,29 @@ export class DeviceAuthService {
    */
   async verifyDevice(
     email: string,
-    deviceTokenRaw: string
+    deviceTokenRaw: string,
   ): Promise<TrustedDevice | null> {
-    const tokenHash = this.hashToken(deviceTokenRaw)
+    const tokenHash = this.hashToken(deviceTokenRaw);
 
-    const device = await this.deviceDAO.findByTokenHash(tokenHash)
-    if (!device) return null
+    const device = await this.deviceDAO.findByTokenHash(tokenHash);
+    if (!device) return null;
 
     // Verify the device belongs to the user with this email
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
     const { data: user, error } = await supabase
-      .from('users')
-      .select('id, auth_user_id')
-      .eq('id', device.user_id)
-      .eq('email', email)
-      .is('deleted_at', null)
-      .single()
+      .from("users")
+      .select("id, auth_user_id")
+      .eq("id", device.user_id)
+      .eq("email", email)
+      .is("deleted_at", null)
+      .single();
 
-    if (error || !user) return null
+    if (error || !user) return null;
 
     // Update last_used_at to track device activity
-    await this.deviceDAO.updateLastUsed(device.id)
+    await this.deviceDAO.updateLastUsed(device.id);
 
-    return device
+    return device;
   }
 
   /**
@@ -91,44 +91,44 @@ export class DeviceAuthService {
    */
   async signInWithTrustedDevice(
     email: string,
-    deviceTokenRaw: string
+    deviceTokenRaw: string,
   ): Promise<{
-    session: { access_token: string; refresh_token: string }
-    device: TrustedDevice
+    session: { access_token: string; refresh_token: string };
+    device: TrustedDevice;
   } | null> {
-    const device = await this.verifyDevice(email, deviceTokenRaw)
-    if (!device) return null
+    const device = await this.verifyDevice(email, deviceTokenRaw);
+    if (!device) return null;
 
-    const supabase = await getPooledSupabaseClient()
+    const supabase = await getPooledSupabaseClient();
 
     // Generate a magic link via Admin API (does not send an email)
     const { data: linkData, error: linkError } =
       await supabase.auth.admin.generateLink({
-        type: 'magiclink',
+        type: "magiclink",
         email,
-      })
+      });
 
     if (linkError || !linkData?.properties?.hashed_token) {
       console.error(
-        'Failed to generate magic link for trusted device auth:',
-        linkError?.message
-      )
-      return null
+        "Failed to generate magic link for trusted device auth:",
+        linkError?.message,
+      );
+      return null;
     }
 
     // Verify the OTP server-side to create a session
     const { data: sessionData, error: sessionError } =
       await supabase.auth.verifyOtp({
         token_hash: linkData.properties.hashed_token,
-        type: 'magiclink',
-      })
+        type: "magiclink",
+      });
 
     if (sessionError || !sessionData?.session) {
       console.error(
-        'Failed to verify OTP for trusted device auth:',
-        sessionError?.message
-      )
-      return null
+        "Failed to verify OTP for trusted device auth:",
+        sessionError?.message,
+      );
+      return null;
     }
 
     return {
@@ -137,7 +137,7 @@ export class DeviceAuthService {
         refresh_token: sessionData.session.refresh_token,
       },
       device,
-    }
+    };
   }
 
   /**
@@ -145,7 +145,7 @@ export class DeviceAuthService {
    * Used in the device management settings UI.
    */
   async listDevices(userId: string): Promise<TrustedDevice[]> {
-    return this.deviceDAO.findByUserId(userId)
+    return this.deviceDAO.findByUserId(userId);
   }
 
   /**
@@ -153,7 +153,7 @@ export class DeviceAuthService {
    * Scoped by userId to prevent cross-user revocation.
    */
   async revokeDevice(deviceId: string, userId: string): Promise<void> {
-    await this.deviceDAO.revoke(deviceId, userId)
+    await this.deviceDAO.revoke(deviceId, userId);
   }
 
   /**
@@ -161,7 +161,7 @@ export class DeviceAuthService {
    * Typically called when a user changes their password.
    */
   async revokeAllDevices(userId: string): Promise<void> {
-    await this.deviceDAO.revokeAllForUser(userId)
+    await this.deviceDAO.revokeAllForUser(userId);
   }
 
   /**
@@ -170,7 +170,7 @@ export class DeviceAuthService {
    * Public so API routes can hash a cookie token to identify the current device.
    */
   hashToken(token: string): string {
-    return createHash('sha256').update(token).digest('hex')
+    return createHash("sha256").update(token).digest("hex");
   }
 
   /**
@@ -178,29 +178,29 @@ export class DeviceAuthService {
    * Returns a string like "Chrome on macOS" or "Safari on iOS".
    */
   private parseDeviceName(userAgent: string): string {
-    const browser = this.parseBrowser(userAgent)
-    const os = this.parseOS(userAgent)
+    const browser = this.parseBrowser(userAgent);
+    const os = this.parseOS(userAgent);
 
-    if (browser && os) return `${browser} on ${os}`
-    if (browser) return browser
-    if (os) return os
-    return 'Unknown device'
+    if (browser && os) return `${browser} on ${os}`;
+    if (browser) return browser;
+    if (os) return os;
+    return "Unknown device";
   }
 
   private parseBrowser(ua: string): string | null {
-    if (/Edg\//i.test(ua)) return 'Edge'
-    if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) return 'Chrome'
-    if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return 'Safari'
-    if (/Firefox\//i.test(ua)) return 'Firefox'
-    return null
+    if (/Edg\//i.test(ua)) return "Edge";
+    if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) return "Chrome";
+    if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return "Safari";
+    if (/Firefox\//i.test(ua)) return "Firefox";
+    return null;
   }
 
   private parseOS(ua: string): string | null {
-    if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS'
-    if (/Android/i.test(ua)) return 'Android'
-    if (/Mac OS X|macOS/i.test(ua)) return 'macOS'
-    if (/Windows/i.test(ua)) return 'Windows'
-    if (/Linux/i.test(ua)) return 'Linux'
-    return null
+    if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+    if (/Android/i.test(ua)) return "Android";
+    if (/Mac OS X|macOS/i.test(ua)) return "macOS";
+    if (/Windows/i.test(ua)) return "Windows";
+    if (/Linux/i.test(ua)) return "Linux";
+    return null;
   }
 }

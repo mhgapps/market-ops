@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -8,56 +8,56 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react'
-import { budgetUtilizationColors } from '@/theme/colors'
-import type { BudgetWithSpend, AlertLevel } from '@/services/budget.service'
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
+import { budgetUtilizationColors } from "@/theme/colors";
+import type { BudgetWithSpend, AlertLevel } from "@/services/budget.service";
 
 interface BudgetTableProps {
-  budgets?: BudgetWithSpend[]
-  isLoading?: boolean
-  onEdit?: (budget: BudgetWithSpend) => void
-  onDelete?: (budget: BudgetWithSpend) => void
-  onView?: (budget: BudgetWithSpend) => void
+  budgets?: BudgetWithSpend[];
+  isLoading?: boolean;
+  onEdit?: (budget: BudgetWithSpend) => void;
+  onDelete?: (budget: BudgetWithSpend) => void;
+  onView?: (budget: BudgetWithSpend) => void;
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(amount);
 }
 
 function getAlertColor(level: AlertLevel) {
   switch (level) {
-    case 'over':
-      return budgetUtilizationColors.over
-    case 'danger':
-      return budgetUtilizationColors.danger
-    case 'warning':
-      return budgetUtilizationColors.warning
+    case "over":
+      return budgetUtilizationColors.over;
+    case "danger":
+      return budgetUtilizationColors.danger;
+    case "warning":
+      return budgetUtilizationColors.warning;
     default:
-      return budgetUtilizationColors.healthy
+      return budgetUtilizationColors.healthy;
   }
 }
 
 function AlertBadge({ level }: { level: AlertLevel }) {
-  const colors = getAlertColor(level)
+  const colors = getAlertColor(level);
 
-  if (level === 'none') {
-    return null
+  if (level === "none") {
+    return null;
   }
 
   return (
@@ -72,7 +72,7 @@ function AlertBadge({ level }: { level: AlertLevel }) {
     >
       {colors.label}
     </Badge>
-  )
+  );
 }
 
 function TableSkeleton() {
@@ -80,17 +80,31 @@ function TableSkeleton() {
     <TableBody>
       {[1, 2, 3, 4, 5].map((i) => (
         <TableRow key={i}>
-          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-          <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-          <TableCell><Skeleton className="h-3 w-full" /></TableCell>
-          <TableCell><Skeleton className="h-5 w-8" /></TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-24" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-32" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-20" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-20" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-20" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-3 w-full" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-8" />
+          </TableCell>
         </TableRow>
       ))}
     </TableBody>
-  )
+  );
 }
 
 export function BudgetTable({
@@ -100,23 +114,23 @@ export function BudgetTable({
   onDelete,
   onView,
 }: BudgetTableProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleView = (budget: BudgetWithSpend) => {
     if (onView) {
-      onView(budget)
+      onView(budget);
     } else {
-      router.push(`/budgets/${budget.id}`)
+      router.push(`/budgets/${budget.id}`);
     }
-  }
+  };
 
   const handleEdit = (budget: BudgetWithSpend) => {
     if (onEdit) {
-      onEdit(budget)
+      onEdit(budget);
     } else {
-      router.push(`/budgets/${budget.id}/edit`)
+      router.push(`/budgets/${budget.id}/edit`);
     }
-  }
+  };
 
   return (
     <div className="rounded-md border overflow-x-auto">
@@ -127,8 +141,12 @@ export function BudgetTable({
             <TableHead className="hidden md:table-cell">Location</TableHead>
             <TableHead className="text-right">Budget</TableHead>
             <TableHead className="text-right">Spent</TableHead>
-            <TableHead className="text-right hidden sm:table-cell">Remaining</TableHead>
-            <TableHead className="w-[120px] md:w-[180px]">Utilization</TableHead>
+            <TableHead className="text-right hidden sm:table-cell">
+              Remaining
+            </TableHead>
+            <TableHead className="w-[120px] md:w-[180px]">
+              Utilization
+            </TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -138,14 +156,17 @@ export function BudgetTable({
           <TableBody>
             {budgets && budgets.length > 0 ? (
               budgets.map((budget) => {
-                const alertColors = getAlertColor(budget.alert_level)
+                const alertColors = getAlertColor(budget.alert_level);
                 return (
                   <TableRow
                     key={budget.id}
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleView(budget)}
                     style={{
-                      backgroundColor: budget.alert_level !== 'none' ? `${alertColors.bg}40` : undefined,
+                      backgroundColor:
+                        budget.alert_level !== "none"
+                          ? `${alertColors.bg}40`
+                          : undefined,
                     }}
                   >
                     <TableCell className="font-medium">
@@ -156,22 +177,30 @@ export function BudgetTable({
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {budget.location?.name || (
-                        <span className="text-muted-foreground text-sm">Tenant-wide</span>
+                        <span className="text-muted-foreground text-sm">
+                          Tenant-wide
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(Number(budget.annual_budget))}
                     </TableCell>
-                    <TableCell className="text-right" style={{ color: alertColors.text }}>
+                    <TableCell
+                      className="text-right"
+                      style={{ color: alertColors.text }}
+                    >
                       {formatCurrency(budget.calculated_spent)}
                     </TableCell>
                     <TableCell
                       className="text-right hidden sm:table-cell"
                       style={{
-                        color: budget.remaining < 0 ? budgetUtilizationColors.over.text : undefined,
+                        color:
+                          budget.remaining < 0
+                            ? budgetUtilizationColors.over.text
+                            : undefined,
                       }}
                     >
-                      {budget.remaining < 0 ? '-' : ''}
+                      {budget.remaining < 0 ? "-" : ""}
                       {formatCurrency(Math.abs(budget.remaining))}
                     </TableCell>
                     <TableCell>
@@ -181,7 +210,7 @@ export function BudgetTable({
                           className="h-2 flex-1"
                           style={{
                             // @ts-expect-error CSS variable for progress bar color
-                            '--progress-foreground': alertColors.bar,
+                            "--progress-foreground": alertColors.bar,
                           }}
                         />
                         <span
@@ -194,23 +223,34 @@ export function BudgetTable({
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <DropdownMenuTrigger
+                          asChild
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            handleView(budget)
-                          }}>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleView(budget);
+                            }}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            handleEdit(budget)
-                          }}>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(budget);
+                            }}
+                          >
                             <Pencil className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
@@ -218,8 +258,8 @@ export function BudgetTable({
                             <DropdownMenuItem
                               className="text-destructive"
                               onClick={(e) => {
-                                e.stopPropagation()
-                                onDelete(budget)
+                                e.stopPropagation();
+                                onDelete(budget);
                               }}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -230,7 +270,7 @@ export function BudgetTable({
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                )
+                );
               })
             ) : (
               <TableRow>
@@ -246,5 +286,5 @@ export function BudgetTable({
         )}
       </Table>
     </div>
-  )
+  );
 }

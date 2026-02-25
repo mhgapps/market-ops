@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -12,24 +12,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/loaders'
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/loaders";
 
 // Schema for form - allows null/undefined/empty string for optional fields
 // Note: status values must match database enum asset_status
 const assetFormSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(200),
+  name: z.string().min(1, "Name is required").max(200),
   category_id: z.string().nullable().optional(),
   asset_type_id: z.string().nullable().optional(),
   location_id: z.string().nullable().optional(),
@@ -37,52 +37,67 @@ const assetFormSchema = z.object({
   model: z.string().max(100).nullable().optional(),
   manufacturer: z.string().max(100).nullable().optional(),
   purchase_date: z.string().nullable().optional(),
-  purchase_price: z.number().positive('Price must be positive').nullable().optional(),
+  purchase_price: z
+    .number()
+    .positive("Price must be positive")
+    .nullable()
+    .optional(),
   warranty_expiration: z.string().nullable().optional(),
-  expected_lifespan_years: z.number().int().positive('Lifespan must be positive').nullable().optional(),
+  expected_lifespan_years: z
+    .number()
+    .int()
+    .positive("Lifespan must be positive")
+    .nullable()
+    .optional(),
   notes: z.string().max(1000).nullable().optional(),
   vendor_id: z.string().nullable().optional(),
-  status: z.enum(['active', 'under_maintenance', 'retired', 'transferred', 'disposed']),
-})
+  status: z.enum([
+    "active",
+    "under_maintenance",
+    "retired",
+    "transferred",
+    "disposed",
+  ]),
+});
 
-type AssetFormValues = z.infer<typeof assetFormSchema>
+type AssetFormValues = z.infer<typeof assetFormSchema>;
 
 interface AssetCategory {
-  id: string
-  name: string
-  description?: string | null
-  default_lifespan_years?: number | null
+  id: string;
+  name: string;
+  description?: string | null;
+  default_lifespan_years?: number | null;
 }
 
 interface AssetType {
-  id: string
-  name: string
-  category_id: string
-  description?: string | null
+  id: string;
+  name: string;
+  category_id: string;
+  description?: string | null;
 }
 
 interface Location {
-  id: string
-  name: string
-  address?: string | null
+  id: string;
+  name: string;
+  address?: string | null;
 }
 
 interface Vendor {
-  id: string
-  name: string
-  service_categories?: string[] | null
+  id: string;
+  name: string;
+  service_categories?: string[] | null;
 }
 
 interface AssetFormProps {
-  categories: AssetCategory[]
-  assetTypes: AssetType[]
-  locations: Location[]
-  vendors: Vendor[]
-  defaultValues?: Partial<AssetFormValues>
-  onSubmit: (data: AssetFormValues) => void | Promise<void>
-  onCancel?: () => void
-  isSubmitting?: boolean
-  mode?: 'create' | 'edit'
+  categories: AssetCategory[];
+  assetTypes: AssetType[];
+  locations: Location[];
+  vendors: Vendor[];
+  defaultValues?: Partial<AssetFormValues>;
+  onSubmit: (data: AssetFormValues) => void | Promise<void>;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
+  mode?: "create" | "edit";
 }
 
 export function AssetForm({
@@ -94,12 +109,12 @@ export function AssetForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
-  mode = 'create',
+  mode = "create",
 }: AssetFormProps) {
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
-      name: '',
+      name: "",
       category_id: null,
       asset_type_id: null,
       location_id: null,
@@ -112,44 +127,52 @@ export function AssetForm({
       expected_lifespan_years: null,
       notes: null,
       vendor_id: null,
-      status: 'active',
+      status: "active",
       ...defaultValues,
     },
-  })
+  });
 
-  const selectedCategoryId = form.watch('category_id')
-  const selectedAssetTypeId = form.watch('asset_type_id')
+  const selectedCategoryId = form.watch("category_id");
+  const selectedAssetTypeId = form.watch("asset_type_id");
 
   // Memoize category lookup to prevent recalculation on every render
   const selectedCategory = useMemo(
     () => categories.find((cat) => cat.id === selectedCategoryId),
-    [categories, selectedCategoryId]
-  )
+    [categories, selectedCategoryId],
+  );
 
   const filteredAssetTypes = useMemo(
     () =>
       selectedCategoryId
         ? assetTypes.filter((type) => type.category_id === selectedCategoryId)
         : [],
-    [assetTypes, selectedCategoryId]
-  )
+    [assetTypes, selectedCategoryId],
+  );
 
   // Auto-set lifespan from category default if not already set
   useEffect(() => {
-    if (selectedCategory?.default_lifespan_years && !form.getValues('expected_lifespan_years')) {
-      form.setValue('expected_lifespan_years', selectedCategory.default_lifespan_years)
+    if (
+      selectedCategory?.default_lifespan_years &&
+      !form.getValues("expected_lifespan_years")
+    ) {
+      form.setValue(
+        "expected_lifespan_years",
+        selectedCategory.default_lifespan_years,
+      );
     }
-  }, [selectedCategory?.default_lifespan_years, form])
+  }, [selectedCategory?.default_lifespan_years, form]);
 
   // Clear type if it no longer matches the selected category
   useEffect(() => {
-    if (!selectedAssetTypeId || assetTypes.length === 0) return
+    if (!selectedAssetTypeId || assetTypes.length === 0) return;
 
-    const selectedType = assetTypes.find((type) => type.id === selectedAssetTypeId)
+    const selectedType = assetTypes.find(
+      (type) => type.id === selectedAssetTypeId,
+    );
     if (!selectedType || selectedType.category_id !== selectedCategoryId) {
-      form.setValue('asset_type_id', null)
+      form.setValue("asset_type_id", null);
     }
-  }, [assetTypes, form, selectedAssetTypeId, selectedCategoryId])
+  }, [assetTypes, form, selectedAssetTypeId, selectedCategoryId]);
 
   return (
     <Card>
@@ -238,17 +261,19 @@ export function AssetForm({
                     <FormLabel>Category</FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        const nextCategoryId = value === '__none__' ? null : value
-                        const previousCategoryId = form.getValues('category_id')
+                        const nextCategoryId =
+                          value === "__none__" ? null : value;
+                        const previousCategoryId =
+                          form.getValues("category_id");
 
-                        field.onChange(nextCategoryId)
+                        field.onChange(nextCategoryId);
 
                         // Category changed: force user to re-select a matching type.
                         if (nextCategoryId !== previousCategoryId) {
-                          form.setValue('asset_type_id', null)
+                          form.setValue("asset_type_id", null);
                         }
                       }}
-                      value={field.value || '__none__'}
+                      value={field.value || "__none__"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -277,9 +302,9 @@ export function AssetForm({
                     <FormLabel>Type</FormLabel>
                     <Select
                       onValueChange={(value) =>
-                        field.onChange(value === '__none__' ? null : value)
+                        field.onChange(value === "__none__" ? null : value)
                       }
-                      value={field.value || '__none__'}
+                      value={field.value || "__none__"}
                       disabled={!selectedCategoryId}
                     >
                       <FormControl>
@@ -287,8 +312,8 @@ export function AssetForm({
                           <SelectValue
                             placeholder={
                               selectedCategoryId
-                                ? 'Select a type...'
-                                : 'Select category first...'
+                                ? "Select a type..."
+                                : "Select category first..."
                             }
                           />
                         </SelectTrigger>
@@ -315,9 +340,9 @@ export function AssetForm({
                     <FormLabel>Location</FormLabel>
                     <Select
                       onValueChange={(value) =>
-                        field.onChange(value === '__none__' ? null : value)
+                        field.onChange(value === "__none__" ? null : value)
                       }
-                      value={field.value || '__none__'}
+                      value={field.value || "__none__"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -342,7 +367,9 @@ export function AssetForm({
             {/* Equipment Details Section */}
             <div className="space-y-4">
               <div className="border-b pb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Equipment Details</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Equipment Details
+                </h3>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -353,7 +380,11 @@ export function AssetForm({
                     <FormItem>
                       <FormLabel>Manufacturer</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Carrier" {...field} value={field.value || ''} />
+                        <Input
+                          placeholder="e.g., Carrier"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -367,7 +398,11 @@ export function AssetForm({
                     <FormItem>
                       <FormLabel>Model</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., 24ACC636" {...field} value={field.value || ''} />
+                        <Input
+                          placeholder="e.g., 24ACC636"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -381,7 +416,11 @@ export function AssetForm({
                     <FormItem>
                       <FormLabel>Serial Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., SN123456789" {...field} value={field.value || ''} />
+                        <Input
+                          placeholder="e.g., SN123456789"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -393,7 +432,9 @@ export function AssetForm({
             {/* Financial & Warranty Section */}
             <div className="space-y-4">
               <div className="border-b pb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Financial & Warranty</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Financial & Warranty
+                </h3>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -403,7 +444,10 @@ export function AssetForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Vendor/Supplier</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || undefined}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select vendor..." />
@@ -429,7 +473,11 @@ export function AssetForm({
                     <FormItem>
                       <FormLabel>Purchase Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} value={field.value || ''} />
+                        <Input
+                          type="date"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -448,8 +496,14 @@ export function AssetForm({
                           step="0.01"
                           placeholder="0.00"
                           {...field}
-                          value={field.value || ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                          value={field.value || ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : null,
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -464,7 +518,11 @@ export function AssetForm({
                     <FormItem>
                       <FormLabel>Warranty Expiration</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} value={field.value || ''} />
+                        <Input
+                          type="date"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -480,15 +538,23 @@ export function AssetForm({
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder={selectedCategory?.default_lifespan_years?.toString() || ''}
+                          placeholder={
+                            selectedCategory?.default_lifespan_years?.toString() ||
+                            ""
+                          }
                           {...field}
-                          value={field.value || ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                          value={field.value || ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? parseInt(e.target.value) : null,
+                            )
+                          }
                         />
                       </FormControl>
                       {selectedCategory?.default_lifespan_years && (
                         <FormDescription>
-                          Default: {selectedCategory.default_lifespan_years} years
+                          Default: {selectedCategory.default_lifespan_years}{" "}
+                          years
                         </FormDescription>
                       )}
                       <FormMessage />
@@ -510,7 +576,7 @@ export function AssetForm({
                       placeholder="Any notes about the asset's condition, known issues, or maintenance history..."
                       className="min-h-[80px] resize-y"
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -532,12 +598,12 @@ export function AssetForm({
               )}
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
-                {mode === 'create' ? 'Create Asset' : 'Save Changes'}
+                {mode === "create" ? "Create Asset" : "Save Changes"}
               </Button>
             </div>
           </form>
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }

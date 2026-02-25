@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState } from "react";
+import Link from "next/link";
+import { Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -19,27 +19,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { StatusBadge } from '@/components/compliance/status-badge';
-import { ExpirationCountdown } from '@/components/compliance/expiration-countdown';
-import { useComplianceDocuments } from '@/hooks/use-compliance';
+} from "@/components/ui/table";
+import { StatusBadge } from "@/components/compliance/status-badge";
+import { ExpirationCountdown } from "@/components/compliance/expiration-countdown";
+import { useComplianceDocuments } from "@/hooks/use-compliance";
 
 export function ComplianceList() {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const { data: documents, isLoading, error } = useComplianceDocuments({
+  const {
+    data: documents,
+    isLoading,
+    error,
+  } = useComplianceDocuments({
     status:
-      statusFilter === 'all'
+      statusFilter === "all"
         ? undefined
         : (statusFilter as
-            | 'active'
-            | 'expiring_soon'
-            | 'expired'
-            | 'pending_renewal'
-            | 'conditional'
-            | 'failed_inspection'
-            | 'suspended'),
+            | "active"
+            | "expiring_soon"
+            | "expired"
+            | "pending_renewal"
+            | "conditional"
+            | "failed_inspection"
+            | "suspended"),
   });
 
   if (isLoading) {
@@ -54,9 +58,10 @@ export function ComplianceList() {
     );
   }
 
-  const filteredDocuments = documents?.filter((doc) =>
-    doc.name.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  const filteredDocuments =
+    documents?.filter((doc) =>
+      doc.name.toLowerCase().includes(search.toLowerCase()),
+    ) || [];
 
   return (
     <div className="space-y-4">
@@ -102,7 +107,10 @@ export function ComplianceList() {
           <TableBody>
             {filteredDocuments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="text-center text-muted-foreground"
+                >
                   No documents found
                 </TableCell>
               </TableRow>
@@ -110,8 +118,8 @@ export function ComplianceList() {
               filteredDocuments.map((doc) => (
                 <TableRow key={doc.id}>
                   <TableCell className="font-medium">{doc.name}</TableCell>
-                  <TableCell>{doc.document_type_name || 'N/A'}</TableCell>
-                  <TableCell>{doc.location_name || 'All Locations'}</TableCell>
+                  <TableCell>{doc.document_type_name || "N/A"}</TableCell>
+                  <TableCell>{doc.location_name || "All Locations"}</TableCell>
                   <TableCell>
                     <StatusBadge status={doc.status} />
                   </TableCell>

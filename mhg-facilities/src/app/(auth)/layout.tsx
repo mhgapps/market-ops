@@ -1,20 +1,20 @@
-import type { Metadata } from 'next'
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'MHG Facilities - Authentication',
-  description: 'Sign in to manage your facilities',
-}
+  title: "MHG Facilities - Authentication",
+  description: "Sign in to manage your facilities",
+};
 
 // String constants for bilingual support (EN/ES extraction ready)
 export const AUTH_STRINGS = {
-  APP_NAME: 'MHG Facilities',
-  APP_TAGLINE: 'Streamline your facility management',
-} as const
+  APP_NAME: "MHG Facilities",
+  APP_TAGLINE: "Streamline your facility management",
+} as const;
 
 export default function AuthLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -40,8 +40,10 @@ export default function AuthLayout({
 
       {/* Footer */}
       <footer className="py-4 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} MHG Facilities. All rights reserved.</p>
+        <p>
+          &copy; {new Date().getFullYear()} MHG Facilities. All rights reserved.
+        </p>
       </footer>
     </div>
-  )
+  );
 }

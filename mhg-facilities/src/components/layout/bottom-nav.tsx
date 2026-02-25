@@ -1,29 +1,29 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Ticket,
   Calendar,
   Shield,
   MoreHorizontal,
-} from 'lucide-react'
+} from "lucide-react";
 
 const bottomNavItems = [
-  { title: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'Tickets', href: '/tickets', icon: Ticket },
-  { title: 'PM', href: '/pm', icon: Calendar },
-  { title: 'Docs', href: '/compliance', icon: Shield },
-]
+  { title: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Tickets", href: "/tickets", icon: Ticket },
+  { title: "PM", href: "/pm", icon: Calendar },
+  { title: "Docs", href: "/compliance", icon: Shield },
+];
 
 interface BottomNavProps {
-  onMoreClick: () => void
+  onMoreClick: () => void;
 }
 
 export function BottomNav({ onMoreClick }: BottomNavProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <nav
@@ -33,23 +33,24 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
     >
       <div className="flex items-center justify-around h-16 pb-safe">
         {bottomNavItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-          const Icon = item.icon
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + "/");
+          const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              aria-current={isActive ? 'page' : undefined}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
+                isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
               <Icon className="w-5 h-5 mb-1" />
               <span className="text-xs font-medium">{item.title}</span>
             </Link>
-          )
+          );
         })}
 
         {/* More button */}
@@ -64,5 +65,5 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
         </button>
       </div>
     </nav>
-  )
+  );
 }

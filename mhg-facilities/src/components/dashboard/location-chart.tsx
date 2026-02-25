@@ -1,7 +1,15 @@
-'use client';
+"use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface LocationTicketCount {
   locationId: string;
@@ -14,7 +22,10 @@ interface LocationChartProps {
   title?: string;
 }
 
-export function LocationChart({ data, title = 'Tickets by Location' }: LocationChartProps) {
+export function LocationChart({
+  data,
+  title = "Tickets by Location",
+}: LocationChartProps) {
   // Sort by ticket count descending and take top 10
   const sortedData = [...data]
     .sort((a, b) => b.ticketCount - a.ticketCount)
@@ -43,12 +54,16 @@ export function LocationChart({ data, title = 'Tickets by Location' }: LocationC
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'var(--card)',
-                border: '1px solid var(--border)',
-                borderRadius: '0.5rem',
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "0.5rem",
               }}
             />
-            <Bar dataKey="tickets" fill="var(--primary)" radius={[0, 4, 4, 0]} />
+            <Bar
+              dataKey="tickets"
+              fill="var(--primary)"
+              radius={[0, 4, 4, 0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

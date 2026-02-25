@@ -1,184 +1,236 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FolderOpen, Plus, Pencil, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { PageLoader } from '@/components/ui/loaders'
-import api from '@/lib/api-client'
-import type { Database, TicketPriority } from '@/types/database'
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FolderOpen, Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { PageLoader } from "@/components/ui/loaders";
+import api from "@/lib/api-client";
+import type { Database, TicketPriority } from "@/types/database";
 
-type TicketCategory = Database['public']['Tables']['ticket_categories']['Row']
+type TicketCategory = Database["public"]["Tables"]["ticket_categories"]["Row"];
 
 interface CategoryWithDefaults extends TicketCategory {
   default_assignee?: {
-    id: string
-    full_name: string
-    email: string
-  } | null
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
   preferred_vendor?: {
-    id: string
-    name: string
-    contact_name: string
-  } | null
+    id: string;
+    name: string;
+    contact_name: string;
+  } | null;
 }
 
 interface CreateCategoryData {
-  name: string
-  name_es?: string
-  description?: string
-  default_priority: TicketPriority
-  escalation_hours: number
+  name: string;
+  name_es?: string;
+  description?: string;
+  default_priority: TicketPriority;
+  escalation_hours: number;
 }
 
 interface UpdateCategoryData {
-  name?: string
-  name_es?: string
-  description?: string
-  default_priority?: TicketPriority
-  escalation_hours?: number
+  name?: string;
+  name_es?: string;
+  description?: string;
+  default_priority?: TicketPriority;
+  escalation_hours?: number;
 }
 
 export default function CategoriesSettingsPage() {
-  const queryClient = useQueryClient()
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<CategoryWithDefaults | null>(null)
+  const queryClient = useQueryClient();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] =
+    useState<CategoryWithDefaults | null>(null);
   const [formData, setFormData] = useState<CreateCategoryData>({
-    name: '',
-    name_es: '',
-    description: '',
-    default_priority: 'medium',
+    name: "",
+    name_es: "",
+    description: "",
+    default_priority: "medium",
     escalation_hours: 4,
-  })
+  });
 
   // Fetch categories from API
-  const { data: categories, isLoading, error } = useQuery({
-    queryKey: ['ticket-categories'],
+  const {
+    data: categories,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["ticket-categories"],
     queryFn: async () => {
-      const response = await api.get<{ categories: CategoryWithDefaults[] }>('/api/ticket-categories')
-      return response.categories
+      const response = await api.get<{ categories: CategoryWithDefaults[] }>(
+        "/api/ticket-categories",
+      );
+      return response.categories;
     },
-  })
+  });
 
   // Create category mutation
   const createMutation = useMutation({
     mutationFn: async (data: CreateCategoryData) => {
-      const response = await api.post<{ category: TicketCategory }>('/api/ticket-categories', data)
-      return response.category
+      const response = await api.post<{ category: TicketCategory }>(
+        "/api/ticket-categories",
+        data,
+      );
+      return response.category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ticket-categories'] })
-      toast.success('Category created successfully')
-      resetForm()
-      setIsAddDialogOpen(false)
+      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
+      toast.success("Category created successfully");
+      resetForm();
+      setIsAddDialogOpen(false);
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create category')
+      toast.error(error.message || "Failed to create category");
     },
-  })
+  });
 
   // Update category mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateCategoryData }) => {
-      const response = await api.patch<{ category: TicketCategory }>(`/api/ticket-categories/${id}`, data)
-      return response.category
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateCategoryData;
+    }) => {
+      const response = await api.patch<{ category: TicketCategory }>(
+        `/api/ticket-categories/${id}`,
+        data,
+      );
+      return response.category;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ticket-categories'] })
-      toast.success('Category updated successfully')
-      resetForm()
-      setEditingCategory(null)
+      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
+      toast.success("Category updated successfully");
+      resetForm();
+      setEditingCategory(null);
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update category')
+      toast.error(error.message || "Failed to update category");
     },
-  })
+  });
 
   // Delete category mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/api/ticket-categories/${id}`)
+      await api.delete(`/api/ticket-categories/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ticket-categories'] })
-      toast.success('Category deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
+      toast.success("Category deleted successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete category')
+      toast.error(error.message || "Failed to delete category");
     },
-  })
+  });
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      name_es: '',
-      description: '',
-      default_priority: 'medium',
+      name: "",
+      name_es: "",
+      description: "",
+      default_priority: "medium",
       escalation_hours: 4,
-    })
-  }
+    });
+  };
 
   const handleAddCategory = () => {
     if (!formData.name.trim()) {
-      toast.error('Category name is required')
-      return
+      toast.error("Category name is required");
+      return;
     }
-    createMutation.mutate(formData)
-  }
+    createMutation.mutate(formData);
+  };
 
   const handleEditCategory = (category: CategoryWithDefaults) => {
-    setEditingCategory(category)
+    setEditingCategory(category);
     setFormData({
       name: category.name,
-      name_es: category.name_es || '',
-      description: category.description || '',
+      name_es: category.name_es || "",
+      description: category.description || "",
       default_priority: category.default_priority,
       escalation_hours: category.escalation_hours,
-    })
-  }
+    });
+  };
 
   const handleUpdateCategory = () => {
-    if (!editingCategory) return
+    if (!editingCategory) return;
     if (!formData.name.trim()) {
-      toast.error('Category name is required')
-      return
+      toast.error("Category name is required");
+      return;
     }
-    updateMutation.mutate({ id: editingCategory.id, data: formData })
-  }
+    updateMutation.mutate({ id: editingCategory.id, data: formData });
+  };
 
   const handleDeleteCategory = (id: string) => {
-    if (!confirm('Are you sure you want to delete this category? This action cannot be undone.')) return
-    deleteMutation.mutate(id)
-  }
+    if (
+      !confirm(
+        "Are you sure you want to delete this category? This action cannot be undone.",
+      )
+    )
+      return;
+    deleteMutation.mutate(id);
+  };
 
   const getPriorityBadge = (priority: TicketPriority) => {
     const variants: Record<TicketPriority, string> = {
-      low: 'bg-gray-100 text-gray-800',
-      medium: 'bg-blue-100 text-blue-800',
-      high: 'bg-orange-100 text-orange-800',
-      critical: 'bg-red-100 text-red-800',
-    }
-    return variants[priority] || variants.medium
-  }
+      low: "bg-gray-100 text-gray-800",
+      medium: "bg-blue-100 text-blue-800",
+      high: "bg-orange-100 text-orange-800",
+      critical: "bg-red-100 text-red-800",
+    };
+    return variants[priority] || variants.medium;
+  };
 
   if (isLoading) {
-    return <PageLoader />
+    return <PageLoader />;
   }
 
   if (error) {
     return (
       <div className="p-4 text-red-600">
-        Failed to load categories: {error instanceof Error ? error.message : 'Unknown error'}
+        Failed to load categories:{" "}
+        {error instanceof Error ? error.message : "Unknown error"}
       </div>
-    )
+    );
   }
 
   return (
@@ -215,27 +267,37 @@ export default function CategoriesSettingsPage() {
                 <Input
                   id="category-name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="e.g., HVAC, Plumbing, Electrical"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category-name-es">Spanish Name (optional)</Label>
+                <Label htmlFor="category-name-es">
+                  Spanish Name (optional)
+                </Label>
                 <Input
                   id="category-name-es"
                   value={formData.name_es}
-                  onChange={(e) => setFormData({ ...formData, name_es: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name_es: e.target.value })
+                  }
                   placeholder="e.g., Climatización, Plomería"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category-description">Description (optional)</Label>
+                <Label htmlFor="category-description">
+                  Description (optional)
+                </Label>
                 <Input
                   id="category-description"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   placeholder="Brief description of this category"
                 />
               </div>
@@ -244,7 +306,9 @@ export default function CategoriesSettingsPage() {
                 <Label htmlFor="category-priority">Default Priority</Label>
                 <Select
                   value={formData.default_priority}
-                  onValueChange={(value: TicketPriority) => setFormData({ ...formData, default_priority: value })}
+                  onValueChange={(value: TicketPriority) =>
+                    setFormData({ ...formData, default_priority: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
@@ -265,7 +329,12 @@ export default function CategoriesSettingsPage() {
                   type="number"
                   min={1}
                   value={formData.escalation_hours}
-                  onChange={(e) => setFormData({ ...formData, escalation_hours: parseInt(e.target.value) || 4 })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      escalation_hours: parseInt(e.target.value) || 4,
+                    })
+                  }
                 />
                 <p className="text-sm text-muted-foreground">
                   Hours before ticket is escalated if not addressed
@@ -274,11 +343,17 @@ export default function CategoriesSettingsPage() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddCategory} disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'Creating...' : 'Add Category'}
+              <Button
+                onClick={handleAddCategory}
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? "Creating..." : "Add Category"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -286,13 +361,14 @@ export default function CategoriesSettingsPage() {
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingCategory} onOpenChange={(open) => !open && setEditingCategory(null)}>
+      <Dialog
+        open={!!editingCategory}
+        onOpenChange={(open) => !open && setEditingCategory(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Category</DialogTitle>
-            <DialogDescription>
-              Update the category settings
-            </DialogDescription>
+            <DialogDescription>Update the category settings</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -301,7 +377,9 @@ export default function CategoriesSettingsPage() {
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </div>
 
@@ -310,7 +388,9 @@ export default function CategoriesSettingsPage() {
               <Input
                 id="edit-name-es"
                 value={formData.name_es}
-                onChange={(e) => setFormData({ ...formData, name_es: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name_es: e.target.value })
+                }
               />
             </div>
 
@@ -319,7 +399,9 @@ export default function CategoriesSettingsPage() {
               <Input
                 id="edit-description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </div>
 
@@ -327,7 +409,9 @@ export default function CategoriesSettingsPage() {
               <Label htmlFor="edit-priority">Default Priority</Label>
               <Select
                 value={formData.default_priority}
-                onValueChange={(value: TicketPriority) => setFormData({ ...formData, default_priority: value })}
+                onValueChange={(value: TicketPriority) =>
+                  setFormData({ ...formData, default_priority: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -348,7 +432,12 @@ export default function CategoriesSettingsPage() {
                 type="number"
                 min={1}
                 value={formData.escalation_hours}
-                onChange={(e) => setFormData({ ...formData, escalation_hours: parseInt(e.target.value) || 4 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    escalation_hours: parseInt(e.target.value) || 4,
+                  })
+                }
               />
             </div>
           </div>
@@ -357,8 +446,11 @@ export default function CategoriesSettingsPage() {
             <Button variant="outline" onClick={() => setEditingCategory(null)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateCategory} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+            <Button
+              onClick={handleUpdateCategory}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -395,10 +487,12 @@ export default function CategoriesSettingsPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {category.description || '—'}
+                      {category.description || "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge className={getPriorityBadge(category.default_priority)}>
+                      <Badge
+                        className={getPriorityBadge(category.default_priority)}
+                      >
                         {category.default_priority}
                       </Badge>
                     </TableCell>
@@ -434,5 +528,5 @@ export default function CategoriesSettingsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

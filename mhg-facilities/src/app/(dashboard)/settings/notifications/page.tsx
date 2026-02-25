@@ -1,24 +1,30 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Button } from '@/components/ui/button'
-import { Bell, Save } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Bell, Save } from "lucide-react";
+import { toast } from "sonner";
 
 export default function NotificationSettingsPage() {
-  const [emailTicketAssigned, setEmailTicketAssigned] = useState(true)
-  const [emailTicketStatusChange, setEmailTicketStatusChange] = useState(true)
-  const [emailPMDue, setEmailPMDue] = useState(true)
-  const [emailComplianceExpiring, setEmailComplianceExpiring] = useState(true)
-  const [emailDailyDigest, setEmailDailyDigest] = useState(false)
+  const [emailTicketAssigned, setEmailTicketAssigned] = useState(true);
+  const [emailTicketStatusChange, setEmailTicketStatusChange] = useState(true);
+  const [emailPMDue, setEmailPMDue] = useState(true);
+  const [emailComplianceExpiring, setEmailComplianceExpiring] = useState(true);
+  const [emailDailyDigest, setEmailDailyDigest] = useState(false);
 
   const handleSave = () => {
     // TODO: Persist to user preferences in database
-    toast.success('Notification settings saved')
-  }
+    toast.success("Notification settings saved");
+  };
 
   return (
     <div className="space-y-6">
@@ -97,9 +103,7 @@ export default function NotificationSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Compliance Notifications</CardTitle>
-          <CardDescription>
-            Document expiration alerts
-          </CardDescription>
+          <CardDescription>Document expiration alerts</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
@@ -121,9 +125,7 @@ export default function NotificationSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Digest Notifications</CardTitle>
-          <CardDescription>
-            Daily summary emails
-          </CardDescription>
+          <CardDescription>Daily summary emails</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
@@ -149,5 +151,5 @@ export default function NotificationSettingsPage() {
         </Button>
       </div>
     </div>
-  )
+  );
 }

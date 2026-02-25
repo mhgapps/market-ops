@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { DashboardService } from '@/services/dashboard.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextResponse } from "next/server";
+import { DashboardService } from "@/services/dashboard.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 /**
  * Combined dashboard endpoint
@@ -14,15 +14,21 @@ export async function GET() {
     const service = new DashboardService();
 
     // Fetch all dashboard data in parallel
-    const [overview, ticketStats, ticketTrend, byStatus, byPriority, recentActivity] =
-      await Promise.all([
-        service.getOverviewStats(),
-        service.getTicketStats(),
-        service.getTicketTrend(30),
-        service.getTicketsByStatus(),
-        service.getTicketsByPriority(),
-        service.getRecentActivity(10),
-      ]);
+    const [
+      overview,
+      ticketStats,
+      ticketTrend,
+      byStatus,
+      byPriority,
+      recentActivity,
+    ] = await Promise.all([
+      service.getOverviewStats(),
+      service.getTicketStats(),
+      service.getTicketTrend(30),
+      service.getTicketsByStatus(),
+      service.getTicketsByPriority(),
+      service.getRecentActivity(10),
+    ]);
 
     return NextResponse.json({
       overview,
@@ -35,10 +41,10 @@ export async function GET() {
       recentActivity,
     });
   } catch (error) {
-    console.error('Dashboard error:', error);
+    console.error("Dashboard error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data' },
-      { status: 500 }
+      { error: "Failed to fetch dashboard data" },
+      { status: 500 },
     );
   }
 }

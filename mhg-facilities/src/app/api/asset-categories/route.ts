@@ -1,7 +1,7 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { requireAuth } from '@/lib/auth/api-auth'
-import { AssetCategoryService } from '@/services/asset-category.service'
-import { createAssetCategorySchema } from '@/lib/validations/assets-vendors'
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAuth } from "@/lib/auth/api-auth";
+import { AssetCategoryService } from "@/services/asset-category.service";
+import { createAssetCategorySchema } from "@/lib/validations/assets-vendors";
 
 /**
  * GET /api/asset-categories
@@ -9,22 +9,22 @@ import { createAssetCategorySchema } from '@/lib/validations/assets-vendors'
  */
 export async function GET() {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
-    const service = new AssetCategoryService()
-    const categories = await service.getAllCategories()
+    const service = new AssetCategoryService();
+    const categories = await service.getAllCategories();
 
     return NextResponse.json({
       categories,
       total: categories.length,
-    })
+    });
   } catch (error) {
-    console.error('Error fetching asset categories:', error)
+    console.error("Error fetching asset categories:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch asset categories' },
-      { status: 500 }
-    )
+      { error: "Failed to fetch asset categories" },
+      { status: 500 },
+    );
   }
 }
 
@@ -34,21 +34,21 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
-    const body = await request.json()
+    const body = await request.json();
 
     // Validate input
-    const validationResult = createAssetCategorySchema.safeParse(body)
+    const validationResult = createAssetCategorySchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validationResult.error.issues },
-        { status: 400 }
-      )
+        { error: "Invalid input", details: validationResult.error.issues },
+        { status: 400 },
+      );
     }
 
-    const service = new AssetCategoryService()
+    const service = new AssetCategoryService();
     // Convert null to undefined for service layer
     const createData = {
       ...validationResult.data,
@@ -56,25 +56,25 @@ export async function POST(request: NextRequest) {
         validationResult.data.parent_category_id === null
           ? undefined
           : validationResult.data.parent_category_id,
-    }
-    const category = await service.createCategory(createData)
+    };
+    const category = await service.createCategory(createData);
 
-    return NextResponse.json({ category }, { status: 201 })
+    return NextResponse.json({ category }, { status: 201 });
   } catch (error) {
-    console.error('Error creating asset category:', error)
+    console.error("Error creating asset category:", error);
 
     if (error instanceof Error) {
-      if (error.message.includes('already exists')) {
-        return NextResponse.json({ error: error.message }, { status: 409 })
+      if (error.message.includes("already exists")) {
+        return NextResponse.json({ error: error.message }, { status: 409 });
       }
-      if (error.message.includes('not found')) {
-        return NextResponse.json({ error: error.message }, { status: 404 })
+      if (error.message.includes("not found")) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
       }
     }
 
     return NextResponse.json(
-      { error: 'Failed to create asset category' },
-      { status: 500 }
-    )
+      { error: "Failed to create asset category" },
+      { status: 500 },
+    );
   }
 }

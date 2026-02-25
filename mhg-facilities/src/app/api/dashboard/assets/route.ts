@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { DashboardService } from '@/services/dashboard.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextRequest, NextResponse } from "next/server";
+import { DashboardService } from "@/services/dashboard.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
     if (authError) return authError;
 
     const searchParams = request.nextUrl.searchParams;
-    const includeBreakdown = searchParams.get('breakdown') === 'true';
-    const warrantyDays = parseInt(searchParams.get('warranty_days') || '30');
+    const includeBreakdown = searchParams.get("breakdown") === "true";
+    const warrantyDays = parseInt(searchParams.get("warranty_days") || "30");
 
     const service = new DashboardService();
 
@@ -31,10 +31,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Dashboard assets error:', error);
+    console.error("Dashboard assets error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch asset stats' },
-      { status: 500 }
+      { error: "Failed to fetch asset stats" },
+      { status: 500 },
     );
   }
 }

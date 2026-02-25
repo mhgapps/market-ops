@@ -1,29 +1,34 @@
-'use client'
+"use client";
 
-import { useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { VendorForm, type VendorFormHandle } from '@/components/vendors/vendor-form'
-import { useCreateVendor } from '@/hooks/use-vendors'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
-import { Spinner } from '@/components/ui/loaders'
-import Link from 'next/link'
-import { toast } from 'sonner'
+import { useRef } from "react";
+import { useRouter } from "next/navigation";
+import {
+  VendorForm,
+  type VendorFormHandle,
+} from "@/components/vendors/vendor-form";
+import { useCreateVendor } from "@/hooks/use-vendors";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Spinner } from "@/components/ui/loaders";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function NewVendorPage() {
-  const router = useRouter()
-  const createVendor = useCreateVendor()
-  const formRef = useRef<VendorFormHandle>(null)
+  const router = useRouter();
+  const createVendor = useCreateVendor();
+  const formRef = useRef<VendorFormHandle>(null);
 
-  const handleSubmit = async (data: Parameters<typeof createVendor.mutateAsync>[0]) => {
+  const handleSubmit = async (
+    data: Parameters<typeof createVendor.mutateAsync>[0],
+  ) => {
     try {
-      const vendor = await createVendor.mutateAsync(data)
-      toast.success('Vendor created successfully')
-      router.push(`/vendors/${vendor.id}`)
+      const vendor = await createVendor.mutateAsync(data);
+      toast.success("Vendor created successfully");
+      router.push(`/vendors/${vendor.id}`);
     } catch (_error) {
-      toast.error('Failed to create vendor')
+      toast.error("Failed to create vendor");
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -40,7 +45,7 @@ export default function NewVendorPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/vendors')}
+            onClick={() => router.push("/vendors")}
             disabled={createVendor.isPending}
           >
             Cancel
@@ -62,5 +67,5 @@ export default function NewVendorPage() {
         mode="create"
       />
     </div>
-  )
+  );
 }

@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { type ReactNode } from 'react'
-import { ThemeProvider } from 'next-themes'
-import { QueryProvider } from '@/providers/query-provider'
-import { AuthProvider } from '@/providers/auth-provider'
-import { Toaster } from '@/components/ui/sonner'
+import { type ReactNode } from "react";
+import { ThemeProvider } from "next-themes";
+import { QueryProvider } from "@/providers/query-provider";
+import { AuthProvider } from "@/providers/auth-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 interface ProvidersProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function Providers({ children }: ProvidersProps) {
@@ -25,5 +25,5 @@ export function Providers({ children }: ProvidersProps) {
         </AuthProvider>
       </QueryProvider>
     </ThemeProvider>
-  )
+  );
 }

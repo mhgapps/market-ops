@@ -1,68 +1,73 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Switch } from '@/components/ui/switch'
-import api from '@/lib/api-client'
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import api from "@/lib/api-client";
 
 const editUserSchema = z.object({
-  full_name: z.string().min(1, 'Name is required').max(100),
-  role: z.enum(['admin', 'manager', 'staff', 'vendor', 'readonly']),
-  phone: z.string().optional().or(z.literal('')),
-  language_preference: z.enum(['en', 'es']),
+  full_name: z.string().min(1, "Name is required").max(100),
+  role: z.enum(["admin", "manager", "staff", "vendor", "readonly"]),
+  phone: z.string().optional().or(z.literal("")),
+  language_preference: z.enum(["en", "es"]),
   notification_preferences: z.object({
     email: z.boolean(),
     sms: z.boolean(),
     push: z.boolean(),
   }),
-})
+});
 
-type EditUserFormData = z.infer<typeof editUserSchema>
+type EditUserFormData = z.infer<typeof editUserSchema>;
 
 interface User {
-  id: string
-  email: string
-  fullName: string
-  role: string
-  phone?: string
-  languagePreference: string
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  phone?: string;
+  languagePreference: string;
   notificationPreferences: {
-    email: boolean
-    sms: boolean
-    push: boolean
-  }
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
 }
 
 interface EditUserModalProps {
-  user: User | null
-  open: boolean
-  onClose: () => void
-  onSuccess?: () => void
+  user: User | null;
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalProps) {
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function EditUserModal({
+  user,
+  open,
+  onClose,
+  onSuccess,
+}: EditUserModalProps) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -76,25 +81,25 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
     values: user
       ? {
           full_name: user.fullName,
-          role: user.role as EditUserFormData['role'],
-          phone: user.phone || '',
-          language_preference: user.languagePreference as 'en' | 'es',
+          role: user.role as EditUserFormData["role"],
+          phone: user.phone || "",
+          language_preference: user.languagePreference as "en" | "es",
           notification_preferences: user.notificationPreferences,
         }
       : undefined,
-  })
+  });
 
-  const selectedRole = watch('role')
-  const selectedLanguage = watch('language_preference')
-  const notifEmail = watch('notification_preferences.email')
-  const notifSms = watch('notification_preferences.sms')
-  const notifPush = watch('notification_preferences.push')
+  const selectedRole = watch("role");
+  const selectedLanguage = watch("language_preference");
+  const notifEmail = watch("notification_preferences.email");
+  const notifSms = watch("notification_preferences.sms");
+  const notifPush = watch("notification_preferences.push");
 
   async function onSubmit(data: EditUserFormData) {
-    if (!user) return
+    if (!user) return;
 
-    setError(null)
-    setSubmitting(true)
+    setError(null);
+    setSubmitting(true);
 
     try {
       const payload = {
@@ -103,26 +108,26 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
         phone: data.phone || undefined,
         language_preference: data.language_preference,
         notification_preferences: data.notification_preferences,
-      }
+      };
 
-      await api.patch(`/api/users/${user.id}`, payload)
+      await api.patch(`/api/users/${user.id}`, payload);
 
-      handleClose()
-      onSuccess?.()
+      handleClose();
+      onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   function handleClose() {
-    reset()
-    setError(null)
-    onClose()
+    reset();
+    setError(null);
+    onClose();
   }
 
-  if (!user) return null
+  if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -161,12 +166,14 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
             </Label>
             <Input
               id="full_name"
-              {...register('full_name')}
+              {...register("full_name")}
               placeholder="Enter full name"
               disabled={submitting}
             />
             {errors.full_name && (
-              <p className="text-sm text-destructive">{errors.full_name.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.full_name.message}
+              </p>
             )}
           </div>
 
@@ -177,7 +184,7 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
             <Select
               value={selectedRole}
               onValueChange={(value) =>
-                setValue('role', value as EditUserFormData['role'])
+                setValue("role", value as EditUserFormData["role"])
               }
               disabled={submitting}
             >
@@ -199,7 +206,7 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
             <Input
               id="phone"
               type="tel"
-              {...register('phone')}
+              {...register("phone")}
               placeholder="(555) 123-4567"
               disabled={submitting}
             />
@@ -210,7 +217,7 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
             <Select
               value={selectedLanguage}
               onValueChange={(value) =>
-                setValue('language_preference', value as 'en' | 'es')
+                setValue("language_preference", value as "en" | "es")
               }
               disabled={submitting}
             >
@@ -240,7 +247,7 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
                   id="notif-email"
                   checked={notifEmail}
                   onCheckedChange={(checked) =>
-                    setValue('notification_preferences.email', checked)
+                    setValue("notification_preferences.email", checked)
                   }
                   disabled={submitting}
                 />
@@ -259,7 +266,7 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
                   id="notif-sms"
                   checked={notifSms}
                   onCheckedChange={(checked) =>
-                    setValue('notification_preferences.sms', checked)
+                    setValue("notification_preferences.sms", checked)
                   }
                   disabled={submitting}
                 />
@@ -278,7 +285,7 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
                   id="notif-push"
                   checked={notifPush}
                   onCheckedChange={(checked) =>
-                    setValue('notification_preferences.push', checked)
+                    setValue("notification_preferences.push", checked)
                   }
                   disabled={submitting}
                 />
@@ -296,11 +303,11 @@ export function EditUserModal({ user, open, onClose, onSuccess }: EditUserModalP
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save Changes'}
+              {submitting ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

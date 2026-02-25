@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { PMScheduleDAO } from '../pm-schedule.dao';
-import type { Database } from '@/types/database';
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
+import { PMScheduleDAO } from "../pm-schedule.dao";
+import type { Database } from "@/types/database";
 
-type PMSchedule = Database['public']['Tables']['pm_schedules']['Row'];
-type PMFrequency = Database['public']['Enums']['pm_frequency'];
+type PMSchedule = Database["public"]["Tables"]["pm_schedules"]["Row"];
+type PMFrequency = Database["public"]["Enums"]["pm_frequency"];
 
 interface MockQueryBuilder {
   select: Mock;
@@ -21,31 +21,31 @@ interface MockSupabaseClient {
   from: Mock;
 }
 
-describe('PMScheduleDAO', () => {
+describe("PMScheduleDAO", () => {
   let dao: PMScheduleDAO;
   let mockSupabase: MockSupabaseClient;
   let mockQuery: MockQueryBuilder;
 
   const mockSchedule: PMSchedule = {
-    id: 'schedule-1',
-    tenant_id: 'test-tenant-id',
-    template_id: 'template-1',
-    name: 'Monthly HVAC Inspection',
-    description: 'Check filters and coolant levels',
-    asset_id: 'asset-1',
-    location_id: 'location-1',
-    frequency: 'monthly' as PMFrequency,
+    id: "schedule-1",
+    tenant_id: "test-tenant-id",
+    template_id: "template-1",
+    name: "Monthly HVAC Inspection",
+    description: "Check filters and coolant levels",
+    asset_id: "asset-1",
+    location_id: "location-1",
+    frequency: "monthly" as PMFrequency,
     day_of_week: null,
     day_of_month: 1,
     month_of_year: null,
-    assigned_to: 'user-1',
+    assigned_to: "user-1",
     vendor_id: null,
     estimated_cost: null,
     is_active: true,
     last_generated_at: null,
-    next_due_date: '2024-02-01',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    next_due_date: "2024-02-01",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
     deleted_at: null,
   };
 
@@ -68,139 +68,168 @@ describe('PMScheduleDAO', () => {
       from: vi.fn(() => mockQuery),
     };
 
-    vi.doMock('@/lib/supabase/server-pooled', () => ({
+    vi.doMock("@/lib/supabase/server-pooled", () => ({
       getPooledSupabaseClient: vi.fn(() => Promise.resolve(mockSupabase)),
     }));
 
-    vi.doMock('@/lib/tenant/context', () => ({
+    vi.doMock("@/lib/tenant/context", () => ({
       getTenantContext: vi.fn(() =>
-        Promise.resolve({ id: 'test-tenant-id', name: 'Test Tenant' })
+        Promise.resolve({ id: "test-tenant-id", name: "Test Tenant" }),
       ),
     }));
   });
 
-  describe('findActive', () => {
-    it('should return only active schedules', async () => {
-      mockQuery.order.mockResolvedValueOnce({ data: [mockSchedule], error: null });
+  describe("findActive", () => {
+    it("should return only active schedules", async () => {
+      mockQuery.order.mockResolvedValueOnce({
+        data: [mockSchedule],
+        error: null,
+      });
 
       const result = await dao.findActive();
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
-      expect(mockQuery.order).toHaveBeenCalledWith('next_due_date', { ascending: true });
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.eq).toHaveBeenCalledWith("is_active", true);
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
+      expect(mockQuery.order).toHaveBeenCalledWith("next_due_date", {
+        ascending: true,
+      });
       expect(result).toEqual([mockSchedule]);
     });
   });
 
-  describe('findByAsset', () => {
-    it('should find schedules for a specific asset', async () => {
-      mockQuery.order.mockResolvedValueOnce({ data: [mockSchedule], error: null });
+  describe("findByAsset", () => {
+    it("should find schedules for a specific asset", async () => {
+      mockQuery.order.mockResolvedValueOnce({
+        data: [mockSchedule],
+        error: null,
+      });
 
-      const result = await dao.findByAsset('asset-1');
+      const result = await dao.findByAsset("asset-1");
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.eq).toHaveBeenCalledWith('asset_id', 'asset-1');
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.eq).toHaveBeenCalledWith("asset_id", "asset-1");
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
       expect(result).toEqual([mockSchedule]);
     });
   });
 
-  describe('findByLocation', () => {
-    it('should find schedules for a specific location', async () => {
-      mockQuery.order.mockResolvedValueOnce({ data: [mockSchedule], error: null });
+  describe("findByLocation", () => {
+    it("should find schedules for a specific location", async () => {
+      mockQuery.order.mockResolvedValueOnce({
+        data: [mockSchedule],
+        error: null,
+      });
 
-      const result = await dao.findByLocation('location-1');
+      const result = await dao.findByLocation("location-1");
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.eq).toHaveBeenCalledWith('location_id', 'location-1');
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.eq).toHaveBeenCalledWith("location_id", "location-1");
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
       expect(result).toEqual([mockSchedule]);
     });
   });
 
-  describe('findDueToday', () => {
-    it('should find schedules due exactly today', async () => {
-      mockQuery.order.mockResolvedValueOnce({ data: [mockSchedule], error: null });
+  describe("findDueToday", () => {
+    it("should find schedules due exactly today", async () => {
+      mockQuery.order.mockResolvedValueOnce({
+        data: [mockSchedule],
+        error: null,
+      });
 
       const result = await dao.findDueToday();
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
-      expect(mockQuery.eq).toHaveBeenCalledWith('next_due_date', expect.any(String));
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.eq).toHaveBeenCalledWith("is_active", true);
+      expect(mockQuery.eq).toHaveBeenCalledWith(
+        "next_due_date",
+        expect.any(String),
+      );
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
       expect(result).toEqual([mockSchedule]);
     });
   });
 
-  describe('findOverdue', () => {
-    it('should find overdue schedules', async () => {
-      mockQuery.order.mockResolvedValueOnce({ data: [mockSchedule], error: null });
+  describe("findOverdue", () => {
+    it("should find overdue schedules", async () => {
+      mockQuery.order.mockResolvedValueOnce({
+        data: [mockSchedule],
+        error: null,
+      });
 
       const result = await dao.findOverdue();
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.eq).toHaveBeenCalledWith('is_active', true);
-      expect(mockQuery.lt).toHaveBeenCalledWith('next_due_date', expect.any(String));
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.eq).toHaveBeenCalledWith("is_active", true);
+      expect(mockQuery.lt).toHaveBeenCalledWith(
+        "next_due_date",
+        expect.any(String),
+      );
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
       expect(result).toEqual([mockSchedule]);
     });
   });
 
-  describe('create', () => {
-    it('should create schedule with tenant_id', async () => {
-      mockQuery.single.mockResolvedValueOnce({ data: mockSchedule, error: null });
+  describe("create", () => {
+    it("should create schedule with tenant_id", async () => {
+      mockQuery.single.mockResolvedValueOnce({
+        data: mockSchedule,
+        error: null,
+      });
 
       const result = await dao.create({
-        name: 'Monthly HVAC Inspection',
-        template_id: 'template-1',
-        asset_id: 'asset-1',
-        location_id: 'location-1',
-        frequency: 'monthly',
-        next_due_date: '2024-02-01',
-        assigned_to: 'user-1',
+        name: "Monthly HVAC Inspection",
+        template_id: "template-1",
+        asset_id: "asset-1",
+        location_id: "location-1",
+        frequency: "monthly",
+        next_due_date: "2024-02-01",
+        assigned_to: "user-1",
       });
 
       expect(mockQuery.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'Monthly HVAC Inspection',
-          tenant_id: 'test-tenant-id',
-        })
+          name: "Monthly HVAC Inspection",
+          tenant_id: "test-tenant-id",
+        }),
       );
       expect(result).toEqual(mockSchedule);
     });
   });
 
-  describe('update', () => {
-    it('should update schedule', async () => {
+  describe("update", () => {
+    it("should update schedule", async () => {
       const updatedSchedule = { ...mockSchedule, is_active: false };
-      mockQuery.single.mockResolvedValueOnce({ data: updatedSchedule, error: null });
+      mockQuery.single.mockResolvedValueOnce({
+        data: updatedSchedule,
+        error: null,
+      });
 
-      const result = await dao.update('schedule-1', { is_active: false });
+      const result = await dao.update("schedule-1", { is_active: false });
 
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
           is_active: false,
           updated_at: expect.any(String),
-        })
+        }),
       );
       expect(result.is_active).toBe(false);
     });
   });
 
-  describe('softDelete', () => {
-    it('should soft delete schedule', async () => {
+  describe("softDelete", () => {
+    it("should soft delete schedule", async () => {
       mockQuery.update.mockResolvedValueOnce({ data: null, error: null });
 
-      await dao.softDelete('schedule-1');
+      await dao.softDelete("schedule-1");
 
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
           deleted_at: expect.any(String),
-        })
+        }),
       );
-      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'schedule-1');
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
+      expect(mockQuery.eq).toHaveBeenCalledWith("id", "schedule-1");
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
     });
   });
 });

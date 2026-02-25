@@ -1,15 +1,14 @@
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  FileText,
-  CheckCircle2,
-  AlertTriangle,
-  Wrench,
-} from 'lucide-react';
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText, CheckCircle2, AlertTriangle, Wrench } from "lucide-react";
 
 interface ActivityItem {
   id: string;
-  type: 'ticket_created' | 'ticket_completed' | 'compliance_expiring' | 'pm_completed';
+  type:
+    | "ticket_created"
+    | "ticket_completed"
+    | "compliance_expiring"
+    | "pm_completed";
   title: string;
   description: string;
   timestamp: string;
@@ -31,10 +30,10 @@ const ACTIVITY_ICONS: Record<string, typeof FileText> = {
 };
 
 const ACTIVITY_COLORS: Record<string, string> = {
-  ticket_created: 'text-blue-600',
-  ticket_completed: 'text-green-600',
-  compliance_expiring: 'text-amber-600',
-  pm_completed: 'text-purple-600',
+  ticket_created: "text-blue-600",
+  ticket_completed: "text-green-600",
+  compliance_expiring: "text-amber-600",
+  pm_completed: "text-purple-600",
 };
 
 function formatRelativeTime(timestamp: string): string {
@@ -45,7 +44,7 @@ function formatRelativeTime(timestamp: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return 'Just now';
+  if (diffMins < 1) return "Just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
@@ -53,7 +52,10 @@ function formatRelativeTime(timestamp: string): string {
   return date.toLocaleDateString();
 }
 
-export function ActivityFeed({ activities, title = 'Recent Activity' }: ActivityFeedProps) {
+export function ActivityFeed({
+  activities,
+  title = "Recent Activity",
+}: ActivityFeedProps) {
   return (
     <Card>
       <CardHeader>

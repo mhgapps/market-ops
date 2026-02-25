@@ -1,8 +1,8 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { AssetService } from '@/services/asset.service'
+import { NextResponse, type NextRequest } from "next/server";
+import { AssetService } from "@/services/asset.service";
 
 interface RouteParams {
-  params: Promise<{ code: string }>
+  params: Promise<{ code: string }>;
 }
 
 /**
@@ -13,22 +13,31 @@ interface RouteParams {
  */
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { code } = await params
+    const { code } = await params;
 
     if (!code || code.trim().length === 0) {
-      return NextResponse.redirect(new URL('/assets?qr_error=not_found', _request.url))
+      return NextResponse.redirect(
+        new URL("/assets?qr_error=not_found", _request.url),
+      );
     }
 
-    const service = new AssetService()
-    const asset = await service.getAssetByQRCode(code)
+    const service = new AssetService();
+    const asset = await service.getAssetByQRCode(code);
 
     if (!asset) {
-      return NextResponse.redirect(new URL('/assets?qr_error=not_found', _request.url))
+      return NextResponse.redirect(
+        new URL("/assets?qr_error=not_found", _request.url),
+      );
     }
 
-    return NextResponse.redirect(new URL(`/assets/${asset.id}`, _request.url), 302)
+    return NextResponse.redirect(
+      new URL(`/assets/${asset.id}`, _request.url),
+      302,
+    );
   } catch (error) {
-    console.error('Error during QR code redirect:', error)
-    return NextResponse.redirect(new URL('/assets?qr_error=not_found', _request.url))
+    console.error("Error during QR code redirect:", error);
+    return NextResponse.redirect(
+      new URL("/assets?qr_error=not_found", _request.url),
+    );
   }
 }

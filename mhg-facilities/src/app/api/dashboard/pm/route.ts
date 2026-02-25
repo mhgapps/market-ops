@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { DashboardService } from '@/services/dashboard.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextRequest, NextResponse } from "next/server";
+import { DashboardService } from "@/services/dashboard.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (authError) return authError;
 
     const searchParams = request.nextUrl.searchParams;
-    const includeOverdue = searchParams.get('include_overdue') === 'true';
+    const includeOverdue = searchParams.get("include_overdue") === "true";
 
     const service = new DashboardService();
 
@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Dashboard PM error:', error);
+    console.error("Dashboard PM error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch PM stats' },
-      { status: 500 }
+      { error: "Failed to fetch PM stats" },
+      { status: 500 },
     );
   }
 }

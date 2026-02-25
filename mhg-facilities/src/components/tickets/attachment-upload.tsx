@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useState, useRef } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useState, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -20,100 +20,108 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Upload, FileImage, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Upload, FileImage, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const attachmentSchema = z.object({
   file: z
     .instanceof(File)
-    .refine((file) => file.size <= 10 * 1024 * 1024, 'File size must be less than 10MB')
+    .refine(
+      (file) => file.size <= 10 * 1024 * 1024,
+      "File size must be less than 10MB",
+    )
     .refine(
       (file) =>
-        ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type),
-      'Only JPEG, PNG, WebP, and PDF files are allowed'
+        ["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(
+          file.type,
+        ),
+      "Only JPEG, PNG, WebP, and PDF files are allowed",
     ),
-  attachment_type: z.enum(['photo', 'invoice', 'quote', 'other']),
-})
+  attachment_type: z.enum(["photo", "invoice", "quote", "other"]),
+});
 
-type AttachmentFormValues = z.infer<typeof attachmentSchema>
+type AttachmentFormValues = z.infer<typeof attachmentSchema>;
 
 interface AttachmentUploadProps {
   onUpload: (data: {
-    file: File
-    attachment_type: 'photo' | 'invoice' | 'quote' | 'other'
-  }) => void | Promise<void>
-  onCancel?: () => void
+    file: File;
+    attachment_type: "photo" | "invoice" | "quote" | "other";
+  }) => void | Promise<void>;
+  onCancel?: () => void;
 }
 
-export function AttachmentUpload({ onUpload, onCancel }: AttachmentUploadProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [preview, setPreview] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export function AttachmentUpload({
+  onUpload,
+  onCancel,
+}: AttachmentUploadProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<AttachmentFormValues>({
     resolver: zodResolver(attachmentSchema),
     defaultValues: {
-      attachment_type: 'photo',
+      attachment_type: "photo",
     },
-  })
+  });
 
-  const selectedFile = form.watch('file')
+  const selectedFile = form.watch("file");
 
   const handleFileChange = (file: File | undefined) => {
     if (!file) {
-      setPreview(null)
-      return
+      setPreview(null);
+      return;
     }
 
     // Create preview for images
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader()
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     } else {
-      setPreview(null)
+      setPreview(null);
     }
-  }
+  };
 
   const handleSubmit = async (values: AttachmentFormValues) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       await onUpload({
         file: values.file,
         attachment_type: values.attachment_type,
-      })
+      });
 
-      form.reset()
-      setPreview(null)
+      form.reset();
+      setPreview(null);
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+        fileInputRef.current.value = "";
       }
     } catch (error) {
-      console.error('Error uploading attachment:', error)
+      console.error("Error uploading attachment:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleClearFile = () => {
-    form.setValue('file', null as unknown as File)
-    setPreview(null)
+    form.setValue("file", null as unknown as File);
+    setPreview(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      fileInputRef.current.value = "";
     }
-  }
+  };
 
   return (
     <Card>
@@ -136,7 +144,10 @@ export function AttachmentUpload({ onUpload, onCancel }: AttachmentUploadProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Attachment Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select attachment type..." />
@@ -175,9 +186,9 @@ export function AttachmentUpload({ onUpload, onCancel }: AttachmentUploadProps) 
                         type="file"
                         accept="image/jpeg,image/png,image/webp,application/pdf"
                         onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          onChange(file)
-                          handleFileChange(file)
+                          const file = e.target.files?.[0];
+                          onChange(file);
+                          handleFileChange(file);
                         }}
                       />
                       {selectedFile && (
@@ -210,13 +221,15 @@ export function AttachmentUpload({ onUpload, onCancel }: AttachmentUploadProps) 
             {/* Image Preview */}
             {preview && (
               <div className="rounded-md border border-gray-200 p-2">
-                <p className="mb-2 text-sm font-medium text-gray-700">Preview</p>
+                <p className="mb-2 text-sm font-medium text-gray-700">
+                  Preview
+                </p>
                 <img
                   src={preview}
                   alt="Preview"
                   className={cn(
-                    'h-auto w-full rounded-md object-contain',
-                    'max-h-[300px]'
+                    "h-auto w-full rounded-md object-contain",
+                    "max-h-[300px]",
                   )}
                 />
               </div>
@@ -240,11 +253,11 @@ export function AttachmentUpload({ onUpload, onCancel }: AttachmentUploadProps) 
               className="ml-auto gap-2"
             >
               <Upload className="h-4 w-4" />
-              {isSubmitting ? 'Uploading...' : 'Upload Attachment'}
+              {isSubmitting ? "Uploading..." : "Upload Attachment"}
             </Button>
           </CardFooter>
         </form>
       </Form>
     </Card>
-  )
+  );
 }

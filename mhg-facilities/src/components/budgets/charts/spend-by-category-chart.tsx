@@ -1,29 +1,36 @@
-'use client'
+"use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { budgetCategoryColors } from '@/theme/colors'
-import type { SpendByCategory } from '@/dao/budget.dao'
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { budgetCategoryColors } from "@/theme/colors";
+import type { SpendByCategory } from "@/dao/budget.dao";
 
 interface SpendByCategoryChartProps {
-  data?: SpendByCategory[]
-  title?: string
-  isLoading?: boolean
+  data?: SpendByCategory[];
+  title?: string;
+  isLoading?: boolean;
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(amount);
 }
 
 export function SpendByCategoryChart({
   data,
-  title = 'Spend by Category',
+  title = "Spend by Category",
   isLoading,
 }: SpendByCategoryChartProps) {
   if (isLoading) {
@@ -38,15 +45,15 @@ export function SpendByCategoryChart({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const chartData = (data || []).map((item) => ({
     name: item.category_name,
     value: item.spent,
-  }))
+  }));
 
-  const totalSpend = chartData.reduce((sum, item) => sum + item.value, 0)
+  const totalSpend = chartData.reduce((sum, item) => sum + item.value, 0);
 
   if (chartData.length === 0 || totalSpend === 0) {
     return (
@@ -60,7 +67,7 @@ export function SpendByCategoryChart({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -76,8 +83,16 @@ export function SpendByCategoryChart({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }: { name?: string; percent?: number }) =>
-                percent && percent > 0.05 ? `${name ?? ''}: ${(percent * 100).toFixed(0)}%` : ''
+              label={({
+                name,
+                percent,
+              }: {
+                name?: string;
+                percent?: number;
+              }) =>
+                percent && percent > 0.05
+                  ? `${name ?? ""}: ${(percent * 100).toFixed(0)}%`
+                  : ""
               }
               outerRadius={80}
               fill="#8884d8"
@@ -86,17 +101,22 @@ export function SpendByCategoryChart({
               {chartData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={budgetCategoryColors[index % budgetCategoryColors.length]}
+                  fill={
+                    budgetCategoryColors[index % budgetCategoryColors.length]
+                  }
                 />
               ))}
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'var(--card)',
-                border: '1px solid var(--border)',
-                borderRadius: '0.5rem',
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "0.5rem",
               }}
-              formatter={(value: number | undefined) => [formatCurrency(value ?? 0), 'Spent']}
+              formatter={(value: number | undefined) => [
+                formatCurrency(value ?? 0),
+                "Spent",
+              ]}
             />
             <Legend
               formatter={(value) => (
@@ -107,5 +127,5 @@ export function SpendByCategoryChart({
         </ResponsiveContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

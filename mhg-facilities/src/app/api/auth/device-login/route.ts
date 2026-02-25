@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { DeviceAuthService } from '@/services/device-auth.service'
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { DeviceAuthService } from "@/services/device-auth.service";
 
 const deviceLoginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-})
+  email: z.string().email("Invalid email address"),
+});
 
 /**
  * POST /api/auth/device-login
@@ -16,47 +16,52 @@ const deviceLoginSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json();
 
-    const validation = deviceLoginSchema.safeParse(body)
+    const validation = deviceLoginSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.format() },
-        { status: 400 }
-      )
+        { error: "Validation failed", details: validation.error.format() },
+        { status: 400 },
+      );
     }
 
-    const { email } = validation.data
+    const { email } = validation.data;
 
     // Read device_token from cookies
-    const deviceToken = request.cookies.get('device_token')?.value
+    const deviceToken = request.cookies.get("device_token")?.value;
 
     if (!deviceToken) {
       return NextResponse.json(
-        { error: 'Device not trusted' },
-        { status: 401 }
-      )
+        { error: "Device not trusted" },
+        { status: 401 },
+      );
     }
 
-    const deviceAuthService = new DeviceAuthService()
-    const result = await deviceAuthService.signInWithTrustedDevice(email, deviceToken)
+    const deviceAuthService = new DeviceAuthService();
+    const result = await deviceAuthService.signInWithTrustedDevice(
+      email,
+      deviceToken,
+    );
 
     if (!result) {
       return NextResponse.json(
-        { error: 'Device not trusted' },
-        { status: 401 }
-      )
+        { error: "Device not trusted" },
+        { status: 401 },
+      );
     }
 
     return NextResponse.json({
       success: true,
       session: result.session,
-    })
+    });
   } catch (error) {
-    console.error('Error in POST /api/auth/device-login:', error)
+    console.error("Error in POST /api/auth/device-login:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Something went wrong' },
-      { status: 500 }
-    )
+      {
+        error: error instanceof Error ? error.message : "Something went wrong",
+      },
+      { status: 500 },
+    );
   }
 }

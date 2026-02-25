@@ -1,52 +1,60 @@
-'use client'
+"use client";
 
-import { use } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { BudgetForm } from '@/components/budgets'
-import { toast } from 'sonner'
-import { useBudget, useUpdateBudget, useFiscalYearOptions } from '@/hooks/use-budgets'
-import { useLocations } from '@/hooks/use-locations'
+import { use } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BudgetForm } from "@/components/budgets";
+import { toast } from "sonner";
+import {
+  useBudget,
+  useUpdateBudget,
+  useFiscalYearOptions,
+} from "@/hooks/use-budgets";
+import { useLocations } from "@/hooks/use-locations";
 
 export default function EditBudgetPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params)
-  const router = useRouter()
-  const fiscalYearOptions = useFiscalYearOptions()
+  const { id } = use(params);
+  const router = useRouter();
+  const fiscalYearOptions = useFiscalYearOptions();
 
-  const { data: budget, isLoading: budgetLoading } = useBudget(id)
-  const { data: locationsData, isLoading: locationsLoading } = useLocations()
-  const locations = (locationsData || []).map(loc => ({ id: loc.id, name: loc.name }))
+  const { data: budget, isLoading: budgetLoading } = useBudget(id);
+  const { data: locationsData, isLoading: locationsLoading } = useLocations();
+  const locations = (locationsData || []).map((loc) => ({
+    id: loc.id,
+    name: loc.name,
+  }));
 
-  const updateBudget = useUpdateBudget()
+  const updateBudget = useUpdateBudget();
 
   const handleSubmit = async (data: {
-    category: string
-    location_id?: string | null
-    fiscal_year: number
-    annual_budget: number
-    notes?: string | null
+    category: string;
+    location_id?: string | null;
+    fiscal_year: number;
+    annual_budget: number;
+    notes?: string | null;
   }) => {
     try {
-      await updateBudget.mutateAsync({ id, data })
-      toast.success('Budget updated', {
-        description: 'The budget has been updated successfully.',
-      })
-      router.push(`/budgets/${id}`)
+      await updateBudget.mutateAsync({ id, data });
+      toast.success("Budget updated", {
+        description: "The budget has been updated successfully.",
+      });
+      router.push(`/budgets/${id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update budget'
-      toast.error('Error', {
+      const message =
+        error instanceof Error ? error.message : "Failed to update budget";
+      toast.error("Error", {
         description: message,
-      })
+      });
     }
-  }
+  };
 
-  const isLoading = budgetLoading || locationsLoading
+  const isLoading = budgetLoading || locationsLoading;
 
   if (isLoading) {
     return (
@@ -63,7 +71,7 @@ export default function EditBudgetPage({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!budget) {
@@ -76,13 +84,12 @@ export default function EditBudgetPage({
           <h1 className="text-2xl font-bold">Budget Not Found</h1>
         </div>
         <p className="text-muted-foreground">
-          The budget you&apos;re looking for doesn&apos;t exist or has been deleted.
+          The budget you&apos;re looking for doesn&apos;t exist or has been
+          deleted.
         </p>
-        <Button onClick={() => router.push('/budgets')}>
-          Back to Budgets
-        </Button>
+        <Button onClick={() => router.push("/budgets")}>Back to Budgets</Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -101,7 +108,7 @@ export default function EditBudgetPage({
           locations={locations}
           fiscalYearOptions={fiscalYearOptions}
           defaultValues={{
-            category: budget.category || '',
+            category: budget.category || "",
             location_id: budget.location_id,
             fiscal_year: budget.fiscal_year,
             annual_budget: Number(budget.annual_budget),
@@ -114,5 +121,5 @@ export default function EditBudgetPage({
         />
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { DashboardService } from '@/services/dashboard.service';
-import { requireAuth } from '@/lib/auth/api-auth';
+import { NextRequest, NextResponse } from "next/server";
+import { DashboardService } from "@/services/dashboard.service";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
     if (authError) return authError;
 
     const searchParams = request.nextUrl.searchParams;
-    const days = parseInt(searchParams.get('days') || '30');
-    const includeBreakdown = searchParams.get('breakdown') === 'true';
+    const days = parseInt(searchParams.get("days") || "30");
+    const includeBreakdown = searchParams.get("breakdown") === "true";
 
     const service = new DashboardService();
 
@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Dashboard tickets error:', error);
+    console.error("Dashboard tickets error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch ticket stats' },
-      { status: 500 }
+      { error: "Failed to fetch ticket stats" },
+      { status: 500 },
     );
   }
 }

@@ -1,9 +1,9 @@
-import { ZodError } from 'zod';
-import { NextRequest, NextResponse } from 'next/server';
+import { ZodError } from "zod";
+import { NextRequest, NextResponse } from "next/server";
 
-import { requireAuth } from '@/lib/auth/api-auth';
-import { PMTemplateService } from '@/services/pm-template.service';
-import { updatePMTemplateSchema } from '@/lib/validations/pm';
+import { requireAuth } from "@/lib/auth/api-auth";
+import { PMTemplateService } from "@/services/pm-template.service";
+import { updatePMTemplateSchema } from "@/lib/validations/pm";
 
 interface RouteContext {
   params: Promise<{
@@ -13,8 +13,8 @@ interface RouteContext {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
     const { id } = await context.params;
 
@@ -23,25 +23,30 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     if (!template) {
       return NextResponse.json(
-        { error: 'PM template not found' },
-        { status: 404 }
+        { error: "PM template not found" },
+        { status: 404 },
       );
     }
 
     return NextResponse.json({ template });
   } catch (error: unknown) {
-    console.error('Error fetching PM template:', error);
+    console.error("Error fetching PM template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) || 'Failed to fetch PM template' },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error) || "Failed to fetch PM template",
+      },
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
     const { id } = await context.params;
 
@@ -53,26 +58,31 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ template });
   } catch (error: unknown) {
-    console.error('Error updating PM template:', error);
+    console.error("Error updating PM template:", error);
 
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.issues },
-        { status: 400 }
+        { error: "Validation error", details: error.issues },
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) || 'Failed to update PM template' },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error) || "Failed to update PM template",
+      },
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
     const { id } = await context.params;
 
@@ -81,10 +91,15 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    console.error('Error deleting PM template:', error);
+    console.error("Error deleting PM template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) || 'Failed to delete PM template' },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error) || "Failed to delete PM template",
+      },
+      { status: 500 },
     );
   }
 }

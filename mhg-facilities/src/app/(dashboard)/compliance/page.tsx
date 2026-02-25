@@ -1,15 +1,28 @@
-import { Suspense } from 'react';
-import Link from 'next/link';
-import { Plus, FileText, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Suspense } from "react";
+import Link from "next/link";
+import {
+  Plus,
+  FileText,
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Client component for the data display
-import { ComplianceList } from './compliance-list';
+import { ComplianceList } from "./compliance-list";
 
 export const metadata = {
-  title: 'Documents',
-  description: 'Manage permits, licenses, insurance, and compliance documentation',
+  title: "Documents",
+  description:
+    "Manage permits, licenses, insurance, and compliance documentation",
 };
 
 export default async function CompliancePage() {
@@ -72,16 +85,28 @@ async function StatsCards() {
           <span className="font-semibold">{stats.active}</span>
           <span className="text-sm text-muted-foreground">Active</span>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${stats.expiring_soon > 0 ? 'bg-amber-50' : ''}`}>
-          <Clock className={`h-4 w-4 ${stats.expiring_soon > 0 ? 'text-amber-600' : 'text-muted-foreground'}`} />
-          <span className={`font-semibold ${stats.expiring_soon > 0 ? 'text-amber-700' : ''}`}>
+        <div
+          className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${stats.expiring_soon > 0 ? "bg-amber-50" : ""}`}
+        >
+          <Clock
+            className={`h-4 w-4 ${stats.expiring_soon > 0 ? "text-amber-600" : "text-muted-foreground"}`}
+          />
+          <span
+            className={`font-semibold ${stats.expiring_soon > 0 ? "text-amber-700" : ""}`}
+          >
             {stats.expiring_soon}
           </span>
           <span className="text-sm text-muted-foreground">Expiring Soon</span>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${stats.expired > 0 ? 'bg-red-50' : ''}`}>
-          <AlertTriangle className={`h-4 w-4 ${stats.expired > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
-          <span className={`font-semibold ${stats.expired > 0 ? 'text-red-600' : ''}`}>
+        <div
+          className={`flex items-center gap-2 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${stats.expired > 0 ? "bg-red-50" : ""}`}
+        >
+          <AlertTriangle
+            className={`h-4 w-4 ${stats.expired > 0 ? "text-destructive" : "text-muted-foreground"}`}
+          />
+          <span
+            className={`font-semibold ${stats.expired > 0 ? "text-red-600" : ""}`}
+          >
             {stats.expired}
           </span>
           <span className="text-sm text-muted-foreground">Expired</span>
@@ -92,7 +117,5 @@ async function StatsCards() {
 }
 
 function StatsLoading() {
-  return (
-    <div className="h-12 rounded-lg bg-muted animate-pulse" />
-  );
+  return <div className="h-12 rounded-lg bg-muted animate-pulse" />;
 }

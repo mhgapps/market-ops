@@ -1,67 +1,67 @@
-'use client'
+"use client";
 
-import { use } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
-import { useBudget, useDeleteBudget } from '@/hooks/use-budgets'
-import { DeleteBudgetDialog } from '@/components/budgets'
-import { budgetUtilizationColors } from '@/theme/colors'
-import { useState } from 'react'
-import type { AlertLevel } from '@/services/budget.service'
+import { use } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { useBudget, useDeleteBudget } from "@/hooks/use-budgets";
+import { DeleteBudgetDialog } from "@/components/budgets";
+import { budgetUtilizationColors } from "@/theme/colors";
+import { useState } from "react";
+import type { AlertLevel } from "@/services/budget.service";
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(amount);
 }
 
 function getAlertColor(level: AlertLevel) {
   switch (level) {
-    case 'over':
-      return budgetUtilizationColors.over
-    case 'danger':
-      return budgetUtilizationColors.danger
-    case 'warning':
-      return budgetUtilizationColors.warning
+    case "over":
+      return budgetUtilizationColors.over;
+    case "danger":
+      return budgetUtilizationColors.danger;
+    case "warning":
+      return budgetUtilizationColors.warning;
     default:
-      return budgetUtilizationColors.healthy
+      return budgetUtilizationColors.healthy;
   }
 }
 
 export default function BudgetDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params)
-  const router = useRouter()
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const { id } = use(params);
+  const router = useRouter();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data: budget, isLoading } = useBudget(id, true)
-  const deleteBudget = useDeleteBudget()
+  const { data: budget, isLoading } = useBudget(id, true);
+  const deleteBudget = useDeleteBudget();
 
   const handleDelete = async () => {
     try {
-      await deleteBudget.mutateAsync(id)
-      toast.success('Budget deleted', {
-        description: 'The budget has been deleted successfully.',
-      })
-      router.push('/budgets')
+      await deleteBudget.mutateAsync(id);
+      toast.success("Budget deleted", {
+        description: "The budget has been deleted successfully.",
+      });
+      router.push("/budgets");
     } catch {
-      toast.error('Error', {
-        description: 'Failed to delete the budget. Please try again.',
-      })
+      toast.error("Error", {
+        description: "Failed to delete the budget. Please try again.",
+      });
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -85,7 +85,7 @@ export default function BudgetDetailPage({
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   if (!budget) {
@@ -98,16 +98,15 @@ export default function BudgetDetailPage({
           <h1 className="text-2xl font-bold">Budget Not Found</h1>
         </div>
         <p className="text-muted-foreground">
-          The budget you&apos;re looking for doesn&apos;t exist or has been deleted.
+          The budget you&apos;re looking for doesn&apos;t exist or has been
+          deleted.
         </p>
-        <Button onClick={() => router.push('/budgets')}>
-          Back to Budgets
-        </Button>
+        <Button onClick={() => router.push("/budgets")}>Back to Budgets</Button>
       </div>
-    )
+    );
   }
 
-  const alertColor = getAlertColor(budget.alert_level)
+  const alertColor = getAlertColor(budget.alert_level);
 
   return (
     <div className="space-y-6">
@@ -122,7 +121,7 @@ export default function BudgetDetailPage({
               {budget.category}
             </h1>
             <p className="text-muted-foreground">
-              {budget.location?.name || 'Tenant-wide'} • FY {budget.fiscal_year}
+              {budget.location?.name || "Tenant-wide"} • FY {budget.fiscal_year}
             </p>
           </div>
         </div>
@@ -173,10 +172,13 @@ export default function BudgetDetailPage({
                 <p
                   className="text-xl font-bold"
                   style={{
-                    color: budget.remaining < 0 ? budgetUtilizationColors.over.text : undefined,
+                    color:
+                      budget.remaining < 0
+                        ? budgetUtilizationColors.over.text
+                        : undefined,
                   }}
                 >
-                  {budget.remaining < 0 ? '-' : ''}
+                  {budget.remaining < 0 ? "-" : ""}
                   {formatCurrency(Math.abs(budget.remaining))}
                 </p>
               </div>
@@ -187,7 +189,7 @@ export default function BudgetDetailPage({
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm">Utilization</span>
                 <div className="flex items-center gap-2">
-                  {budget.alert_level !== 'none' && (
+                  {budget.alert_level !== "none" && (
                     <Badge
                       variant="outline"
                       style={{
@@ -212,7 +214,7 @@ export default function BudgetDetailPage({
                 className="h-3"
                 style={{
                   // @ts-expect-error CSS variable for progress bar color
-                  '--progress-foreground': alertColor.bar,
+                  "--progress-foreground": alertColor.bar,
                 }}
               />
             </div>
@@ -232,7 +234,7 @@ export default function BudgetDetailPage({
             <div>
               <p className="text-sm text-muted-foreground">Location</p>
               <p className="font-medium">
-                {budget.location?.name || 'Tenant-wide (All Locations)'}
+                {budget.location?.name || "Tenant-wide (All Locations)"}
               </p>
             </div>
             <div>
@@ -264,5 +266,5 @@ export default function BudgetDetailPage({
         isDeleting={deleteBudget.isPending}
       />
     </div>
-  )
+  );
 }

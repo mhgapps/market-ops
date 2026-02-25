@@ -1,10 +1,11 @@
-import { ComplianceDocumentDAO } from '@/dao/compliance-document.dao';
-import { ComplianceDocumentTypeDAO } from '@/dao/compliance-document-type.dao';
-import { LocationDAO } from '@/dao/location.dao';
-import type { Database } from '@/types/database';
+import { ComplianceDocumentDAO } from "@/dao/compliance-document.dao";
+import { ComplianceDocumentTypeDAO } from "@/dao/compliance-document-type.dao";
+import { LocationDAO } from "@/dao/location.dao";
+import type { Database } from "@/types/database";
 
-type ComplianceDocument = Database['public']['Tables']['compliance_documents']['Row'];
-type ComplianceStatus = Database['public']['Enums']['compliance_status'];
+type ComplianceDocument =
+  Database["public"]["Tables"]["compliance_documents"]["Row"];
+type ComplianceStatus = Database["public"]["Enums"]["compliance_status"];
 
 interface CreateComplianceDocInput {
   name: string;
@@ -67,10 +68,12 @@ export class ComplianceDocumentService {
   constructor(
     private complianceDAO = new ComplianceDocumentDAO(),
     private documentTypeDAO = new ComplianceDocumentTypeDAO(),
-    private locationDAO = new LocationDAO()
+    private locationDAO = new LocationDAO(),
   ) {}
 
-  async getAllDocuments(filters?: ComplianceFilters): Promise<ComplianceDocument[]> {
+  async getAllDocuments(
+    filters?: ComplianceFilters,
+  ): Promise<ComplianceDocument[]> {
     if (filters?.location_id) {
       return await this.complianceDAO.findByLocation(filters.location_id);
     }
@@ -90,7 +93,9 @@ export class ComplianceDocumentService {
     return await this.complianceDAO.findWithVersions(id);
   }
 
-  async getDocumentsByLocation(locationId: string): Promise<ComplianceDocument[]> {
+  async getDocumentsByLocation(
+    locationId: string,
+  ): Promise<ComplianceDocument[]> {
     return await this.complianceDAO.findByLocation(locationId);
   }
 
@@ -111,7 +116,7 @@ export class ComplianceDocumentService {
 
     return {
       total: all.length,
-      active: all.filter(d => d.status === 'active').length,
+      active: all.filter((d) => d.status === "active").length,
       expiring_soon: expiringSoon.length,
       expired: expired.length,
       conditional: conditional.length,
@@ -119,7 +124,10 @@ export class ComplianceDocumentService {
     };
   }
 
-  async getComplianceCalendar(month: number, year: number): Promise<ComplianceCalendarItem[]> {
+  async getComplianceCalendar(
+    month: number,
+    year: number,
+  ): Promise<ComplianceCalendarItem[]> {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);
 
@@ -127,7 +135,7 @@ export class ComplianceDocumentService {
 
     const calendar: Map<string, ComplianceCalendarItem> = new Map();
 
-    all.forEach(doc => {
+    all.forEach((doc) => {
       if (!doc.expiration_date) return;
 
       const expirationDate = new Date(doc.expiration_date);
@@ -137,7 +145,7 @@ export class ComplianceDocumentService {
         if (!calendar.has(dateKey)) {
           calendar.set(dateKey, {
             date: dateKey,
-            documents: []
+            documents: [],
           });
         }
 
@@ -145,38 +153,44 @@ export class ComplianceDocumentService {
           id: doc.id,
           name: doc.name,
           status: doc.status,
-          document_type_id: doc.document_type_id
+          document_type_id: doc.document_type_id,
         });
       }
     });
 
-    return Array.from(calendar.values()).sort((a, b) => a.date.localeCompare(b.date));
+    return Array.from(calendar.values()).sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
   }
 
-  async createDocument(data: CreateComplianceDocInput): Promise<ComplianceDocument> {
+  async createDocument(
+    data: CreateComplianceDocInput,
+  ): Promise<ComplianceDocument> {
     if (!data.name || data.name.trim().length === 0) {
-      throw new Error('Document name is required');
+      throw new Error("Document name is required");
     }
 
     if (!data.expiration_date) {
-      throw new Error('Expiration date is required');
+      throw new Error("Expiration date is required");
     }
 
     if (data.location_id && data.location_ids && data.location_ids.length > 0) {
-      throw new Error('Cannot specify both location_id and location_ids');
+      throw new Error("Cannot specify both location_id and location_ids");
     }
 
     if (data.document_type_id) {
-      const docType = await this.documentTypeDAO.findById(data.document_type_id);
+      const docType = await this.documentTypeDAO.findById(
+        data.document_type_id,
+      );
       if (!docType) {
-        throw new Error('Document type not found');
+        throw new Error("Document type not found");
       }
     }
 
     if (data.location_id) {
       const location = await this.locationDAO.findById(data.location_id);
       if (!location) {
-        throw new Error('Location not found');
+        throw new Error("Location not found");
       }
     }
 
@@ -190,50 +204,66 @@ export class ComplianceDocumentService {
       issuing_authority: data.issuing_authority?.trim() || null,
       document_number: data.document_number?.trim() || null,
       file_path: data.file_path || null,
-      status: 'active',
+      status: "active",
       renewal_cost: data.renewal_cost || null,
       renewal_assigned_to: data.renewal_assigned_to || null,
       notes: data.notes?.trim() || null,
     });
   }
 
-  async updateDocument(id: string, data: UpdateComplianceDocInput): Promise<ComplianceDocument> {
+  async updateDocument(
+    id: string,
+    data: UpdateComplianceDocInput,
+  ): Promise<ComplianceDocument> {
     const existing = await this.complianceDAO.findById(id);
     if (!existing) {
-      throw new Error('Compliance document not found');
+      throw new Error("Compliance document not found");
     }
 
-    if (data.name !== undefined && (!data.name || data.name.trim().length === 0)) {
-      throw new Error('Document name is required');
+    if (
+      data.name !== undefined &&
+      (!data.name || data.name.trim().length === 0)
+    ) {
+      throw new Error("Document name is required");
     }
 
     if (data.document_type_id) {
-      const docType = await this.documentTypeDAO.findById(data.document_type_id);
+      const docType = await this.documentTypeDAO.findById(
+        data.document_type_id,
+      );
       if (!docType) {
-        throw new Error('Document type not found');
+        throw new Error("Document type not found");
       }
     }
 
     if (data.location_id) {
       const location = await this.locationDAO.findById(data.location_id);
       if (!location) {
-        throw new Error('Location not found');
+        throw new Error("Location not found");
       }
     }
 
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
-    if (data.document_type_id !== undefined) updateData.document_type_id = data.document_type_id;
-    if (data.location_id !== undefined) updateData.location_id = data.location_id;
-    if (data.location_ids !== undefined) updateData.location_ids = data.location_ids;
+    if (data.document_type_id !== undefined)
+      updateData.document_type_id = data.document_type_id;
+    if (data.location_id !== undefined)
+      updateData.location_id = data.location_id;
+    if (data.location_ids !== undefined)
+      updateData.location_ids = data.location_ids;
     if (data.issue_date !== undefined) updateData.issue_date = data.issue_date;
-    if (data.expiration_date !== undefined) updateData.expiration_date = data.expiration_date;
-    if (data.issuing_authority !== undefined) updateData.issuing_authority = data.issuing_authority?.trim() || null;
-    if (data.document_number !== undefined) updateData.document_number = data.document_number?.trim() || null;
+    if (data.expiration_date !== undefined)
+      updateData.expiration_date = data.expiration_date;
+    if (data.issuing_authority !== undefined)
+      updateData.issuing_authority = data.issuing_authority?.trim() || null;
+    if (data.document_number !== undefined)
+      updateData.document_number = data.document_number?.trim() || null;
     if (data.file_path !== undefined) updateData.file_path = data.file_path;
     if (data.status !== undefined) updateData.status = data.status;
-    if (data.renewal_cost !== undefined) updateData.renewal_cost = data.renewal_cost;
-    if (data.renewal_assigned_to !== undefined) updateData.renewal_assigned_to = data.renewal_assigned_to;
+    if (data.renewal_cost !== undefined)
+      updateData.renewal_cost = data.renewal_cost;
+    if (data.renewal_assigned_to !== undefined)
+      updateData.renewal_assigned_to = data.renewal_assigned_to;
     if (data.notes !== undefined) updateData.notes = data.notes?.trim() || null;
 
     return await this.complianceDAO.update(id, updateData);
@@ -242,17 +272,20 @@ export class ComplianceDocumentService {
   async deleteDocument(id: string): Promise<void> {
     const existing = await this.complianceDAO.findById(id);
     if (!existing) {
-      throw new Error('Compliance document not found');
+      throw new Error("Compliance document not found");
     }
 
     await this.complianceDAO.softDelete(id);
   }
 
-  async markAsRenewed(id: string, newExpirationDate: string): Promise<ComplianceDocument> {
+  async markAsRenewed(
+    id: string,
+    newExpirationDate: string,
+  ): Promise<ComplianceDocument> {
     return await this.complianceDAO.update(id, {
       expiration_date: newExpirationDate,
-      status: 'active',
-      renewal_submitted_date: new Date().toISOString().split('T')[0],
+      status: "active",
+      renewal_submitted_date: new Date().toISOString().split("T")[0],
       is_conditional: false,
       conditional_requirements: null,
       conditional_deadline: null,
@@ -265,26 +298,26 @@ export class ComplianceDocumentService {
   async markAsConditional(
     id: string,
     requirements: string,
-    deadline: string
+    deadline: string,
   ): Promise<ComplianceDocument> {
     return await this.complianceDAO.update(id, {
       is_conditional: true,
       conditional_requirements: requirements,
       conditional_deadline: deadline,
-      status: 'conditional',
+      status: "conditional",
     });
   }
 
   async markAsFailedInspection(
     id: string,
     correctiveAction: string,
-    reinspectionDate: string
+    reinspectionDate: string,
   ): Promise<ComplianceDocument> {
     return await this.complianceDAO.update(id, {
-      failed_inspection_date: new Date().toISOString().split('T')[0],
+      failed_inspection_date: new Date().toISOString().split("T")[0],
       corrective_action_required: correctiveAction,
       reinspection_date: reinspectionDate,
-      status: 'failed_inspection',
+      status: "failed_inspection",
     });
   }
 
@@ -293,7 +326,7 @@ export class ComplianceDocumentService {
       is_conditional: false,
       conditional_requirements: null,
       conditional_deadline: null,
-      status: 'active',
+      status: "active",
     });
   }
 
@@ -302,12 +335,12 @@ export class ComplianceDocumentService {
       failed_inspection_date: null,
       corrective_action_required: null,
       reinspection_date: null,
-      status: 'active',
+      status: "active",
     });
   }
 
   async processExpirationAlerts(): Promise<void> {
-    throw new Error('Not implemented - requires email service integration');
+    throw new Error("Not implemented - requires email service integration");
   }
 
   /**

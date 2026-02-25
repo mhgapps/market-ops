@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   LineChart,
@@ -9,34 +9,47 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-} from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { theme, budgetUtilizationColors } from '@/theme/colors'
-import type { MonthlyTrendData } from '@/hooks/use-budgets'
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { theme, budgetUtilizationColors } from "@/theme/colors";
+import type { MonthlyTrendData } from "@/hooks/use-budgets";
 
 interface MonthlyTrendChartProps {
-  data?: MonthlyTrendData[]
-  title?: string
-  isLoading?: boolean
-  totalBudget?: number
+  data?: MonthlyTrendData[];
+  title?: string;
+  isLoading?: boolean;
+  totalBudget?: number;
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 function formatCurrency(amount: number): string {
   if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}M`
+    return `$${(amount / 1000000).toFixed(1)}M`;
   }
   if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(0)}K`
+    return `$${(amount / 1000).toFixed(0)}K`;
   }
-  return `$${amount.toFixed(0)}`
+  return `$${amount.toFixed(0)}`;
 }
 
 export function MonthlyTrendChart({
   data,
-  title = 'Monthly Spend Trend',
+  title = "Monthly Spend Trend",
   isLoading,
   totalBudget,
 }: MonthlyTrendChartProps) {
@@ -50,7 +63,7 @@ export function MonthlyTrendChart({
           <Skeleton className="h-[300px] w-full" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const chartData = (data || []).map((item) => ({
@@ -58,7 +71,7 @@ export function MonthlyTrendChart({
     spent: item.spent,
     cumulative: item.cumulative_spend,
     budgetPace: item.budget_pace,
-  }))
+  }));
 
   if (chartData.length === 0) {
     return (
@@ -72,11 +85,11 @@ export function MonthlyTrendChart({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   // Calculate monthly budget pace for reference line
-  const monthlyBudgetPace = totalBudget ? totalBudget / 12 : undefined
+  const monthlyBudgetPace = totalBudget ? totalBudget / 12 : undefined;
 
   return (
     <Card>
@@ -87,27 +100,27 @@ export function MonthlyTrendChart({
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis
-              dataKey="month"
-              className="text-xs text-muted-foreground"
-            />
+            <XAxis dataKey="month" className="text-xs text-muted-foreground" />
             <YAxis
               className="text-xs text-muted-foreground"
               tickFormatter={formatCurrency}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'var(--card)',
-                border: '1px solid var(--border)',
-                borderRadius: '0.5rem',
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "0.5rem",
               }}
-              formatter={(value: number | undefined, name: string | undefined) => [
-                new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
+              formatter={(
+                value: number | undefined,
+                name: string | undefined,
+              ) => [
+                new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
                   minimumFractionDigits: 0,
                 }).format(value ?? 0),
-                name === 'spent' ? 'Monthly Spend' : 'Cumulative',
+                name === "spent" ? "Monthly Spend" : "Cumulative",
               ]}
             />
             {/* Monthly budget pace reference */}
@@ -117,8 +130,8 @@ export function MonthlyTrendChart({
                 stroke={budgetUtilizationColors.warning.bar}
                 strokeDasharray="5 5"
                 label={{
-                  value: 'Monthly Avg',
-                  position: 'right',
+                  value: "Monthly Avg",
+                  position: "right",
                   fontSize: 10,
                   fill: budgetUtilizationColors.warning.bar,
                 }}
@@ -157,7 +170,7 @@ export function MonthlyTrendChart({
               className="w-3 h-0.5"
               style={{
                 backgroundColor: theme.secondary.main,
-                borderStyle: 'dashed',
+                borderStyle: "dashed",
               }}
             />
             <span className="text-muted-foreground">Cumulative</span>
@@ -165,5 +178,5 @@ export function MonthlyTrendChart({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

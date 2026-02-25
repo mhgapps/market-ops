@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,40 +8,40 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import { MapPin } from 'lucide-react'
-import { Spinner } from '@/components/ui/loaders'
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { MapPin } from "lucide-react";
+import { Spinner } from "@/components/ui/loaders";
 
 interface Location {
-  id: string
-  name: string
-  address?: string | null
+  id: string;
+  name: string;
+  address?: string | null;
 }
 
 interface TransferModalProps {
-  assetName: string
-  currentLocationId?: string | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  locations: Location[]
-  userId: string
+  assetName: string;
+  currentLocationId?: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  locations: Location[];
+  userId: string;
   onTransfer: (data: {
-    to_location_id: string
-    transferred_by: string
-    reason?: string
-    notes?: string
-  }) => void | Promise<void>
+    to_location_id: string;
+    transferred_by: string;
+    reason?: string;
+    notes?: string;
+  }) => void | Promise<void>;
 }
 
 export function TransferModal({
@@ -53,36 +53,38 @@ export function TransferModal({
   userId,
   onTransfer,
 }: TransferModalProps) {
-  const [selectedLocationId, setSelectedLocationId] = useState<string>('')
-  const [reason, setReason] = useState('')
-  const [notes, setNotes] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedLocationId, setSelectedLocationId] = useState<string>("");
+  const [reason, setReason] = useState("");
+  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentLocation = locations.find((loc) => loc.id === currentLocationId)
-  const availableLocations = locations.filter((loc) => loc.id !== currentLocationId)
+  const currentLocation = locations.find((loc) => loc.id === currentLocationId);
+  const availableLocations = locations.filter(
+    (loc) => loc.id !== currentLocationId,
+  );
 
   const handleTransfer = async () => {
-    if (!selectedLocationId) return
+    if (!selectedLocationId) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       await onTransfer({
         to_location_id: selectedLocationId,
         transferred_by: userId,
         reason: reason || undefined,
         notes: notes || undefined,
-      })
-      onOpenChange(false)
+      });
+      onOpenChange(false);
       // Reset form
-      setSelectedLocationId('')
-      setReason('')
-      setNotes('')
+      setSelectedLocationId("");
+      setReason("");
+      setNotes("");
     } catch (error) {
-      console.error('Error transferring asset:', error)
+      console.error("Error transferring asset:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,8 +92,8 @@ export function TransferModal({
         <DialogHeader>
           <DialogTitle>Transfer Asset</DialogTitle>
           <DialogDescription>
-            Transfer <span className="font-medium">{assetName}</span> to a new location.
-            This will create an audit trail record.
+            Transfer <span className="font-medium">{assetName}</span> to a new
+            location. This will create an audit trail record.
           </DialogDescription>
         </DialogHeader>
 
@@ -105,7 +107,9 @@ export function TransferModal({
                 <div>
                   <div className="font-medium">{currentLocation.name}</div>
                   {currentLocation.address && (
-                    <div className="text-xs text-gray-500">{currentLocation.address}</div>
+                    <div className="text-xs text-gray-500">
+                      {currentLocation.address}
+                    </div>
                   )}
                 </div>
               </div>
@@ -117,7 +121,10 @@ export function TransferModal({
             <Label htmlFor="location-select">
               New Location <span className="text-red-500">*</span>
             </Label>
-            <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+            <Select
+              value={selectedLocationId}
+              onValueChange={setSelectedLocationId}
+            >
               <SelectTrigger id="location-select">
                 <SelectValue placeholder="Select destination location..." />
               </SelectTrigger>
@@ -129,7 +136,9 @@ export function TransferModal({
                       <div>
                         <div className="font-medium">{location.name}</div>
                         {location.address && (
-                          <div className="text-xs text-gray-500">{location.address}</div>
+                          <div className="text-xs text-gray-500">
+                            {location.address}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -149,7 +158,9 @@ export function TransferModal({
               onChange={(e) => setReason(e.target.value)}
               maxLength={200}
             />
-            <p className="text-xs text-gray-500">Optional - Brief reason for transfer</p>
+            <p className="text-xs text-gray-500">
+              Optional - Brief reason for transfer
+            </p>
           </div>
 
           {/* Notes */}
@@ -163,7 +174,9 @@ export function TransferModal({
               className="min-h-[80px] resize-y"
               maxLength={1000}
             />
-            <p className="text-xs text-gray-500">Optional - Additional transfer details</p>
+            <p className="text-xs text-gray-500">
+              Optional - Additional transfer details
+            </p>
           </div>
         </div>
 
@@ -182,10 +195,10 @@ export function TransferModal({
             disabled={!selectedLocationId || isSubmitting}
           >
             {isSubmitting && <Spinner size="sm" className="mr-2" />}
-            {isSubmitting ? 'Transferring...' : 'Transfer Asset'}
+            {isSubmitting ? "Transferring..." : "Transfer Asset"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

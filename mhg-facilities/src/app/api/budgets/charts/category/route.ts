@@ -1,43 +1,48 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { BudgetService } from '@/services/budget.service'
-import { ZodError } from 'zod'
-import { budgetChartFiltersSchema } from '@/lib/validations/budget'
-import { requireAuth } from '@/lib/auth/api-auth'
+import { NextRequest, NextResponse } from "next/server";
+import { BudgetService } from "@/services/budget.service";
+import { ZodError } from "zod";
+import { budgetChartFiltersSchema } from "@/lib/validations/budget";
+import { requireAuth } from "@/lib/auth/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
-    const service = new BudgetService()
-    const { searchParams } = new URL(request.url)
+    const service = new BudgetService();
+    const { searchParams } = new URL(request.url);
 
     const rawParams = {
-      fiscal_year: searchParams.get('fiscal_year'),
-      location_id: searchParams.get('location_id'),
-    }
+      fiscal_year: searchParams.get("fiscal_year"),
+      location_id: searchParams.get("location_id"),
+    };
 
     const params = budgetChartFiltersSchema.parse({
-      fiscal_year: rawParams.fiscal_year ? parseInt(rawParams.fiscal_year) : undefined,
+      fiscal_year: rawParams.fiscal_year
+        ? parseInt(rawParams.fiscal_year)
+        : undefined,
       location_id: rawParams.location_id || undefined,
-    })
+    });
 
-    const fiscalYear = params.fiscal_year || service.getCurrentFiscalYear()
-    const data = await service.getSpendByCategory(fiscalYear, params.location_id ?? undefined)
+    const fiscalYear = params.fiscal_year || service.getCurrentFiscalYear();
+    const data = await service.getSpendByCategory(
+      fiscalYear,
+      params.location_id ?? undefined,
+    );
 
-    return NextResponse.json({ data })
+    return NextResponse.json({ data });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Invalid query parameters', details: error.issues },
-        { status: 400 }
-      )
+        { error: "Invalid query parameters", details: error.issues },
+        { status: 400 },
+      );
     }
 
-    console.error('Error fetching category spend:', error)
+    console.error("Error fetching category spend:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch category spend data' },
-      { status: 500 }
-    )
+      { error: "Failed to fetch category spend data" },
+      { status: 500 },
+    );
   }
 }

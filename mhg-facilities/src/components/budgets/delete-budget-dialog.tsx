@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   AlertDialog,
@@ -9,15 +9,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Spinner } from '@/components/ui/loaders'
+} from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/loaders";
 
 interface DeleteBudgetDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  budgetCategory?: string
-  onConfirm: () => void | Promise<void>
-  isDeleting?: boolean
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  budgetCategory?: string;
+  onConfirm: () => void | Promise<void>;
+  isDeleting?: boolean;
 }
 
 export function DeleteBudgetDialog({
@@ -33,9 +33,11 @@ export function DeleteBudgetDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Budget</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the budget for{' '}
-            <span className="font-medium capitalize">{budgetCategory || 'this category'}</span>?
-            This action cannot be undone.
+            Are you sure you want to delete the budget for{" "}
+            <span className="font-medium capitalize">
+              {budgetCategory || "this category"}
+            </span>
+            ? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -51,11 +53,11 @@ export function DeleteBudgetDialog({
                 Deleting...
               </>
             ) : (
-              'Delete'
+              "Delete"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

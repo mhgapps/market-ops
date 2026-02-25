@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { ArrowLeft, Mail } from 'lucide-react'
-import { Spinner } from '@/components/ui/loaders'
+import { useState } from "react";
+import Link from "next/link";
+import { z } from "zod";
+import { toast } from "sonner";
+import { ArrowLeft, Mail } from "lucide-react";
+import { Spinner } from "@/components/ui/loaders";
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -17,67 +17,68 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { forgotPassword } from '../actions'
+} from "@/components/ui/card";
+import { forgotPassword } from "../actions";
 
 // String constants for bilingual support
 const STRINGS = {
-  TITLE: 'Reset your password',
-  DESCRIPTION: "Enter your email address and we'll send you a link to reset your password",
-  EMAIL_LABEL: 'Email address',
-  EMAIL_PLACEHOLDER: 'you@company.com',
-  SEND_RESET_LINK: 'Send reset link',
-  SENDING: 'Sending...',
-  BACK_TO_LOGIN: 'Back to login',
-  SUCCESS_TITLE: 'Check your email',
+  TITLE: "Reset your password",
+  DESCRIPTION:
+    "Enter your email address and we'll send you a link to reset your password",
+  EMAIL_LABEL: "Email address",
+  EMAIL_PLACEHOLDER: "you@company.com",
+  SEND_RESET_LINK: "Send reset link",
+  SENDING: "Sending...",
+  BACK_TO_LOGIN: "Back to login",
+  SUCCESS_TITLE: "Check your email",
   SUCCESS_DESCRIPTION: "We've sent a password reset link to",
-  ERROR_INVALID_EMAIL: 'Please enter a valid email address',
-} as const
+  ERROR_INVALID_EMAIL: "Please enter a valid email address",
+} as const;
 
 // Zod schema for form validation
 const forgotPasswordSchema = z.object({
   email: z.string().email(STRINGS.ERROR_INVALID_EMAIL),
-})
+});
 
 export default function ForgotPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [submittedEmail, setSubmittedEmail] = useState('')
-  const [errors, setErrors] = useState<{ email?: string }>({})
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [errors, setErrors] = useState<{ email?: string }>({});
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setErrors({})
+    event.preventDefault();
+    setErrors({});
 
-    const formData = new FormData(event.currentTarget)
-    const email = formData.get('email') as string
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
 
     // Validate with Zod
-    const result = forgotPasswordSchema.safeParse({ email })
+    const result = forgotPasswordSchema.safeParse({ email });
     if (!result.success) {
-      const fieldErrors: { email?: string } = {}
+      const fieldErrors: { email?: string } = {};
       result.error.issues.forEach((issue) => {
-        if (issue.path[0] === 'email') fieldErrors.email = issue.message
-      })
-      setErrors(fieldErrors)
-      return
+        if (issue.path[0] === "email") fieldErrors.email = issue.message;
+      });
+      setErrors(fieldErrors);
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const response = await forgotPassword(email)
+      const response = await forgotPassword(email);
 
       if (response.error) {
-        toast.error(response.error)
+        toast.error(response.error);
       } else {
-        setSubmittedEmail(email)
-        setIsSuccess(true)
+        setSubmittedEmail(email);
+        setIsSuccess(true);
       }
     } catch {
-      toast.error('An unexpected error occurred. Please try again.')
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -92,7 +93,9 @@ export default function ForgotPasswordPage() {
           <CardDescription>
             {STRINGS.SUCCESS_DESCRIPTION}
             <br />
-            <span className="font-medium text-foreground">{submittedEmail}</span>
+            <span className="font-medium text-foreground">
+              {submittedEmail}
+            </span>
           </CardDescription>
         </CardHeader>
 
@@ -105,7 +108,7 @@ export default function ForgotPasswordPage() {
           </Link>
         </CardFooter>
       </Card>
-    )
+    );
   }
 
   return (
@@ -155,5 +158,5 @@ export default function ForgotPasswordPage() {
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }

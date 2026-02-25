@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/lib/api-client';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/api-client";
 
 // Types
 interface ComplianceDocument {
@@ -15,7 +15,14 @@ interface ComplianceDocument {
   issuing_authority: string | null;
   document_number: string | null;
   file_path: string | null;
-  status: 'active' | 'expiring_soon' | 'expired' | 'pending_renewal' | 'conditional' | 'failed_inspection' | 'suspended';
+  status:
+    | "active"
+    | "expiring_soon"
+    | "expired"
+    | "pending_renewal"
+    | "conditional"
+    | "failed_inspection"
+    | "suspended";
   is_conditional: boolean | null;
   conditional_requirements: string | null;
   conditional_deadline: string | null;
@@ -97,15 +104,18 @@ interface ComplianceFilters {
 
 // Query keys
 export const complianceKeys = {
-  all: ['compliance'] as const,
-  lists: () => [...complianceKeys.all, 'list'] as const,
-  list: (filters?: ComplianceFilters) => [...complianceKeys.lists(), filters] as const,
-  details: () => [...complianceKeys.all, 'detail'] as const,
+  all: ["compliance"] as const,
+  lists: () => [...complianceKeys.all, "list"] as const,
+  list: (filters?: ComplianceFilters) =>
+    [...complianceKeys.lists(), filters] as const,
+  details: () => [...complianceKeys.all, "detail"] as const,
   detail: (id: string) => [...complianceKeys.details(), id] as const,
-  stats: () => [...complianceKeys.all, 'stats'] as const,
-  calendar: (month: number, year: number) => [...complianceKeys.all, 'calendar', month, year] as const,
-  expiring: (days: number) => [...complianceKeys.all, 'expiring', days] as const,
-  types: () => [...complianceKeys.all, 'types'] as const,
+  stats: () => [...complianceKeys.all, "stats"] as const,
+  calendar: (month: number, year: number) =>
+    [...complianceKeys.all, "calendar", month, year] as const,
+  expiring: (days: number) =>
+    [...complianceKeys.all, "expiring", days] as const,
+  types: () => [...complianceKeys.all, "types"] as const,
 };
 
 // Hooks
@@ -115,13 +125,14 @@ export function useComplianceDocuments(filters?: ComplianceFilters) {
     queryKey: complianceKeys.list(filters),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters?.location_id) params.set('location_id', filters.location_id);
-      if (filters?.document_type_id) params.set('document_type_id', filters.document_type_id);
-      if (filters?.status) params.set('status', filters.status);
-      if (filters?.search) params.set('search', filters.search);
+      if (filters?.location_id) params.set("location_id", filters.location_id);
+      if (filters?.document_type_id)
+        params.set("document_type_id", filters.document_type_id);
+      if (filters?.status) params.set("status", filters.status);
+      if (filters?.search) params.set("search", filters.search);
 
       const response = await api.get<{ documents: ComplianceDocument[] }>(
-        `/api/compliance?${params.toString()}`
+        `/api/compliance?${params.toString()}`,
       );
       return response.documents;
     },
@@ -133,7 +144,7 @@ export function useComplianceDocument(id: string) {
     queryKey: complianceKeys.detail(id),
     queryFn: async () => {
       const response = await api.get<{ document: ComplianceDocument }>(
-        `/api/compliance/${id}`
+        `/api/compliance/${id}`,
       );
       return response.document;
     },
@@ -146,7 +157,7 @@ export function useComplianceStats() {
     queryKey: complianceKeys.stats(),
     queryFn: async () => {
       const response = await api.get<{ stats: ComplianceStats }>(
-        '/api/compliance?stats=true'
+        "/api/compliance?stats=true",
       );
       return response.stats;
     },
@@ -158,7 +169,7 @@ export function useComplianceCalendar(month: number, year: number) {
     queryKey: complianceKeys.calendar(month, year),
     queryFn: async () => {
       const response = await api.get<{ calendar: ComplianceCalendarItem[] }>(
-        `/api/compliance/calendar?month=${month}&year=${year}`
+        `/api/compliance/calendar?month=${month}&year=${year}`,
       );
       return response.calendar;
     },
@@ -170,7 +181,7 @@ export function useExpiringDocuments(days = 90) {
     queryKey: complianceKeys.expiring(days),
     queryFn: async () => {
       const response = await api.get<{ documents: ComplianceDocument[] }>(
-        `/api/compliance/expiring?days=${days}`
+        `/api/compliance/expiring?days=${days}`,
       );
       return response.documents;
     },
@@ -182,7 +193,7 @@ export function useComplianceTypes() {
     queryKey: complianceKeys.types(),
     queryFn: async () => {
       const response = await api.get<{ types: ComplianceDocumentType[] }>(
-        '/api/compliance-types'
+        "/api/compliance-types",
       );
       return response.types;
     },
@@ -195,8 +206,8 @@ export function useCreateComplianceDocument() {
   return useMutation({
     mutationFn: async (data: CreateComplianceDocInput) => {
       const response = await api.post<{ document: ComplianceDocument }>(
-        '/api/compliance',
-        data
+        "/api/compliance",
+        data,
       );
       return response.document;
     },
@@ -211,16 +222,24 @@ export function useUpdateComplianceDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateComplianceDocInput }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateComplianceDocInput;
+    }) => {
       const response = await api.patch<{ document: ComplianceDocument }>(
         `/api/compliance/${id}`,
-        data
+        data,
       );
       return response.document;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: complianceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: complianceKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: complianceKeys.detail(variables.id),
+      });
       queryClient.invalidateQueries({ queryKey: complianceKeys.stats() });
     },
   });
@@ -244,16 +263,24 @@ export function useMarkAsRenewed() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, newExpirationDate }: { id: string; newExpirationDate: string }) => {
+    mutationFn: async ({
+      id,
+      newExpirationDate,
+    }: {
+      id: string;
+      newExpirationDate: string;
+    }) => {
       const response = await api.patch<{ document: ComplianceDocument }>(
         `/api/compliance/${id}/status`,
-        { action: 'renew', new_expiration_date: newExpirationDate }
+        { action: "renew", new_expiration_date: newExpirationDate },
       );
       return response.document;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: complianceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: complianceKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: complianceKeys.detail(variables.id),
+      });
       queryClient.invalidateQueries({ queryKey: complianceKeys.stats() });
     },
   });
@@ -274,13 +301,15 @@ export function useMarkAsConditional() {
     }) => {
       const response = await api.patch<{ document: ComplianceDocument }>(
         `/api/compliance/${id}/status`,
-        { action: 'conditional', requirements, deadline }
+        { action: "conditional", requirements, deadline },
       );
       return response.document;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: complianceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: complianceKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: complianceKeys.detail(variables.id),
+      });
       queryClient.invalidateQueries({ queryKey: complianceKeys.stats() });
     },
   });
@@ -301,13 +330,19 @@ export function useMarkAsFailedInspection() {
     }) => {
       const response = await api.patch<{ document: ComplianceDocument }>(
         `/api/compliance/${id}/status`,
-        { action: 'failed_inspection', corrective_action: correctiveAction, reinspection_date: reinspectionDate }
+        {
+          action: "failed_inspection",
+          corrective_action: correctiveAction,
+          reinspection_date: reinspectionDate,
+        },
       );
       return response.document;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: complianceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: complianceKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: complianceKeys.detail(variables.id),
+      });
       queryClient.invalidateQueries({ queryKey: complianceKeys.stats() });
     },
   });
@@ -320,7 +355,7 @@ export function useClearConditional() {
     mutationFn: async (id: string) => {
       const response = await api.patch<{ document: ComplianceDocument }>(
         `/api/compliance/${id}/status`,
-        { action: 'clear_conditional' }
+        { action: "clear_conditional" },
       );
       return response.document;
     },
@@ -339,7 +374,7 @@ export function useClearFailedInspection() {
     mutationFn: async (id: string) => {
       const response = await api.patch<{ document: ComplianceDocument }>(
         `/api/compliance/${id}/status`,
-        { action: 'clear_failed_inspection' }
+        { action: "clear_failed_inspection" },
       );
       return response.document;
     },

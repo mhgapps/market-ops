@@ -1,17 +1,12 @@
-import { Suspense } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { StatCard } from '@/components/dashboard/stat-card';
-import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
-import { DashboardChartsSkeleton } from '@/components/ui/skeletons';
-import { ActivityFeed } from '@/components/dashboard/activity-feed';
-import { DashboardService } from '@/services/dashboard.service';
-import {
-  FileText,
-  FileCheck,
-  Wrench,
-  Plus,
-} from 'lucide-react';
+import { Suspense } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
+import { DashboardChartsSkeleton } from "@/components/ui/skeletons";
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { DashboardService } from "@/services/dashboard.service";
+import { FileText, FileCheck, Wrench, Plus } from "lucide-react";
 import type {
   OverviewStats,
   TicketStats,
@@ -19,7 +14,7 @@ import type {
   StatusCount,
   PriorityCount,
   ActivityItem,
-} from '@/services/dashboard.service';
+} from "@/services/dashboard.service";
 
 // Types for dashboard data
 interface DashboardData {
@@ -38,15 +33,21 @@ async function fetchDashboardData(): Promise<DashboardData> {
   const service = new DashboardService();
 
   // Fetch all dashboard data in parallel
-  const [overview, ticketStats, ticketTrend, byStatus, byPriority, recentActivity] =
-    await Promise.all([
-      service.getOverviewStats(),
-      service.getTicketStats(),
-      service.getTicketTrend(30),
-      service.getTicketsByStatus(),
-      service.getTicketsByPriority(),
-      service.getRecentActivity(10),
-    ]);
+  const [
+    overview,
+    ticketStats,
+    ticketTrend,
+    byStatus,
+    byPriority,
+    recentActivity,
+  ] = await Promise.all([
+    service.getOverviewStats(),
+    service.getTicketStats(),
+    service.getTicketTrend(30),
+    service.getTicketsByStatus(),
+    service.getTicketsByPriority(),
+    service.getRecentActivity(10),
+  ]);
 
   return {
     overview,
@@ -94,7 +95,10 @@ function StatsSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-2 md:gap-4 lg:grid-cols-4">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-16 md:h-32 rounded-lg bg-muted animate-pulse" />
+        <div
+          key={i}
+          className="h-16 md:h-32 rounded-lg bg-muted animate-pulse"
+        />
       ))}
     </div>
   );
@@ -122,7 +126,9 @@ export default async function DashboardPage() {
       {/* Quick Action */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Dashboard
+          </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Welcome back! Here&apos;s what&apos;s happening today.
           </p>

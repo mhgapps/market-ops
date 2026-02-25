@@ -1,22 +1,27 @@
-import { AssetCategoryDAO, type AssetCategoryWithParent } from '@/dao/asset-category.dao'
-import type { Database } from '@/types/database'
+import {
+  AssetCategoryDAO,
+  type AssetCategoryWithParent,
+} from "@/dao/asset-category.dao";
+import type { Database } from "@/types/database";
 
-type AssetCategory = Database['public']['Tables']['asset_categories']['Row']
-type AssetCategoryInsert = Database['public']['Tables']['asset_categories']['Insert']
-type AssetCategoryUpdate = Database['public']['Tables']['asset_categories']['Update']
+type AssetCategory = Database["public"]["Tables"]["asset_categories"]["Row"];
+type AssetCategoryInsert =
+  Database["public"]["Tables"]["asset_categories"]["Insert"];
+type AssetCategoryUpdate =
+  Database["public"]["Tables"]["asset_categories"]["Update"];
 
 export interface CreateAssetCategoryDTO {
-  name: string
-  description?: string
-  default_lifespan_years?: number
-  parent_category_id?: string
+  name: string;
+  description?: string;
+  default_lifespan_years?: number;
+  parent_category_id?: string;
 }
 
 export interface UpdateAssetCategoryDTO {
-  name?: string
-  description?: string
-  default_lifespan_years?: number
-  parent_category_id?: string
+  name?: string;
+  description?: string;
+  default_lifespan_years?: number;
+  parent_category_id?: string;
 }
 
 /**
@@ -30,19 +35,21 @@ export class AssetCategoryService {
    * Get all asset categories for current tenant
    */
   async getAllCategories(): Promise<AssetCategoryWithParent[]> {
-    return this.categoryDAO.findWithParent()
+    return this.categoryDAO.findWithParent();
   }
 
   /**
    * Get category by ID
    */
   async getCategoryById(id: string): Promise<AssetCategoryWithParent | null> {
-    const category = await this.categoryDAO.findById(id)
-    if (!category) return null
+    const category = await this.categoryDAO.findById(id);
+    if (!category) return null;
 
     // Fetch parent info if exists
     if (category.parent_category_id) {
-      const parent = await this.categoryDAO.findById(category.parent_category_id)
+      const parent = await this.categoryDAO.findById(
+        category.parent_category_id,
+      );
       return {
         ...category,
         parent_category: parent
@@ -51,17 +58,17 @@ export class AssetCategoryService {
               name: parent.name,
             }
           : null,
-      }
+      };
     }
 
-    return category as AssetCategoryWithParent
+    return category as AssetCategoryWithParent;
   }
 
   /**
    * Get top-level categories (no parent)
    */
   async getTopLevelCategories(): Promise<AssetCategory[]> {
-    return this.categoryDAO.findTopLevel()
+    return this.categoryDAO.findTopLevel();
   }
 
   /**
@@ -69,12 +76,12 @@ export class AssetCategoryService {
    */
   async getChildCategories(parentId: string): Promise<AssetCategory[]> {
     // Verify parent exists
-    const parentExists = await this.categoryDAO.exists(parentId)
+    const parentExists = await this.categoryDAO.exists(parentId);
     if (!parentExists) {
-      throw new Error('Parent category not found')
+      throw new Error("Parent category not found");
     }
 
-    return this.categoryDAO.findChildren(parentId)
+    return this.categoryDAO.findChildren(parentId);
   }
 
   /**
@@ -82,26 +89,30 @@ export class AssetCategoryService {
    * Returns nested structure with children
    */
   async getCategoryTree(): Promise<CategoryTreeNode[]> {
-    const allCategories = await this.categoryDAO.findWithParent()
+    const allCategories = await this.categoryDAO.findWithParent();
 
     // Build tree structure
-    const topLevel = allCategories.filter((c) => !c.parent_category_id)
+    const topLevel = allCategories.filter((c) => !c.parent_category_id);
 
-    return topLevel.map((category) => this.buildTreeNode(category, allCategories))
+    return topLevel.map((category) =>
+      this.buildTreeNode(category, allCategories),
+    );
   }
 
   private buildTreeNode(
     category: AssetCategoryWithParent,
-    allCategories: AssetCategoryWithParent[]
+    allCategories: AssetCategoryWithParent[],
   ): CategoryTreeNode {
     const children = allCategories.filter(
-      (c) => c.parent_category_id === category.id
-    )
+      (c) => c.parent_category_id === category.id,
+    );
 
     return {
       ...category,
-      children: children.map((child) => this.buildTreeNode(child, allCategories)),
-    }
+      children: children.map((child) =>
+        this.buildTreeNode(child, allCategories),
+      ),
+    };
   }
 
   /**
@@ -109,16 +120,18 @@ export class AssetCategoryService {
    */
   async createCategory(data: CreateAssetCategoryDTO): Promise<AssetCategory> {
     // Check for duplicate name
-    const existing = await this.categoryDAO.findByName(data.name)
+    const existing = await this.categoryDAO.findByName(data.name);
     if (existing) {
-      throw new Error('Category with this name already exists')
+      throw new Error("Category with this name already exists");
     }
 
     // Validate parent exists if provided
     if (data.parent_category_id) {
-      const parentExists = await this.categoryDAO.exists(data.parent_category_id)
+      const parentExists = await this.categoryDAO.exists(
+        data.parent_category_id,
+      );
       if (!parentExists) {
-        throw new Error('Parent category not found')
+        throw new Error("Parent category not found");
       }
     }
 
@@ -127,9 +140,9 @@ export class AssetCategoryService {
       description: data.description ?? null,
       default_lifespan_years: data.default_lifespan_years ?? null,
       parent_category_id: data.parent_category_id ?? null,
-    }
+    };
 
-    return this.categoryDAO.create(insertData)
+    return this.categoryDAO.create(insertData);
   }
 
   /**
@@ -137,39 +150,43 @@ export class AssetCategoryService {
    */
   async updateCategory(
     id: string,
-    data: UpdateAssetCategoryDTO
+    data: UpdateAssetCategoryDTO,
   ): Promise<AssetCategory> {
     // Verify category exists
-    const category = await this.categoryDAO.findById(id)
+    const category = await this.categoryDAO.findById(id);
     if (!category) {
-      throw new Error('Category not found')
+      throw new Error("Category not found");
     }
 
     // Check for duplicate name if changing name
     if (data.name && data.name !== category.name) {
-      const existing = await this.categoryDAO.findByName(data.name)
+      const existing = await this.categoryDAO.findByName(data.name);
       if (existing && existing.id !== id) {
-        throw new Error('Category with this name already exists')
+        throw new Error("Category with this name already exists");
       }
     }
 
     // Prevent circular parent reference
     if (data.parent_category_id) {
-      const isCircular = await this.isCircularParent(id, data.parent_category_id)
+      const isCircular = await this.isCircularParent(
+        id,
+        data.parent_category_id,
+      );
       if (isCircular) {
-        throw new Error('Cannot set parent - would create circular reference')
+        throw new Error("Cannot set parent - would create circular reference");
       }
     }
 
-    const updateData: Partial<AssetCategoryUpdate> = {}
-    if (data.name !== undefined) updateData.name = data.name
-    if (data.description !== undefined) updateData.description = data.description
+    const updateData: Partial<AssetCategoryUpdate> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined)
+      updateData.description = data.description;
     if (data.default_lifespan_years !== undefined)
-      updateData.default_lifespan_years = data.default_lifespan_years
+      updateData.default_lifespan_years = data.default_lifespan_years;
     if (data.parent_category_id !== undefined)
-      updateData.parent_category_id = data.parent_category_id
+      updateData.parent_category_id = data.parent_category_id;
 
-    return this.categoryDAO.update(id, updateData)
+    return this.categoryDAO.update(id, updateData);
   }
 
   /**
@@ -178,23 +195,23 @@ export class AssetCategoryService {
    */
   async deleteCategory(id: string): Promise<void> {
     // Verify category exists
-    const category = await this.categoryDAO.findById(id)
+    const category = await this.categoryDAO.findById(id);
     if (!category) {
-      throw new Error('Category not found')
+      throw new Error("Category not found");
     }
 
     // Check for children
-    const hasChildren = await this.categoryDAO.hasChildren(id)
+    const hasChildren = await this.categoryDAO.hasChildren(id);
     if (hasChildren) {
       throw new Error(
-        'Cannot delete category with child categories. Delete children first.'
-      )
+        "Cannot delete category with child categories. Delete children first.",
+      );
     }
 
     // TODO: Check if any assets use this category
     // This will be implemented once Asset DAO is available
 
-    await this.categoryDAO.softDelete(id)
+    await this.categoryDAO.softDelete(id);
   }
 
   /**
@@ -202,63 +219,63 @@ export class AssetCategoryService {
    */
   private async isCircularParent(
     categoryId: string,
-    proposedParentId: string
+    proposedParentId: string,
   ): Promise<boolean> {
     if (categoryId === proposedParentId) {
-      return true
+      return true;
     }
 
-    let currentParentId = proposedParentId
-    const visited = new Set<string>()
+    let currentParentId = proposedParentId;
+    const visited = new Set<string>();
 
     while (currentParentId) {
       if (visited.has(currentParentId)) {
-        return true // Circular reference detected
+        return true; // Circular reference detected
       }
-      visited.add(currentParentId)
+      visited.add(currentParentId);
 
       if (currentParentId === categoryId) {
-        return true // Would create circular reference
+        return true; // Would create circular reference
       }
 
-      const parent = await this.categoryDAO.findById(currentParentId)
+      const parent = await this.categoryDAO.findById(currentParentId);
       if (!parent || !parent.parent_category_id) {
-        break
+        break;
       }
 
-      currentParentId = parent.parent_category_id
+      currentParentId = parent.parent_category_id;
     }
 
-    return false
+    return false;
   }
 
   /**
    * Get category usage statistics
    */
   async getCategoryStats(id: string): Promise<CategoryStats> {
-    const category = await this.categoryDAO.findById(id)
+    const category = await this.categoryDAO.findById(id);
     if (!category) {
-      throw new Error('Category not found')
+      throw new Error("Category not found");
     }
 
-    const children = await this.categoryDAO.findChildren(id)
+    const children = await this.categoryDAO.findChildren(id);
 
     return {
       id: category.id,
       name: category.name,
       child_count: children.length,
       asset_count: 0, // TODO: Implement once Asset DAO is available
-    }
+    };
   }
 }
 
 export interface CategoryTreeNode extends AssetCategoryWithParent {
-  children: CategoryTreeNode[]
+  children: CategoryTreeNode[];
 }
 
 export interface CategoryStats {
-  id: string
-  name: string
-  child_count: number
-  asset_count: number
+  id: string;
+  name: string;
+  child_count: number;
+  asset_count: number;
 }

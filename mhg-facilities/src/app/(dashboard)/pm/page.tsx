@@ -1,8 +1,8 @@
-import { PMPageContent } from './pm-page-content';
+import { PMPageContent } from "./pm-page-content";
 
 export const metadata = {
-  title: 'Preventive Maintenance',
-  description: 'Manage preventive maintenance schedules and tasks',
+  title: "Preventive Maintenance",
+  description: "Manage preventive maintenance schedules and tasks",
 };
 
 export default function PMPage() {

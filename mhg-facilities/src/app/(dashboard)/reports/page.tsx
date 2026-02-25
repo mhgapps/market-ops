@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { FileText, Download, FileSpreadsheet } from 'lucide-react';
-import { EmptyState } from '@/components/ui/empty-state';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FileText, Download, FileSpreadsheet } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   exportTicketsToPDF,
   exportAssetsToPDF,
@@ -23,7 +23,7 @@ import {
   exportAssetsToExcel,
   exportComplianceToExcel,
   exportPMSchedulesToExcel,
-} from '@/lib/export';
+} from "@/lib/export";
 
 // Helper to get default date range (last 30 days)
 function getDefaultDateRange() {
@@ -31,27 +31,38 @@ function getDefaultDateRange() {
   const start = new Date();
   start.setDate(start.getDate() - 30);
   return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0],
+    start: start.toISOString().split("T")[0],
+    end: end.toISOString().split("T")[0],
   };
 }
 
 // Helper to get array data from report response
-function getReportDataArray(report: Record<string, unknown>): Record<string, unknown>[] {
+function getReportDataArray(
+  report: Record<string, unknown>,
+): Record<string, unknown>[] {
   // Report data is typically in a property like 'tickets', 'assets', or similar
-  if (Array.isArray(report.tickets)) return report.tickets as Record<string, unknown>[];
-  if (Array.isArray(report.assets)) return report.assets as Record<string, unknown>[];
-  if (Array.isArray(report.documents)) return report.documents as Record<string, unknown>[];
-  if (Array.isArray(report.schedules)) return report.schedules as Record<string, unknown>[];
-  if (Array.isArray(report.data)) return report.data as Record<string, unknown>[];
+  if (Array.isArray(report.tickets))
+    return report.tickets as Record<string, unknown>[];
+  if (Array.isArray(report.assets))
+    return report.assets as Record<string, unknown>[];
+  if (Array.isArray(report.documents))
+    return report.documents as Record<string, unknown>[];
+  if (Array.isArray(report.schedules))
+    return report.schedules as Record<string, unknown>[];
+  if (Array.isArray(report.data))
+    return report.data as Record<string, unknown>[];
   // If it's already an array at root level
-  if (Array.isArray(report)) return report as unknown as Record<string, unknown>[];
+  if (Array.isArray(report))
+    return report as unknown as Record<string, unknown>[];
   return [];
 }
 
 export default function ReportsPage() {
-  const [reportType, setReportType] = useState<string>('tickets');
-  const [generatedReport, setGeneratedReport] = useState<Record<string, unknown> | null>(null);
+  const [reportType, setReportType] = useState<string>("tickets");
+  const [generatedReport, setGeneratedReport] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +71,7 @@ export default function ReportsPage() {
     try {
       // Build URL with query params for PM report
       let url = `/api/reports/${reportType}`;
-      if (reportType === 'pm') {
+      if (reportType === "pm") {
         const params = new URLSearchParams({
           start_date: dateRange.start,
           end_date: dateRange.end,
@@ -72,14 +83,14 @@ export default function ReportsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Failed to generate report');
+        setError(data.error || "Failed to generate report");
         return;
       }
 
       setGeneratedReport(data);
     } catch (err) {
-      console.error('Failed to generate report:', err);
-      setError('Failed to generate report');
+      console.error("Failed to generate report:", err);
+      setError("Failed to generate report");
     }
   };
 
@@ -89,30 +100,30 @@ export default function ReportsPage() {
     try {
       const rows = getReportDataArray(generatedReport);
       if (rows.length === 0) {
-        setError('No rows available to export for this report');
+        setError("No rows available to export for this report");
         return;
       }
 
-      const response = await fetch('/api/reports/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/reports/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           data: rows,
-          filename: `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`,
-          format: 'csv',
+          filename: `${reportType}-report-${new Date().toISOString().split("T")[0]}.csv`,
+          format: "csv",
         }),
       });
 
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
         a.download = `${reportType}-report.csv`;
         a.click();
       }
     } catch (error) {
-      console.error('Failed to export report:', error);
+      console.error("Failed to export report:", error);
     }
   };
 
@@ -122,20 +133,20 @@ export default function ReportsPage() {
     const data = getReportDataArray(generatedReport);
 
     switch (reportType) {
-      case 'tickets':
+      case "tickets":
         exportTicketsToPDF(data);
         break;
-      case 'assets':
+      case "assets":
         exportAssetsToPDF(data);
         break;
-      case 'compliance':
+      case "compliance":
         exportComplianceToPDF(data);
         break;
-      case 'pm':
+      case "pm":
         exportPMSchedulesToPDF(data);
         break;
       default:
-        console.error('Unknown report type for PDF export');
+        console.error("Unknown report type for PDF export");
     }
   };
 
@@ -145,20 +156,20 @@ export default function ReportsPage() {
     const data = getReportDataArray(generatedReport);
 
     switch (reportType) {
-      case 'tickets':
+      case "tickets":
         exportTicketsToExcel(data);
         break;
-      case 'assets':
+      case "assets":
         exportAssetsToExcel(data);
         break;
-      case 'compliance':
+      case "compliance":
         exportComplianceToExcel(data);
         break;
-      case 'pm':
+      case "pm":
         exportPMSchedulesToExcel(data);
         break;
       default:
-        console.error('Unknown report type for Excel export');
+        console.error("Unknown report type for Excel export");
     }
   };
 
@@ -209,7 +220,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Date range picker for PM report */}
-            {reportType === 'pm' && (
+            {reportType === "pm" && (
               <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full md:w-auto">
                   <Label htmlFor="start_date">Start Date</Label>
@@ -218,7 +229,10 @@ export default function ReportsPage() {
                     type="date"
                     value={dateRange.start}
                     onChange={(e) =>
-                      setDateRange((prev) => ({ ...prev, start: e.target.value }))
+                      setDateRange((prev) => ({
+                        ...prev,
+                        start: e.target.value,
+                      }))
                     }
                     className="w-full md:w-[180px]"
                   />

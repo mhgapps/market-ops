@@ -1,6 +1,13 @@
-import { ComplianceAlertDAO } from '@/dao/compliance-alert.dao';
+import { ComplianceAlertDAO } from "@/dao/compliance-alert.dao";
 
-type AlertType = '90_day' | '60_day' | '30_day' | '14_day' | '7_day' | 'expired' | 'failed_inspection';
+type AlertType =
+  | "90_day"
+  | "60_day"
+  | "30_day"
+  | "14_day"
+  | "7_day"
+  | "expired"
+  | "failed_inspection";
 
 interface ComplianceAlert {
   id: string;
@@ -19,27 +26,27 @@ interface UpcomingAlert {
 }
 
 export class ComplianceAlertService {
-  constructor(
-    private alertDAO = new ComplianceAlertDAO()
-  ) {}
+  constructor(private alertDAO = new ComplianceAlertDAO()) {}
 
   async sendExpirationAlert(
     documentId: string,
     alertType: AlertType,
-    recipients: string[]
+    recipients: string[],
   ): Promise<void> {
     if (!recipients || recipients.length === 0) {
-      throw new Error('At least one recipient is required');
+      throw new Error("At least one recipient is required");
     }
 
     await this.alertDAO.create({
       document_id: documentId,
       alert_type: alertType,
       sent_to: recipients,
-      delivery_method: 'email',
+      delivery_method: "email",
     });
 
-    console.log(`Alert sent for document ${documentId} to ${recipients.join(', ')}`);
+    console.log(
+      `Alert sent for document ${documentId} to ${recipients.join(", ")}`,
+    );
   }
 
   async getAlertHistory(documentId: string): Promise<ComplianceAlert[]> {

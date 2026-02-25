@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useMemo } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { uuid, optionalNullableUuid } from '@/lib/validations/shared'
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { uuid, optionalNullableUuid } from "@/lib/validations/shared";
 import {
   Form,
   FormControl,
@@ -13,62 +13,68 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-import { Spinner } from '@/components/ui/loaders'
-import { AlertTriangle } from 'lucide-react'
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Spinner } from "@/components/ui/loaders";
+import { AlertTriangle } from "lucide-react";
 
 const ticketFormSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters').max(200),
+  title: z.string().min(5, "Title must be at least 5 characters").max(200),
   description: z.string().max(5000).optional(),
-  category_id: optionalNullableUuid('Invalid category'),
-  priority: z.enum(['low', 'medium', 'high', 'critical']),
-  location_id: uuid('Please select a location'),
+  category_id: optionalNullableUuid("Invalid category"),
+  priority: z.enum(["low", "medium", "high", "critical"]),
+  location_id: uuid("Please select a location"),
   asset_id: optionalNullableUuid(),
   is_emergency: z.boolean(),
-})
+});
 
-type TicketFormValues = z.infer<typeof ticketFormSchema>
+type TicketFormValues = z.infer<typeof ticketFormSchema>;
 
 interface Category {
-  id: string
-  name: string
-  description?: string | null
+  id: string;
+  name: string;
+  description?: string | null;
 }
 
 interface Location {
-  id: string
-  name: string
-  address?: string | null
+  id: string;
+  name: string;
+  address?: string | null;
 }
 
 interface Asset {
-  id: string
-  name: string
-  serial_number?: string | null
-  location_id: string
+  id: string;
+  name: string;
+  serial_number?: string | null;
+  location_id: string;
 }
 
 interface TicketFormProps {
-  categories: Category[]
-  locations: Location[]
-  assets: Asset[]
-  defaultValues?: Partial<TicketFormValues>
-  onSubmit: (data: TicketFormValues) => void | Promise<void>
-  onCancel?: () => void
-  isSubmitting?: boolean
-  mode?: 'create' | 'edit'
+  categories: Category[];
+  locations: Location[];
+  assets: Asset[];
+  defaultValues?: Partial<TicketFormValues>;
+  onSubmit: (data: TicketFormValues) => void | Promise<void>;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
+  mode?: "create" | "edit";
 }
 
 export function TicketForm({
@@ -79,62 +85,71 @@ export function TicketForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
-  mode = 'create',
+  mode = "create",
 }: TicketFormProps) {
   const form = useForm<TicketFormValues>({
     resolver: zodResolver(ticketFormSchema),
     defaultValues: {
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       category_id: undefined,
-      priority: 'medium',
-      location_id: '',
+      priority: "medium",
+      location_id: "",
       asset_id: null,
       is_emergency: false,
       ...defaultValues,
     },
-  })
+  });
 
-  const [selectedLocationId, isEmergency] = form.watch(['location_id', 'is_emergency'])
+  const [selectedLocationId, isEmergency] = form.watch([
+    "location_id",
+    "is_emergency",
+  ]);
 
   // Memoize filtered assets to prevent recalculation on every render
   const filteredAssets = useMemo(
     () => assets.filter((asset) => asset.location_id === selectedLocationId),
-    [assets, selectedLocationId]
-  )
+    [assets, selectedLocationId],
+  );
 
   return (
     <Form {...form}>
       <Card>
         <CardHeader className="flex flex-row items-start justify-between space-y-0">
           <div className="space-y-1.5">
-            <CardTitle>{mode === 'create' ? 'Create New Ticket' : 'Edit Ticket'}</CardTitle>
+            <CardTitle>
+              {mode === "create" ? "Create New Ticket" : "Edit Ticket"}
+            </CardTitle>
             <CardDescription>
-              {mode === 'create'
-                ? 'Submit a maintenance or facilities request'
-                : 'Update ticket information'}
+              {mode === "create"
+                ? "Submit a maintenance or facilities request"
+                : "Update ticket information"}
             </CardDescription>
           </div>
           {/* Emergency Toggle - Top Right */}
           <div
             className={`flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
               isEmergency
-                ? 'border-red-300 bg-red-100'
-                : 'border-red-200 bg-red-50'
+                ? "border-red-300 bg-red-100"
+                : "border-red-200 bg-red-50"
             }`}
           >
             <div className="flex items-center gap-2">
-              <AlertTriangle className={`h-4 w-4 ${isEmergency ? 'text-red-600' : 'text-red-500'}`} />
-              <span className={`text-sm font-medium ${isEmergency ? 'text-red-700' : 'text-foreground'}`}>
+              <AlertTriangle
+                className={`h-4 w-4 ${isEmergency ? "text-red-600" : "text-red-500"}`}
+              />
+              <span
+                className={`text-sm font-medium ${isEmergency ? "text-red-700" : "text-foreground"}`}
+              >
                 Emergency
               </span>
             </div>
             <Switch
               checked={isEmergency}
               onCheckedChange={(checked) => {
-                form.setValue('is_emergency', checked)
+                form.setValue("is_emergency", checked);
                 if (checked) {
-                  form.setValue('priority', 'critical')
+                  form.setValue("priority", "critical");
                 }
               }}
             />
@@ -173,7 +188,10 @@ export function TicketForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? undefined}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category..." />
@@ -253,9 +271,9 @@ export function TicketForm({
                     <FormLabel>Location *</FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value)
+                        field.onChange(value);
                         // Clear asset when location changes
-                        form.setValue('asset_id', null)
+                        form.setValue("asset_id", null);
                       }}
                       value={field.value}
                     >
@@ -292,9 +310,13 @@ export function TicketForm({
                   <FormItem>
                     <FormLabel>Asset (Optional)</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
-                      value={field.value || '__none__'}
-                      disabled={!selectedLocationId || filteredAssets.length === 0}
+                      onValueChange={(value) =>
+                        field.onChange(value === "__none__" ? null : value)
+                      }
+                      value={field.value || "__none__"}
+                      disabled={
+                        !selectedLocationId || filteredAssets.length === 0
+                      }
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -303,7 +325,9 @@ export function TicketForm({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="__none__">
-                          <span className="text-gray-500">No specific asset</span>
+                          <span className="text-gray-500">
+                            No specific asset
+                          </span>
                         </SelectItem>
                         {filteredAssets.map((asset) => (
                           <SelectItem key={asset.id} value={asset.id}>
@@ -321,10 +345,10 @@ export function TicketForm({
                     </Select>
                     <FormDescription className="text-xs">
                       {!selectedLocationId
-                        ? 'Select a location first'
+                        ? "Select a location first"
                         : filteredAssets.length === 0
-                        ? 'No assets at this location'
-                        : 'Equipment related to this issue'}
+                          ? "No assets at this location"
+                          : "Equipment related to this issue"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -368,12 +392,12 @@ export function TicketForm({
               )}
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
-                {mode === 'create' ? 'Create Ticket' : 'Update Ticket'}
+                {mode === "create" ? "Create Ticket" : "Update Ticket"}
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
     </Form>
-  )
+  );
 }

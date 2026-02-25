@@ -1,17 +1,21 @@
-'use client'
+"use client";
 
-import { useParams, useRouter } from 'next/navigation'
-import { usePMTemplate, useUpdatePMTemplate, useDeletePMTemplate } from '@/hooks/use-pm'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Trash2, Save } from 'lucide-react'
-import { PageLoader } from '@/components/ui/loaders'
-import Link from 'next/link'
-import { toast } from 'sonner'
-import { useState } from 'react'
+import { useParams, useRouter } from "next/navigation";
+import {
+  usePMTemplate,
+  useUpdatePMTemplate,
+  useDeletePMTemplate,
+} from "@/hooks/use-pm";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Trash2, Save } from "lucide-react";
+import { PageLoader } from "@/components/ui/loaders";
+import Link from "next/link";
+import { toast } from "sonner";
+import { useState } from "react";
 
 // Separate form component that only renders when data is ready
 function TemplateForm({
@@ -22,27 +26,27 @@ function TemplateForm({
   isDeleting,
 }: {
   template: {
-    name: string
-    description: string | null
-    category: string | null
-    estimated_duration_hours: number | null
-  }
+    name: string;
+    description: string | null;
+    category: string | null;
+    estimated_duration_hours: number | null;
+  };
   onSave: (data: {
-    name: string
-    description: string | null
-    category: string | null
-    estimated_duration_hours: number | null
-  }) => void
-  onDelete: () => void
-  isSaving: boolean
-  isDeleting: boolean
+    name: string;
+    description: string | null;
+    category: string | null;
+    estimated_duration_hours: number | null;
+  }) => void;
+  onDelete: () => void;
+  isSaving: boolean;
+  isDeleting: boolean;
 }) {
-  const [name, setName] = useState(template.name)
-  const [description, setDescription] = useState(template.description || '')
-  const [category, setCategory] = useState(template.category || '')
-  const [estimatedHours, setEstimatedHours] = useState<number | ''>(
-    template.estimated_duration_hours || ''
-  )
+  const [name, setName] = useState(template.name);
+  const [description, setDescription] = useState(template.description || "");
+  const [category, setCategory] = useState(template.category || "");
+  const [estimatedHours, setEstimatedHours] = useState<number | "">(
+    template.estimated_duration_hours || "",
+  );
 
   const handleSave = () => {
     onSave({
@@ -50,8 +54,8 @@ function TemplateForm({
       description: description || null,
       category: category || null,
       estimated_duration_hours: estimatedHours || null,
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -77,10 +81,7 @@ function TemplateForm({
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !name}
-          >
+          <Button onClick={handleSave} disabled={isSaving || !name}>
             <Save className="h-4 w-4 mr-2" />
             Save Changes
           </Button>
@@ -132,56 +133,60 @@ function TemplateForm({
               step="0.25"
               min="0"
               value={estimatedHours}
-              onChange={(e) => setEstimatedHours(e.target.value ? parseFloat(e.target.value) : '')}
+              onChange={(e) =>
+                setEstimatedHours(
+                  e.target.value ? parseFloat(e.target.value) : "",
+                )
+              }
               placeholder="e.g., 2.5"
             />
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 export default function PMTemplateDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const templateId = params.id as string
+  const params = useParams();
+  const router = useRouter();
+  const templateId = params.id as string;
 
-  const { data: template, isLoading } = usePMTemplate(templateId)
-  const updateTemplate = useUpdatePMTemplate()
-  const deleteTemplate = useDeletePMTemplate()
+  const { data: template, isLoading } = usePMTemplate(templateId);
+  const updateTemplate = useUpdatePMTemplate();
+  const deleteTemplate = useDeletePMTemplate();
 
   const handleSave = async (data: {
-    name: string
-    description: string | null
-    category: string | null
-    estimated_duration_hours: number | null
+    name: string;
+    description: string | null;
+    category: string | null;
+    estimated_duration_hours: number | null;
   }) => {
     try {
       await updateTemplate.mutateAsync({
         id: templateId,
         data,
-      })
-      toast.success('Template updated successfully')
+      });
+      toast.success("Template updated successfully");
     } catch (_error) {
-      toast.error('Failed to update template')
+      toast.error("Failed to update template");
     }
-  }
+  };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this template?')) return
+    if (!confirm("Are you sure you want to delete this template?")) return;
 
     try {
-      await deleteTemplate.mutateAsync(templateId)
-      toast.success('Template deleted successfully')
-      router.push('/pm/templates')
+      await deleteTemplate.mutateAsync(templateId);
+      toast.success("Template deleted successfully");
+      router.push("/pm/templates");
     } catch (_error) {
-      toast.error('Failed to delete template')
+      toast.error("Failed to delete template");
     }
-  }
+  };
 
   if (isLoading) {
-    return <PageLoader />
+    return <PageLoader />;
   }
 
   if (!template) {
@@ -196,7 +201,7 @@ export default function PMTemplateDetailPage() {
           <h1 className="text-2xl font-bold">Template Not Found</h1>
         </div>
       </div>
-    )
+    );
   }
 
   // Use key to reset form when template changes
@@ -209,5 +214,5 @@ export default function PMTemplateDetailPage() {
       isSaving={updateTemplate.isPending}
       isDeleting={deleteTemplate.isPending}
     />
-  )
+  );
 }

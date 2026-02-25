@@ -1,18 +1,19 @@
-import { getPooledSupabaseClient } from '@/lib/supabase/server-pooled';
-import type { Database } from '@/types/database-extensions';
+import { getPooledSupabaseClient } from "@/lib/supabase/server-pooled";
+import type { Database } from "@/types/database-extensions";
 
-type PMCompletion = Database['public']['Tables']['pm_completions']['Row'];
-type PMCompletionInsert = Database['public']['Tables']['pm_completions']['Insert'];
+type PMCompletion = Database["public"]["Tables"]["pm_completions"]["Row"];
+type PMCompletionInsert =
+  Database["public"]["Tables"]["pm_completions"]["Insert"];
 
 export class PMCompletionDAO {
   async findBySchedule(scheduleId: string): Promise<PMCompletion[]> {
     const supabase = await getPooledSupabaseClient();
 
     const { data, error } = await supabase
-      .from('pm_completions')
-      .select('*')
-      .eq('schedule_id', scheduleId)
-      .order('scheduled_date', { ascending: false });
+      .from("pm_completions")
+      .select("*")
+      .eq("schedule_id", scheduleId)
+      .order("scheduled_date", { ascending: false });
 
     if (error) throw new Error(error.message);
     return data || [];
@@ -22,13 +23,13 @@ export class PMCompletionDAO {
     const supabase = await getPooledSupabaseClient();
 
     const { data, error } = await supabase
-      .from('pm_completions')
-      .select('*')
-      .eq('id', id)
+      .from("pm_completions")
+      .select("*")
+      .eq("id", id)
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
 
@@ -39,7 +40,7 @@ export class PMCompletionDAO {
     const supabase = await getPooledSupabaseClient();
 
     const { data: created, error } = await supabase
-      .from('pm_completions')
+      .from("pm_completions")
       .insert({
         schedule_id: data.schedule_id,
         ticket_id: data.ticket_id,
@@ -48,13 +49,13 @@ export class PMCompletionDAO {
         completed_by: data.completed_by,
         checklist_results: data.checklist_results || null,
         notes: data.notes || null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
       .select()
       .single();
 
     if (error) throw new Error(error.message);
-    if (!created) throw new Error('Failed to create PM completion');
+    if (!created) throw new Error("Failed to create PM completion");
     return created as PMCompletion;
   }
 }

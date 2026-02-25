@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,33 +8,33 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { UserCircle } from 'lucide-react'
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { UserCircle } from "lucide-react";
 
 interface StaffMember {
-  id: string
-  full_name?: string
-  fullName?: string
-  role: string
-  email: string
+  id: string;
+  full_name?: string;
+  fullName?: string;
+  role: string;
+  email: string;
 }
 
 interface AssignModalProps {
-  ticketTitle: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  staffMembers: StaffMember[]
-  currentAssigneeId?: string | null
-  onAssign: (staffId: string) => void | Promise<void>
+  ticketTitle: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  staffMembers: StaffMember[];
+  currentAssigneeId?: string | null;
+  onAssign: (staffId: string) => void | Promise<void>;
 }
 
 export function AssignModal({
@@ -46,23 +46,23 @@ export function AssignModal({
   onAssign,
 }: AssignModalProps) {
   const [selectedStaffId, setSelectedStaffId] = useState<string>(
-    currentAssigneeId || ''
-  )
-  const [isSubmitting, setIsSubmitting] = useState(false)
+    currentAssigneeId || "",
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAssign = async () => {
-    if (!selectedStaffId) return
+    if (!selectedStaffId) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      await onAssign(selectedStaffId)
-      onOpenChange(false)
+      await onAssign(selectedStaffId);
+      onOpenChange(false);
     } catch (error) {
-      console.error('Error assigning ticket:', error)
+      console.error("Error assigning ticket:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,8 +70,8 @@ export function AssignModal({
         <DialogHeader>
           <DialogTitle>Assign Ticket to Staff</DialogTitle>
           <DialogDescription>
-            Assign ticket <span className="font-medium">#{ticketTitle}</span> to a staff
-            member who will handle the work.
+            Assign ticket <span className="font-medium">#{ticketTitle}</span> to
+            a staff member who will handle the work.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,7 +88,9 @@ export function AssignModal({
                     <div className="flex items-center gap-2">
                       <UserCircle className="h-4 w-4 text-gray-500" />
                       <div>
-                        <div className="font-medium">{staff.full_name || staff.fullName}</div>
+                        <div className="font-medium">
+                          {staff.full_name || staff.fullName}
+                        </div>
                         <div className="text-xs text-gray-500">
                           {staff.role} • {staff.email}
                         </div>
@@ -102,10 +104,12 @@ export function AssignModal({
 
           {currentAssigneeId && (
             <p className="text-sm text-gray-600">
-              <span className="font-medium">Current assignee:</span>{' '}
+              <span className="font-medium">Current assignee:</span>{" "}
               {(() => {
-                const assignee = staffMembers.find((s) => s.id === currentAssigneeId)
-                return assignee?.full_name || assignee?.fullName || 'Unknown'
+                const assignee = staffMembers.find(
+                  (s) => s.id === currentAssigneeId,
+                );
+                return assignee?.full_name || assignee?.fullName || "Unknown";
               })()}
             </p>
           )}
@@ -125,10 +129,10 @@ export function AssignModal({
             onClick={handleAssign}
             disabled={!selectedStaffId || isSubmitting}
           >
-            {isSubmitting ? 'Assigning...' : 'Assign Ticket'}
+            {isSubmitting ? "Assigning..." : "Assign Ticket"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

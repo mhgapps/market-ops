@@ -1,7 +1,14 @@
-'use client';
+"use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatusCount {
   status: string;
@@ -14,17 +21,20 @@ interface StatusPieChartProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: 'var(--primary)',
-  in_progress: 'var(--chart-4)',
-  completed: 'var(--chart-2)',
-  closed: 'var(--muted-foreground)',
-  rejected: 'var(--destructive)',
-  on_hold: 'var(--chart-5)',
+  submitted: "var(--primary)",
+  in_progress: "var(--chart-4)",
+  completed: "var(--chart-2)",
+  closed: "var(--muted-foreground)",
+  rejected: "var(--destructive)",
+  on_hold: "var(--chart-5)",
 };
 
-export function StatusPieChart({ data, title = 'Status Distribution' }: StatusPieChartProps) {
+export function StatusPieChart({
+  data,
+  title = "Status Distribution",
+}: StatusPieChartProps) {
   const chartData = data.map((item) => ({
-    name: item.status.replace('_', ' '),
+    name: item.status.replace("_", " "),
     value: item.count,
   }));
 
@@ -53,16 +63,18 @@ export function StatusPieChart({ data, title = 'Status Distribution' }: StatusPi
                 return (
                   <Cell
                     key={`cell-${index}`}
-                    fill={STATUS_COLORS[originalStatus] || 'var(--muted-foreground)'}
+                    fill={
+                      STATUS_COLORS[originalStatus] || "var(--muted-foreground)"
+                    }
                   />
                 );
               })}
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'var(--card)',
-                border: '1px solid var(--border)',
-                borderRadius: '0.5rem',
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "0.5rem",
               }}
             />
             <Legend />

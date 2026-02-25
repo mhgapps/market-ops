@@ -1,51 +1,60 @@
-'use client'
+"use client";
 
-import { useParams, useRouter } from 'next/navigation'
-import { AssetForm } from '@/components/assets/asset-form'
-import { useAsset, useUpdateAsset } from '@/hooks/use-assets'
-import { useAssetCategories } from '@/hooks/use-asset-categories'
-import { useAssetTypes } from '@/hooks/use-asset-types'
-import { useLocations } from '@/hooks/use-locations'
-import { useVendors } from '@/hooks/use-vendors'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
-import { PageLoader } from '@/components/ui/loaders'
-import Link from 'next/link'
-import { toast } from 'sonner'
+import { useParams, useRouter } from "next/navigation";
+import { AssetForm } from "@/components/assets/asset-form";
+import { useAsset, useUpdateAsset } from "@/hooks/use-assets";
+import { useAssetCategories } from "@/hooks/use-asset-categories";
+import { useAssetTypes } from "@/hooks/use-asset-types";
+import { useLocations } from "@/hooks/use-locations";
+import { useVendors } from "@/hooks/use-vendors";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { PageLoader } from "@/components/ui/loaders";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function EditAssetPage() {
-  const params = useParams()
-  const router = useRouter()
-  const assetId = params.id as string
+  const params = useParams();
+  const router = useRouter();
+  const assetId = params.id as string;
 
-  const { data: asset, isLoading: assetLoading } = useAsset(assetId)
-  const { data: categoriesData } = useAssetCategories()
-  const { data: assetTypesData } = useAssetTypes()
-  const { data: locationsData } = useLocations()
-  const { data: vendorsData } = useVendors()
-  const updateAsset = useUpdateAsset()
+  const { data: asset, isLoading: assetLoading } = useAsset(assetId);
+  const { data: categoriesData } = useAssetCategories();
+  const { data: assetTypesData } = useAssetTypes();
+  const { data: locationsData } = useLocations();
+  const { data: vendorsData } = useVendors();
+  const updateAsset = useUpdateAsset();
 
-  const categories = categoriesData?.categories ?? []
-  const assetTypes = assetTypesData?.assetTypes ?? []
-  const locations = locationsData ?? []
-  const vendors = vendorsData?.data?.map((v: { id: string; name: string; service_categories?: string[] | null }) => ({
-    id: v.id,
-    name: v.name,
-    service_categories: v.service_categories,
-  })) ?? []
+  const categories = categoriesData?.categories ?? [];
+  const assetTypes = assetTypesData?.assetTypes ?? [];
+  const locations = locationsData ?? [];
+  const vendors =
+    vendorsData?.data?.map(
+      (v: {
+        id: string;
+        name: string;
+        service_categories?: string[] | null;
+      }) => ({
+        id: v.id,
+        name: v.name,
+        service_categories: v.service_categories,
+      }),
+    ) ?? [];
 
-  const handleSubmit = async (data: Parameters<typeof updateAsset.mutateAsync>[0]['data']) => {
+  const handleSubmit = async (
+    data: Parameters<typeof updateAsset.mutateAsync>[0]["data"],
+  ) => {
     try {
-      await updateAsset.mutateAsync({ id: assetId, data })
-      toast.success('Asset updated successfully')
-      router.push(`/assets/${assetId}`)
+      await updateAsset.mutateAsync({ id: assetId, data });
+      toast.success("Asset updated successfully");
+      router.push(`/assets/${assetId}`);
     } catch (_error) {
-      toast.error('Failed to update asset')
+      toast.error("Failed to update asset");
     }
-  }
+  };
 
   if (assetLoading) {
-    return <PageLoader />
+    return <PageLoader />;
   }
 
   if (!asset) {
@@ -63,7 +72,7 @@ export default function EditAssetPage() {
           The asset you are looking for does not exist or has been deleted.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -107,5 +116,5 @@ export default function EditAssetPage() {
         mode="edit"
       />
     </div>
-  )
+  );
 }

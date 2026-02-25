@@ -1,9 +1,9 @@
-import { TicketDAO, TicketFilters } from '@/dao/ticket.dao';
-import { AssetDAO } from '@/dao/asset.dao';
-import { VendorDAO } from '@/dao/vendor.dao';
-import { ComplianceDocumentDAO } from '@/dao/compliance-document.dao';
-import { PMScheduleDAO } from '@/dao/pm-schedule.dao';
-import type { TicketStatus, TicketPriority } from '@/types/database';
+import { TicketDAO, TicketFilters } from "@/dao/ticket.dao";
+import { AssetDAO } from "@/dao/asset.dao";
+import { VendorDAO } from "@/dao/vendor.dao";
+import { ComplianceDocumentDAO } from "@/dao/compliance-document.dao";
+import { PMScheduleDAO } from "@/dao/pm-schedule.dao";
+import type { TicketStatus, TicketPriority } from "@/types/database";
 
 // Date range type
 export interface DateRange {
@@ -166,7 +166,7 @@ export class ReportService {
     private assetDAO = new AssetDAO(),
     private vendorDAO = new VendorDAO(),
     private complianceDAO = new ComplianceDocumentDAO(),
-    private pmScheduleDAO = new PMScheduleDAO()
+    private pmScheduleDAO = new PMScheduleDAO(),
   ) {}
 
   // ============================================================
@@ -177,7 +177,9 @@ export class ReportService {
    * Get ticket report with filters
    * PERFORMANCE: Uses database-level filtering instead of loading all tickets
    */
-  async getTicketReport(filters: TicketReportFilters): Promise<TicketReportData> {
+  async getTicketReport(
+    filters: TicketReportFilters,
+  ): Promise<TicketReportData> {
     // Build filters for DAO query - all filtering happens at database level
     const daoFilters: TicketFilters = {};
 
@@ -215,14 +217,17 @@ export class ReportService {
     });
 
     // Calculate average resolution time
-    const closedTickets = tickets.filter((t) => t.status === 'closed' && t.closed_at);
+    const closedTickets = tickets.filter(
+      (t) => t.status === "closed" && t.closed_at,
+    );
     let averageResolutionTime = 0;
 
     if (closedTickets.length > 0) {
       const totalDays = closedTickets.reduce((sum, ticket) => {
         const created = new Date(ticket.created_at);
         const closed = new Date(ticket.closed_at!);
-        const days = (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+        const days =
+          (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
         return sum + days;
       }, 0);
       averageResolutionTime = totalDays / closedTickets.length;
@@ -242,11 +247,13 @@ export class ReportService {
    * Get resolution time report
    * PERFORMANCE: Uses database-level filtering to only fetch closed tickets in date range
    */
-  async getResolutionTimeReport(dateRange: DateRange): Promise<ResolutionReport> {
+  async getResolutionTimeReport(
+    dateRange: DateRange,
+  ): Promise<ResolutionReport> {
     // Query only closed tickets within the date range at database level
     const closedTickets = await this.ticketDAO.findClosedByDateRange(
       dateRange.start,
-      dateRange.end
+      dateRange.end,
     );
 
     if (closedTickets.length === 0) {
@@ -268,21 +275,26 @@ export class ReportService {
 
     resolutionTimes.sort((a, b) => a - b);
 
-    const average = resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length;
+    const average =
+      resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length;
     const median = resolutionTimes[Math.floor(resolutionTimes.length / 2)];
     const fastest = resolutionTimes[0];
     const slowest = resolutionTimes[resolutionTimes.length - 1];
 
     // By priority
     const byPriority: Record<string, number> = {};
-    const priorityGroups = closedTickets.reduce((acc, ticket) => {
-      if (!acc[ticket.priority]) acc[ticket.priority] = [];
-      const created = new Date(ticket.created_at);
-      const closed = new Date(ticket.closed_at!);
-      const days = (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-      acc[ticket.priority].push(days);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const priorityGroups = closedTickets.reduce(
+      (acc, ticket) => {
+        if (!acc[ticket.priority]) acc[ticket.priority] = [];
+        const created = new Date(ticket.created_at);
+        const closed = new Date(ticket.closed_at!);
+        const days =
+          (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+        acc[ticket.priority].push(days);
+        return acc;
+      },
+      {} as Record<string, number[]>,
+    );
 
     Object.entries(priorityGroups).forEach(([priority, times]) => {
       byPriority[priority] = times.reduce((a, b) => a + b, 0) / times.length;
@@ -332,7 +344,9 @@ export class ReportService {
 
     // Handle multiple status filter if needed (rare case)
     if (filters.status && filters.status.length > 1) {
-      assets = assets.filter((a) => filters.status!.includes(a.status || 'active'));
+      assets = assets.filter((a) =>
+        filters.status!.includes(a.status || "active"),
+      );
     }
 
     // Aggregate data from filtered results
@@ -342,7 +356,7 @@ export class ReportService {
     let totalValue = 0;
 
     assets.forEach((a) => {
-      const status = a.status || 'active';
+      const status = a.status || "active";
       byStatus[status] = (byStatus[status] || 0) + 1;
 
       if (a.category_id) {
@@ -412,8 +426,8 @@ export class ReportService {
       }
     });
 
-    const active = documents.filter((d) => d.status === 'active').length;
-    const expired = documents.filter((d) => d.status === 'expired').length;
+    const active = documents.filter((d) => d.status === "active").length;
+    const expired = documents.filter((d) => d.status === "expired").length;
 
     return {
       total: documents.length,
@@ -429,7 +443,9 @@ export class ReportService {
   // PM REPORTS
   // ============================================================
 
-  async getPMComplianceReport(_dateRange: DateRange): Promise<PMComplianceReport> {
+  async getPMComplianceReport(
+    _dateRange: DateRange,
+  ): Promise<PMComplianceReport> {
     const schedules = await this.pmScheduleDAO.findAll();
 
     // This would require PM completion history tracking
@@ -453,7 +469,7 @@ export class ReportService {
    */
   exportToCSV(data: Record<string, unknown>[], _filename: string): Blob {
     if (data.length === 0) {
-      return new Blob(['No data to export'], { type: 'text/csv' });
+      return new Blob(["No data to export"], { type: "text/csv" });
     }
 
     // Get headers from first row
@@ -461,7 +477,7 @@ export class ReportService {
     const csvRows = [];
 
     // Add header row
-    csvRows.push(headers.join(','));
+    csvRows.push(headers.join(","));
 
     // Add data rows
     for (const row of data) {
@@ -469,11 +485,11 @@ export class ReportService {
         const val = row[header];
         // Escape quotes and wrap in quotes if contains comma
         const escaped = String(val).replace(/"/g, '""');
-        return escaped.includes(',') ? `"${escaped}"` : escaped;
+        return escaped.includes(",") ? `"${escaped}"` : escaped;
       });
-      csvRows.push(values.join(','));
+      csvRows.push(values.join(","));
     }
 
-    return new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    return new Blob([csvRows.join("\n")], { type: "text/csv" });
   }
 }

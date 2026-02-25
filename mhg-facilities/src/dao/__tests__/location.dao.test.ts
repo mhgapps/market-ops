@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { LocationDAO } from '../location.dao';
-import type { Database } from '@/types/database';
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
+import { LocationDAO } from "../location.dao";
+import type { Database } from "@/types/database";
 
-type Location = Database['public']['Tables']['locations']['Row'];
+type Location = Database["public"]["Tables"]["locations"]["Row"];
 
 interface MockQueryBuilder {
   select: Mock;
@@ -18,29 +18,29 @@ interface MockSupabaseClient {
   from: Mock;
 }
 
-describe('LocationDAO', () => {
+describe("LocationDAO", () => {
   let dao: LocationDAO;
   let mockSupabase: MockSupabaseClient;
   let mockQuery: MockQueryBuilder;
 
   const mockLocation: Location = {
-    id: 'location-1',
-    tenant_id: 'test-tenant-id',
-    name: 'Building A',
+    id: "location-1",
+    tenant_id: "test-tenant-id",
+    name: "Building A",
     brand: null,
-    address: '123 Main St',
-    city: 'Test City',
-    state: 'TS',
-    zip: '12345',
+    address: "123 Main St",
+    city: "Test City",
+    state: "TS",
+    zip: "12345",
     phone: null,
     square_footage: null,
-    manager_id: 'manager-1',
+    manager_id: "manager-1",
     emergency_contact_phone: null,
-    status: 'active',
+    status: "active",
     opened_date: null,
     closed_date: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
     deleted_at: null,
   };
 
@@ -61,46 +61,55 @@ describe('LocationDAO', () => {
       from: vi.fn(() => mockQuery),
     };
 
-    vi.doMock('@/lib/supabase/server-pooled', () => ({
+    vi.doMock("@/lib/supabase/server-pooled", () => ({
       getPooledSupabaseClient: vi.fn(() => Promise.resolve(mockSupabase)),
     }));
 
-    vi.doMock('@/lib/tenant/context', () => ({
+    vi.doMock("@/lib/tenant/context", () => ({
       getTenantContext: vi.fn(() =>
-        Promise.resolve({ id: 'test-tenant-id', name: 'Test Tenant' })
+        Promise.resolve({ id: "test-tenant-id", name: "Test Tenant" }),
       ),
     }));
   });
 
-  describe('findAll', () => {
-    it('should return all locations for tenant', async () => {
-      const mockLocations = [mockLocation, { ...mockLocation, id: 'location-2' }];
-      mockQuery.order.mockResolvedValueOnce({ data: mockLocations, error: null });
+  describe("findAll", () => {
+    it("should return all locations for tenant", async () => {
+      const mockLocations = [
+        mockLocation,
+        { ...mockLocation, id: "location-2" },
+      ];
+      mockQuery.order.mockResolvedValueOnce({
+        data: mockLocations,
+        error: null,
+      });
 
       const result = await dao.findAll();
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('locations');
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
+      expect(mockSupabase.from).toHaveBeenCalledWith("locations");
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
       expect(result).toEqual(mockLocations);
     });
   });
 
-  describe('findActive', () => {
-    it('should return only active locations', async () => {
+  describe("findActive", () => {
+    it("should return only active locations", async () => {
       const activeLocations = [mockLocation];
-      mockQuery.order.mockResolvedValueOnce({ data: activeLocations, error: null });
+      mockQuery.order.mockResolvedValueOnce({
+        data: activeLocations,
+        error: null,
+      });
 
       const result = await dao.findActive();
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.eq).toHaveBeenCalledWith('status', 'active');
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
-      expect(mockQuery.order).toHaveBeenCalledWith('name', { ascending: true });
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.eq).toHaveBeenCalledWith("status", "active");
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
+      expect(mockQuery.order).toHaveBeenCalledWith("name", { ascending: true });
       expect(result).toEqual(activeLocations);
     });
 
-    it('should return empty array if no active locations', async () => {
+    it("should return empty array if no active locations", async () => {
       mockQuery.order.mockResolvedValueOnce({ data: null, error: null });
 
       const result = await dao.findActive();
@@ -109,32 +118,38 @@ describe('LocationDAO', () => {
     });
   });
 
-  describe('findByManager', () => {
-    it('should return locations managed by specific user', async () => {
+  describe("findByManager", () => {
+    it("should return locations managed by specific user", async () => {
       const managerLocations = [mockLocation];
-      mockQuery.order.mockResolvedValueOnce({ data: managerLocations, error: null });
+      mockQuery.order.mockResolvedValueOnce({
+        data: managerLocations,
+        error: null,
+      });
 
-      const result = await dao.findByManager('manager-1');
+      const result = await dao.findByManager("manager-1");
 
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
-      expect(mockQuery.eq).toHaveBeenCalledWith('manager_id', 'manager-1');
-      expect(mockQuery.is).toHaveBeenCalledWith('deleted_at', null);
-      expect(mockQuery.order).toHaveBeenCalledWith('name', { ascending: true });
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
+      expect(mockQuery.eq).toHaveBeenCalledWith("manager_id", "manager-1");
+      expect(mockQuery.is).toHaveBeenCalledWith("deleted_at", null);
+      expect(mockQuery.order).toHaveBeenCalledWith("name", { ascending: true });
       expect(result).toEqual(managerLocations);
     });
 
-    it('should return empty array if manager has no locations', async () => {
+    it("should return empty array if manager has no locations", async () => {
       mockQuery.order.mockResolvedValueOnce({ data: [], error: null });
 
-      const result = await dao.findByManager('manager-with-no-locations');
+      const result = await dao.findByManager("manager-with-no-locations");
 
       expect(result).toEqual([]);
     });
   });
 
-  describe('findWithStats', () => {
-    it('should return locations with ticket and asset counts', async () => {
-      mockQuery.order.mockResolvedValueOnce({ data: [mockLocation], error: null });
+  describe("findWithStats", () => {
+    it("should return locations with ticket and asset counts", async () => {
+      mockQuery.order.mockResolvedValueOnce({
+        data: [mockLocation],
+        error: null,
+      });
 
       // Mock ticket count
       const mockTicketQuery = {
@@ -165,8 +180,11 @@ describe('LocationDAO', () => {
       });
     });
 
-    it('should handle zero tickets and assets', async () => {
-      mockQuery.order.mockResolvedValueOnce({ data: [mockLocation], error: null });
+    it("should handle zero tickets and assets", async () => {
+      mockQuery.order.mockResolvedValueOnce({
+        data: [mockLocation],
+        error: null,
+      });
 
       const mockTicketQuery = {
         select: vi.fn().mockReturnThis(),
@@ -192,119 +210,141 @@ describe('LocationDAO', () => {
     });
   });
 
-  describe('findByIdWithManager', () => {
-    it('should return location with manager details', async () => {
+  describe("findByIdWithManager", () => {
+    it("should return location with manager details", async () => {
       const locationWithManager = {
         ...mockLocation,
         manager: {
-          id: 'manager-1',
-          full_name: 'Manager Name',
-          email: 'manager@example.com',
+          id: "manager-1",
+          full_name: "Manager Name",
+          email: "manager@example.com",
         },
       };
-      mockQuery.single.mockResolvedValueOnce({ data: locationWithManager, error: null });
+      mockQuery.single.mockResolvedValueOnce({
+        data: locationWithManager,
+        error: null,
+      });
 
-      const result = await dao.findByIdWithManager('location-1');
+      const result = await dao.findByIdWithManager("location-1");
 
-      expect(mockQuery.select).toHaveBeenCalledWith(expect.stringContaining('manager:users'));
-      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'location-1');
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
+      expect(mockQuery.select).toHaveBeenCalledWith(
+        expect.stringContaining("manager:users"),
+      );
+      expect(mockQuery.eq).toHaveBeenCalledWith("id", "location-1");
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
       expect(result).toEqual(locationWithManager);
     });
 
-    it('should return null if location not found', async () => {
-      mockQuery.single.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } });
+    it("should return null if location not found", async () => {
+      mockQuery.single.mockResolvedValueOnce({
+        data: null,
+        error: { code: "PGRST116" },
+      });
 
-      const result = await dao.findByIdWithManager('non-existent');
+      const result = await dao.findByIdWithManager("non-existent");
 
       expect(result).toBeNull();
     });
   });
 
-  describe('assignManager', () => {
-    it('should assign manager to location', async () => {
-      const updatedLocation = { ...mockLocation, manager_id: 'new-manager' };
-      mockQuery.single.mockResolvedValueOnce({ data: updatedLocation, error: null });
+  describe("assignManager", () => {
+    it("should assign manager to location", async () => {
+      const updatedLocation = { ...mockLocation, manager_id: "new-manager" };
+      mockQuery.single.mockResolvedValueOnce({
+        data: updatedLocation,
+        error: null,
+      });
 
-      const result = await dao.assignManager('location-1', 'new-manager');
+      const result = await dao.assignManager("location-1", "new-manager");
 
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          manager_id: 'new-manager',
+          manager_id: "new-manager",
           updated_at: expect.any(String),
-        })
+        }),
       );
-      expect(result.manager_id).toBe('new-manager');
+      expect(result.manager_id).toBe("new-manager");
     });
 
-    it('should unassign manager by setting to null', async () => {
+    it("should unassign manager by setting to null", async () => {
       const updatedLocation = { ...mockLocation, manager_id: null };
-      mockQuery.single.mockResolvedValueOnce({ data: updatedLocation, error: null });
+      mockQuery.single.mockResolvedValueOnce({
+        data: updatedLocation,
+        error: null,
+      });
 
-      const result = await dao.assignManager('location-1', null);
+      const result = await dao.assignManager("location-1", null);
 
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
           manager_id: null,
-        })
+        }),
       );
       expect(result.manager_id).toBeNull();
     });
   });
 
-  describe('createLocation', () => {
-    it('should create location with tenant_id', async () => {
-      mockQuery.single.mockResolvedValueOnce({ data: mockLocation, error: null });
+  describe("createLocation", () => {
+    it("should create location with tenant_id", async () => {
+      mockQuery.single.mockResolvedValueOnce({
+        data: mockLocation,
+        error: null,
+      });
 
       const result = await dao.createLocation({
-        name: 'Building A',
-        address: '123 Main St',
-        city: 'Test City',
-        state: 'TS',
-        zip: '12345',
-        status: 'active',
+        name: "Building A",
+        address: "123 Main St",
+        city: "Test City",
+        state: "TS",
+        zip: "12345",
+        status: "active",
       });
 
       expect(mockQuery.insert).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'Building A',
-          tenant_id: 'test-tenant-id',
-        })
+          name: "Building A",
+          tenant_id: "test-tenant-id",
+        }),
       );
       expect(result).toEqual(mockLocation);
     });
   });
 
-  describe('updateLocation', () => {
-    it('should update location fields', async () => {
-      const updatedLocation = { ...mockLocation, name: 'Building B' };
-      mockQuery.single.mockResolvedValueOnce({ data: updatedLocation, error: null });
+  describe("updateLocation", () => {
+    it("should update location fields", async () => {
+      const updatedLocation = { ...mockLocation, name: "Building B" };
+      mockQuery.single.mockResolvedValueOnce({
+        data: updatedLocation,
+        error: null,
+      });
 
-      const result = await dao.updateLocation('location-1', { name: 'Building B' });
+      const result = await dao.updateLocation("location-1", {
+        name: "Building B",
+      });
 
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'Building B',
+          name: "Building B",
           updated_at: expect.any(String),
-        })
+        }),
       );
-      expect(result.name).toBe('Building B');
+      expect(result.name).toBe("Building B");
     });
   });
 
-  describe('softDelete', () => {
-    it('should soft delete location', async () => {
+  describe("softDelete", () => {
+    it("should soft delete location", async () => {
       mockQuery.update.mockResolvedValueOnce({ data: null, error: null });
 
-      await dao.softDelete('location-1');
+      await dao.softDelete("location-1");
 
       expect(mockQuery.update).toHaveBeenCalledWith(
         expect.objectContaining({
           deleted_at: expect.any(String),
-        })
+        }),
       );
-      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'location-1');
-      expect(mockQuery.eq).toHaveBeenCalledWith('tenant_id', 'test-tenant-id');
+      expect(mockQuery.eq).toHaveBeenCalledWith("id", "location-1");
+      expect(mockQuery.eq).toHaveBeenCalledWith("tenant_id", "test-tenant-id");
     });
   });
 });

@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -12,97 +12,107 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Label } from '@/components/ui/label'
-import { Info } from 'lucide-react'
-import { Spinner } from '@/components/ui/loaders'
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Info } from "lucide-react";
+import { Spinner } from "@/components/ui/loaders";
 
 // Schema aligned with backend createPMScheduleSchema
-const formSchema = z.object({
-  template_id: z.string().nullable().optional(),
-  name: z.string().min(1, 'Task name is required').max(200),
-  description: z.string().max(1000).nullable().optional(),
-  target_type: z.enum(['asset', 'location']),
-  asset_id: z.string().nullable().optional(),
-  location_id: z.string().nullable().optional(),
-  frequency: z.enum(['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'semi_annually', 'annually']),
-  day_of_week: z.number().int().min(0).max(6).nullable().optional(),
-  day_of_month: z.number().int().min(1).max(31).nullable().optional(),
-  month_of_year: z.number().int().min(1).max(12).nullable().optional(),
-  assigned_to: z.string().nullable().optional(),
-  vendor_id: z.string().nullable().optional(),
-  estimated_cost: z.number().positive().nullable().optional(),
-}).refine(
-  data => {
-    if (data.target_type === 'asset') return !!data.asset_id
-    if (data.target_type === 'location') return !!data.location_id
-    return false
-  },
-  { message: 'Please select an asset or location', path: ['asset_id'] }
-)
+const formSchema = z
+  .object({
+    template_id: z.string().nullable().optional(),
+    name: z.string().min(1, "Task name is required").max(200),
+    description: z.string().max(1000).nullable().optional(),
+    target_type: z.enum(["asset", "location"]),
+    asset_id: z.string().nullable().optional(),
+    location_id: z.string().nullable().optional(),
+    frequency: z.enum([
+      "daily",
+      "weekly",
+      "biweekly",
+      "monthly",
+      "quarterly",
+      "semi_annually",
+      "annually",
+    ]),
+    day_of_week: z.number().int().min(0).max(6).nullable().optional(),
+    day_of_month: z.number().int().min(1).max(31).nullable().optional(),
+    month_of_year: z.number().int().min(1).max(12).nullable().optional(),
+    assigned_to: z.string().nullable().optional(),
+    vendor_id: z.string().nullable().optional(),
+    estimated_cost: z.number().positive().nullable().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.target_type === "asset") return !!data.asset_id;
+      if (data.target_type === "location") return !!data.location_id;
+      return false;
+    },
+    { message: "Please select an asset or location", path: ["asset_id"] },
+  );
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
 interface PMScheduleFormProps {
-  initialData?: Partial<FormValues>
-  onSubmit: (data: FormValues) => void | Promise<void>
-  onCancel?: () => void
-  isSubmitting?: boolean
-  mode?: 'create' | 'edit'
-  assets?: Array<{ id: string; name: string; qr_code: string }>
-  locations?: Array<{ id: string; name: string; address?: string | null }>
+  initialData?: Partial<FormValues>;
+  onSubmit: (data: FormValues) => void | Promise<void>;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
+  mode?: "create" | "edit";
+  assets?: Array<{ id: string; name: string; qr_code: string }>;
+  locations?: Array<{ id: string; name: string; address?: string | null }>;
   templates?: Array<{
-    id: string
-    name: string
-    description?: string | null
-    estimated_duration_hours?: number | null
-    default_vendor_id?: string | null
-  }>
-  users?: Array<{ id: string; full_name: string }>
-  vendors?: Array<{ id: string; name: string }>
+    id: string;
+    name: string;
+    description?: string | null;
+    estimated_duration_hours?: number | null;
+    default_vendor_id?: string | null;
+  }>;
+  users?: Array<{ id: string; full_name: string }>;
+  vendors?: Array<{ id: string; name: string }>;
 }
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Sunday' },
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
-]
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
 
 const MONTHS = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' },
-]
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
 
 export function PMScheduleForm({
   initialData,
   onSubmit,
   onCancel,
   isSubmitting = false,
-  mode = 'create',
+  mode = "create",
   assets = [],
   locations = [],
   templates = [],
@@ -113,12 +123,16 @@ export function PMScheduleForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       template_id: initialData?.template_id || null,
-      name: initialData?.name || '',
-      description: initialData?.description || '',
-      target_type: initialData?.asset_id ? 'asset' : initialData?.location_id ? 'location' : 'asset',
+      name: initialData?.name || "",
+      description: initialData?.description || "",
+      target_type: initialData?.asset_id
+        ? "asset"
+        : initialData?.location_id
+          ? "location"
+          : "asset",
       asset_id: initialData?.asset_id || null,
       location_id: initialData?.location_id || null,
-      frequency: initialData?.frequency || 'monthly',
+      frequency: initialData?.frequency || "monthly",
       day_of_week: initialData?.day_of_week ?? null,
       day_of_month: initialData?.day_of_month ?? null,
       month_of_year: initialData?.month_of_year ?? null,
@@ -126,73 +140,84 @@ export function PMScheduleForm({
       vendor_id: initialData?.vendor_id || null,
       estimated_cost: initialData?.estimated_cost || null,
     },
-  })
+  });
 
   // Consolidate watches to reduce re-render cascades
-  const [targetType, frequency, selectedTemplateId] = form.watch(['target_type', 'frequency', 'template_id'])
+  const [targetType, frequency, selectedTemplateId] = form.watch([
+    "target_type",
+    "frequency",
+    "template_id",
+  ]);
 
   // Memoize template lookup
   const selectedTemplate = useMemo(() => {
-    return selectedTemplateId ? templates.find(t => t.id === selectedTemplateId) : null
-  }, [selectedTemplateId, templates])
+    return selectedTemplateId
+      ? templates.find((t) => t.id === selectedTemplateId)
+      : null;
+  }, [selectedTemplateId, templates]);
 
   // Consolidated effect for template auto-fill, target clearing, and frequency reset
   useEffect(() => {
     // Auto-fill from template when selected
     if (selectedTemplate) {
-      if (selectedTemplate.name && !form.getValues('name')) {
-        form.setValue('name', selectedTemplate.name)
+      if (selectedTemplate.name && !form.getValues("name")) {
+        form.setValue("name", selectedTemplate.name);
       }
-      if (selectedTemplate.description && !form.getValues('description')) {
-        form.setValue('description', selectedTemplate.description)
+      if (selectedTemplate.description && !form.getValues("description")) {
+        form.setValue("description", selectedTemplate.description);
       }
-      if (selectedTemplate.default_vendor_id && !form.getValues('vendor_id')) {
-        form.setValue('vendor_id', selectedTemplate.default_vendor_id)
+      if (selectedTemplate.default_vendor_id && !form.getValues("vendor_id")) {
+        form.setValue("vendor_id", selectedTemplate.default_vendor_id);
       }
     }
-  }, [selectedTemplate, form])
+  }, [selectedTemplate, form]);
 
   // Clear the non-selected target when switching
   useEffect(() => {
-    if (targetType === 'asset') {
-      form.setValue('location_id', null)
+    if (targetType === "asset") {
+      form.setValue("location_id", null);
     } else {
-      form.setValue('asset_id', null)
+      form.setValue("asset_id", null);
     }
-  }, [targetType, form])
+  }, [targetType, form]);
 
   // Reset scheduling fields when frequency changes
   useEffect(() => {
     const resetFields = () => {
-      if (frequency === 'daily') {
-        form.setValue('day_of_week', null)
-        form.setValue('day_of_month', null)
-        form.setValue('month_of_year', null)
-      } else if (frequency === 'weekly' || frequency === 'biweekly') {
-        form.setValue('day_of_month', null)
-        form.setValue('month_of_year', null)
-      } else if (frequency === 'monthly' || frequency === 'quarterly') {
-        form.setValue('day_of_week', null)
-        form.setValue('month_of_year', null)
+      if (frequency === "daily") {
+        form.setValue("day_of_week", null);
+        form.setValue("day_of_month", null);
+        form.setValue("month_of_year", null);
+      } else if (frequency === "weekly" || frequency === "biweekly") {
+        form.setValue("day_of_month", null);
+        form.setValue("month_of_year", null);
+      } else if (frequency === "monthly" || frequency === "quarterly") {
+        form.setValue("day_of_week", null);
+        form.setValue("month_of_year", null);
       }
-    }
-    resetFields()
-  }, [frequency, form])
+    };
+    resetFields();
+  }, [frequency, form]);
 
   const handleSubmit = (data: FormValues) => {
     // Clean up data before submission
     const cleanData = {
       ...data,
-      asset_id: data.target_type === 'asset' ? data.asset_id : null,
-      location_id: data.target_type === 'location' ? data.location_id : null,
-    }
-    onSubmit(cleanData)
-  }
+      asset_id: data.target_type === "asset" ? data.asset_id : null,
+      location_id: data.target_type === "location" ? data.location_id : null,
+    };
+    onSubmit(cleanData);
+  };
 
   // Determine which scheduling fields to show
-  const showDayOfWeek = frequency === 'weekly' || frequency === 'biweekly'
-  const showDayOfMonth = frequency === 'monthly' || frequency === 'quarterly' || frequency === 'semi_annually' || frequency === 'annually'
-  const showMonthOfYear = frequency === 'semi_annually' || frequency === 'annually'
+  const showDayOfWeek = frequency === "weekly" || frequency === "biweekly";
+  const showDayOfMonth =
+    frequency === "monthly" ||
+    frequency === "quarterly" ||
+    frequency === "semi_annually" ||
+    frequency === "annually";
+  const showMonthOfYear =
+    frequency === "semi_annually" || frequency === "annually";
 
   return (
     <Form {...form}>
@@ -207,7 +232,10 @@ export function PMScheduleForm({
                 <FormItem>
                   <FormLabel>Task Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., HVAC Filter Replacement" {...field} />
+                    <Input
+                      placeholder="e.g., HVAC Filter Replacement"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -227,8 +255,10 @@ export function PMScheduleForm({
                       </span>
                     </FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
-                      value={field.value || '__none__'}
+                      onValueChange={(value) =>
+                        field.onChange(value === "__none__" ? null : value)
+                      }
+                      value={field.value || "__none__"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -237,7 +267,9 @@ export function PMScheduleForm({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="__none__">
-                          <span className="text-muted-foreground">No template</span>
+                          <span className="text-muted-foreground">
+                            No template
+                          </span>
                         </SelectItem>
                         {templates.map((template) => (
                           <SelectItem key={template.id} value={template.id}>
@@ -271,7 +303,7 @@ export function PMScheduleForm({
                     placeholder="Brief description of the maintenance task..."
                     className="min-h-[60px] resize-y"
                     {...field}
-                    value={field.value || ''}
+                    value={field.value || ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -284,7 +316,9 @@ export function PMScheduleForm({
         <div className="grid gap-6 md:grid-cols-2">
           {/* Target (Asset or Location) */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">Target</h4>
+            <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">
+              Target
+            </h4>
             <FormField
               control={form.control}
               name="target_type"
@@ -298,13 +332,19 @@ export function PMScheduleForm({
                     >
                       <div className="flex items-center space-x-1.5">
                         <RadioGroupItem value="asset" id="target-asset" />
-                        <Label htmlFor="target-asset" className="text-sm font-normal cursor-pointer">
+                        <Label
+                          htmlFor="target-asset"
+                          className="text-sm font-normal cursor-pointer"
+                        >
                           Asset
                         </Label>
                       </div>
                       <div className="flex items-center space-x-1.5">
                         <RadioGroupItem value="location" id="target-location" />
-                        <Label htmlFor="target-location" className="text-sm font-normal cursor-pointer">
+                        <Label
+                          htmlFor="target-location"
+                          className="text-sm font-normal cursor-pointer"
+                        >
                           Location
                         </Label>
                       </div>
@@ -315,7 +355,7 @@ export function PMScheduleForm({
               )}
             />
 
-            {targetType === 'asset' && (
+            {targetType === "asset" && (
               <FormField
                 control={form.control}
                 name="asset_id"
@@ -335,7 +375,9 @@ export function PMScheduleForm({
                           <SelectItem key={asset.id} value={asset.id}>
                             <div>
                               <div className="font-medium">{asset.name}</div>
-                              <div className="text-xs text-muted-foreground">{asset.qr_code}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {asset.qr_code}
+                              </div>
                             </div>
                           </SelectItem>
                         ))}
@@ -347,7 +389,7 @@ export function PMScheduleForm({
               />
             )}
 
-            {targetType === 'location' && (
+            {targetType === "location" && (
               <FormField
                 control={form.control}
                 name="location_id"
@@ -368,7 +410,9 @@ export function PMScheduleForm({
                             <div>
                               <div className="font-medium">{location.name}</div>
                               {location.address && (
-                                <div className="text-xs text-muted-foreground">{location.address}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {location.address}
+                                </div>
                               )}
                             </div>
                           </SelectItem>
@@ -384,7 +428,9 @@ export function PMScheduleForm({
 
           {/* Schedule */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">Schedule</h4>
+            <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">
+              Schedule
+            </h4>
             <FormField
               control={form.control}
               name="frequency"
@@ -403,7 +449,9 @@ export function PMScheduleForm({
                       <SelectItem value="biweekly">Bi-Weekly</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>
                       <SelectItem value="quarterly">Quarterly</SelectItem>
-                      <SelectItem value="semi_annually">Semi-Annually</SelectItem>
+                      <SelectItem value="semi_annually">
+                        Semi-Annually
+                      </SelectItem>
                       <SelectItem value="annually">Annually</SelectItem>
                     </SelectContent>
                   </Select>
@@ -421,7 +469,9 @@ export function PMScheduleForm({
                     <FormItem>
                       <FormLabel className="text-xs">Day of Week</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        onValueChange={(value) =>
+                          field.onChange(parseInt(value))
+                        }
                         value={field.value?.toString() || undefined}
                       >
                         <FormControl>
@@ -431,7 +481,10 @@ export function PMScheduleForm({
                         </FormControl>
                         <SelectContent>
                           {DAYS_OF_WEEK.map((day) => (
-                            <SelectItem key={day.value} value={day.value.toString()}>
+                            <SelectItem
+                              key={day.value}
+                              value={day.value.toString()}
+                            >
                               {day.label}
                             </SelectItem>
                           ))}
@@ -451,7 +504,9 @@ export function PMScheduleForm({
                     <FormItem>
                       <FormLabel className="text-xs">Month</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        onValueChange={(value) =>
+                          field.onChange(parseInt(value))
+                        }
                         value={field.value?.toString() || undefined}
                       >
                         <FormControl>
@@ -461,7 +516,10 @@ export function PMScheduleForm({
                         </FormControl>
                         <SelectContent>
                           {MONTHS.map((month) => (
-                            <SelectItem key={month.value} value={month.value.toString()}>
+                            <SelectItem
+                              key={month.value}
+                              value={month.value.toString()}
+                            >
                               {month.label}
                             </SelectItem>
                           ))}
@@ -487,8 +545,12 @@ export function PMScheduleForm({
                           max={31}
                           placeholder="1-31"
                           {...field}
-                          value={field.value || ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                          value={field.value || ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? parseInt(e.target.value) : null,
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -502,7 +564,9 @@ export function PMScheduleForm({
 
         {/* Assignment & Cost */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">Assignment & Cost</h4>
+          <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">
+            Assignment & Cost
+          </h4>
           <div className="grid gap-4 md:grid-cols-3">
             <FormField
               control={form.control}
@@ -511,8 +575,10 @@ export function PMScheduleForm({
                 <FormItem>
                   <FormLabel className="text-xs">Assign To</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
-                    value={field.value || '__none__'}
+                    onValueChange={(value) =>
+                      field.onChange(value === "__none__" ? null : value)
+                    }
+                    value={field.value || "__none__"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -521,7 +587,9 @@ export function PMScheduleForm({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="__none__">
-                        <span className="text-muted-foreground">Unassigned</span>
+                        <span className="text-muted-foreground">
+                          Unassigned
+                        </span>
                       </SelectItem>
                       {users.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
@@ -542,8 +610,10 @@ export function PMScheduleForm({
                 <FormItem>
                   <FormLabel className="text-xs">Preferred Vendor</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
-                    value={field.value || '__none__'}
+                    onValueChange={(value) =>
+                      field.onChange(value === "__none__" ? null : value)
+                    }
+                    value={field.value || "__none__"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -579,8 +649,12 @@ export function PMScheduleForm({
                       min={0}
                       placeholder="0.00"
                       {...field}
-                      value={field.value || ''}
-                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value ? parseFloat(e.target.value) : null,
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -604,10 +678,10 @@ export function PMScheduleForm({
           )}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Spinner size="sm" className="mr-2" />}
-            {mode === 'create' ? 'Create Schedule' : 'Save Changes'}
+            {mode === "create" ? "Create Schedule" : "Save Changes"}
           </Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }

@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -11,37 +11,47 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Star } from 'lucide-react'
-import { Spinner } from '@/components/ui/loaders'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Star } from "lucide-react";
+import { Spinner } from "@/components/ui/loaders";
+import { cn } from "@/lib/utils";
 
 const vendorRatingSchema = z.object({
-  rating: z.number().int().min(1, 'Rating is required').max(5),
-  response_time_rating: z.number().int().min(1, 'Response time rating is required').max(5),
-  quality_rating: z.number().int().min(1, 'Quality rating is required').max(5),
-  cost_rating: z.number().int().min(1, 'Cost rating is required').max(5),
+  rating: z.number().int().min(1, "Rating is required").max(5),
+  response_time_rating: z
+    .number()
+    .int()
+    .min(1, "Response time rating is required")
+    .max(5),
+  quality_rating: z.number().int().min(1, "Quality rating is required").max(5),
+  cost_rating: z.number().int().min(1, "Cost rating is required").max(5),
   comments: z.string().max(2000).nullable().optional(),
-})
+});
 
-type VendorRatingFormValues = z.infer<typeof vendorRatingSchema>
+type VendorRatingFormValues = z.infer<typeof vendorRatingSchema>;
 
 interface VendorRatingFormProps {
-  vendorName: string
-  ticketTitle?: string
-  onSubmit: (data: VendorRatingFormValues) => void | Promise<void>
-  onCancel?: () => void
-  isSubmitting?: boolean
+  vendorName: string;
+  ticketTitle?: string;
+  onSubmit: (data: VendorRatingFormValues) => void | Promise<void>;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
 }
 
 interface StarRatingProps {
-  value: number
-  onChange: (value: number) => void
-  label: string
-  description?: string
+  value: number;
+  onChange: (value: number) => void;
+  label: string;
+  description?: string;
 }
 
 function StarRating({ value, onChange, label, description }: StarRatingProps) {
@@ -58,26 +68,26 @@ function StarRating({ value, onChange, label, description }: StarRatingProps) {
             type="button"
             onClick={() => onChange(star)}
             className={cn(
-              'transition-colors rounded p-1',
-              'hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              "transition-colors rounded p-1",
+              "hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500",
             )}
           >
             <Star
               className={cn(
-                'h-8 w-8 transition-colors',
+                "h-8 w-8 transition-colors",
                 star <= value
-                  ? 'fill-yellow-400 text-yellow-400'
-                  : 'fill-none text-gray-300'
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "fill-none text-gray-300",
               )}
             />
           </button>
         ))}
         <span className="ml-2 text-sm font-medium text-gray-700">
-          {value > 0 ? `${value}/5` : 'Not rated'}
+          {value > 0 ? `${value}/5` : "Not rated"}
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 export function VendorRatingForm({
@@ -96,18 +106,18 @@ export function VendorRatingForm({
       cost_rating: 0,
       comments: null,
     },
-  })
+  });
 
   const getRatingLabel = (value: number): string => {
-    if (value === 0) return 'Not rated'
-    if (value === 5) return 'Excellent'
-    if (value === 4) return 'Very Good'
-    if (value === 3) return 'Good'
-    if (value === 2) return 'Fair'
-    return 'Poor'
-  }
+    if (value === 0) return "Not rated";
+    if (value === 5) return "Excellent";
+    if (value === 4) return "Very Good";
+    if (value === 3) return "Good";
+    if (value === 2) return "Fair";
+    return "Poor";
+  };
 
-  const overallRating = form.watch('rating')
+  const overallRating = form.watch("rating");
 
   return (
     <Card>
@@ -117,7 +127,7 @@ export function VendorRatingForm({
           Rate <span className="font-medium">{vendorName}</span>
           {ticketTitle && (
             <>
-              {' '}
+              {" "}
               for ticket <span className="font-medium">{ticketTitle}</span>
             </>
           )}
@@ -228,7 +238,7 @@ export function VendorRatingForm({
                       placeholder="Share additional feedback about this vendor's performance, what went well, or areas for improvement..."
                       className="min-h-[120px] resize-y"
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormDescription>
@@ -243,9 +253,9 @@ export function VendorRatingForm({
             {overallRating > 0 && (
               <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
                 <p className="text-sm text-blue-800">
-                  <span className="font-medium">Note:</span> This rating will be permanently
-                  recorded and cannot be edited later. Please ensure your ratings accurately
-                  reflect the vendor&apos;s performance.
+                  <span className="font-medium">Note:</span> This rating will be
+                  permanently recorded and cannot be edited later. Please ensure
+                  your ratings accurately reflect the vendor&apos;s performance.
                 </p>
               </div>
             )}
@@ -271,5 +281,5 @@ export function VendorRatingForm({
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }

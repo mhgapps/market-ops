@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { useState, useMemo } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -24,75 +24,85 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { UserPlus, Users, Search, Mail, Phone } from 'lucide-react'
-import { PageLoader } from '@/components/ui/loaders'
-import { InviteUserModal } from '@/components/users/invite-user-modal'
-import { EditUserModal } from '@/components/users/edit-user-modal'
-import { useAuth } from '@/hooks/use-auth'
-import { useUsers, useDeactivateUser, type User } from '@/hooks/use-users'
-import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { TableLoadingOverlay } from '@/components/ui/table-loading-overlay'
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { UserPlus, Users, Search, Mail, Phone } from "lucide-react";
+import { PageLoader } from "@/components/ui/loaders";
+import { InviteUserModal } from "@/components/users/invite-user-modal";
+import { EditUserModal } from "@/components/users/edit-user-modal";
+import { useAuth } from "@/hooks/use-auth";
+import { useUsers, useDeactivateUser, type User } from "@/hooks/use-users";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { TableLoadingOverlay } from "@/components/ui/table-loading-overlay";
 
 export default function UsersPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [roleFilter, setRoleFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [inviteModalOpen, setInviteModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   // Use cached auth hook
-  const { user: currentUser, isLoading: authLoading } = useAuth()
+  const { user: currentUser, isLoading: authLoading } = useAuth();
 
   // Debounce search to avoid API calls on every keystroke
-  const debouncedSearch = useDebouncedValue(searchQuery, 300)
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   // Build filters with memoization
-  const filters = useMemo(() => ({
-    ...(debouncedSearch && { search: debouncedSearch }),
-    ...(roleFilter !== 'all' && { role: roleFilter }),
-    ...(statusFilter !== 'all' && { status: statusFilter as 'active' | 'inactive' | 'all' }),
-  }), [debouncedSearch, roleFilter, statusFilter])
+  const filters = useMemo(
+    () => ({
+      ...(debouncedSearch && { search: debouncedSearch }),
+      ...(roleFilter !== "all" && { role: roleFilter }),
+      ...(statusFilter !== "all" && {
+        status: statusFilter as "active" | "inactive" | "all",
+      }),
+    }),
+    [debouncedSearch, roleFilter, statusFilter],
+  );
 
   // Use React Query hook with caching
-  const { data: users = [], isLoading: usersLoading, isFetching: usersFetching } = useUsers(filters)
+  const {
+    data: users = [],
+    isLoading: usersLoading,
+    isFetching: usersFetching,
+  } = useUsers(filters);
 
   // Deactivate user mutation
-  const deactivateUser = useDeactivateUser()
+  const deactivateUser = useDeactivateUser();
 
   const getRoleBadge = (role: string) => {
     const colors = {
-      super_admin: 'destructive',
-      admin: 'default',
-      manager: 'secondary',
-      staff: 'outline',
-      vendor: 'outline',
-      readonly: 'outline',
-    } as const
+      super_admin: "destructive",
+      admin: "default",
+      manager: "secondary",
+      staff: "outline",
+      vendor: "outline",
+      readonly: "outline",
+    } as const;
 
     const labels = {
-      super_admin: 'Super Admin',
-      admin: 'Admin',
-      manager: 'Manager',
-      staff: 'Staff',
-      vendor: 'Vendor',
-      readonly: 'Read Only',
-    } as Record<string, string>
+      super_admin: "Super Admin",
+      admin: "Admin",
+      manager: "Manager",
+      staff: "Staff",
+      vendor: "Vendor",
+      readonly: "Read Only",
+    } as Record<string, string>;
 
     return (
-      <Badge variant={colors[role as keyof typeof colors] || 'outline'}>
+      <Badge variant={colors[role as keyof typeof colors] || "outline"}>
         {labels[role] || role}
       </Badge>
-    )
-  }
+    );
+  };
 
-  const canManageUsers = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
+  const canManageUsers =
+    currentUser?.role === "admin" || currentUser?.role === "super_admin";
 
-  const isLoading = authLoading || usersLoading
+  const isLoading = authLoading || usersLoading;
 
   if (isLoading && users.length === 0) {
-    return <PageLoader />
+    return <PageLoader />;
   }
 
   return (
@@ -160,14 +170,14 @@ export default function UsersPage() {
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <CardTitle className="mb-2">No Users Found</CardTitle>
             <CardDescription className="text-center mb-4">
-              {searchQuery || roleFilter !== 'all' || statusFilter !== 'all'
-                ? 'No users match your search criteria'
-                : 'Get started by inviting your first user'}
+              {searchQuery || roleFilter !== "all" || statusFilter !== "all"
+                ? "No users match your search criteria"
+                : "Get started by inviting your first user"}
             </CardDescription>
             {canManageUsers &&
               !searchQuery &&
-              roleFilter === 'all' &&
-              statusFilter === 'all' && (
+              roleFilter === "all" &&
+              statusFilter === "all" && (
                 <Button onClick={() => setInviteModalOpen(true)}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite User
@@ -181,77 +191,87 @@ export default function UsersPage() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden md:table-cell">Contact</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead className="hidden lg:table-cell">Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">
-                        <div>
-                          <div>{user.fullName}</div>
-                          <div className="text-sm text-muted-foreground md:hidden">
-                            {user.email}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-3 w-3 text-muted-foreground" />
-                            {user.email}
-                          </div>
-                          {user.phone && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Phone className="h-3 w-3" />
-                              {user.phone}
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Contact
+                      </TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead className="hidden lg:table-cell">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">
+                          <div>
+                            <div>{user.fullName}</div>
+                            <div className="text-sm text-muted-foreground md:hidden">
+                              {user.email}
                             </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                          {user.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {canManageUsers && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEditingUser(user)}
-                              >
-                                Edit
-                              </Button>
-                              {user.isActive && (
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="h-3 w-3 text-muted-foreground" />
+                              {user.email}
+                            </div>
+                            {user.phone && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Phone className="h-3 w-3" />
+                                {user.phone}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <Badge
+                            variant={user.isActive ? "default" : "secondary"}
+                          >
+                            {user.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {canManageUsers && (
+                              <>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => deactivateUser.mutate(user.id)}
-                                  disabled={deactivateUser.isPending}
+                                  onClick={() => setEditingUser(user)}
                                 >
-                                  {deactivateUser.isPending ? 'Deactivating...' : 'Deactivate'}
+                                  Edit
                                 </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
+                                {user.isActive && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      deactivateUser.mutate(user.id)
+                                    }
+                                    disabled={deactivateUser.isPending}
+                                  >
+                                    {deactivateUser.isPending
+                                      ? "Deactivating..."
+                                      : "Deactivate"}
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
           </Card>
         </TableLoadingOverlay>
       )}
@@ -275,5 +295,5 @@ export default function UsersPage() {
         onClose={() => setEditingUser(null)}
       />
     </div>
-  )
+  );
 }

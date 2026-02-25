@@ -1,7 +1,15 @@
-'use client';
+"use client";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TrendData {
   date: string;
@@ -13,7 +21,10 @@ interface TicketTrendChartProps {
   title?: string;
 }
 
-export function TicketTrendChart({ data, title = 'Ticket Trend' }: TicketTrendChartProps) {
+export function TicketTrendChart({
+  data,
+  title = "Ticket Trend",
+}: TicketTrendChartProps) {
   return (
     <Card>
       <CardHeader>
@@ -34,9 +45,9 @@ export function TicketTrendChart({ data, title = 'Ticket Trend' }: TicketTrendCh
             <YAxis className="text-xs text-muted-foreground" />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'var(--card)',
-                border: '1px solid var(--border)',
-                borderRadius: '0.5rem',
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "0.5rem",
               }}
               labelFormatter={(value) => {
                 const date = new Date(value as string);
@@ -48,7 +59,7 @@ export function TicketTrendChart({ data, title = 'Ticket Trend' }: TicketTrendCh
               dataKey="count"
               stroke="var(--primary)"
               strokeWidth={2}
-              dot={{ fill: 'var(--primary)' }}
+              dot={{ fill: "var(--primary)" }}
             />
           </LineChart>
         </ResponsiveContainer>

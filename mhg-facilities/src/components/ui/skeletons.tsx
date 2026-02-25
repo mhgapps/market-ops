@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Standardized skeleton loaders for MHG Facilities
@@ -12,15 +12,15 @@ import { Skeleton } from '@/components/ui/skeleton'
  */
 
 interface SkeletonContainerProps {
-  className?: string
-  children?: React.ReactNode
+  className?: string;
+  children?: React.ReactNode;
 }
 
 /**
  * Reusable skeleton block with pulse animation
  */
 function SkeletonBlock({ className }: { className?: string }) {
-  return <div className={cn('bg-muted animate-pulse rounded', className)} />
+  return <div className={cn("bg-muted animate-pulse rounded", className)} />;
 }
 
 /**
@@ -38,7 +38,7 @@ export function StatCardSkeleton() {
         <Skeleton className="h-3 w-32" />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 /**
@@ -54,7 +54,7 @@ export function ChartSkeleton({ height = 300 }: { height?: number }) {
         <Skeleton className={`h-[${height}px]`} style={{ height }} />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 /**
@@ -71,13 +71,19 @@ export function DashboardChartsSkeleton() {
         <SkeletonBlock className="h-[400px] rounded-lg" />
       </div>
     </>
-  )
+  );
 }
 
 /**
  * Table skeleton (list pages)
  */
-export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
+export function TableSkeleton({
+  rows = 5,
+  columns = 4,
+}: {
+  rows?: number;
+  columns?: number;
+}) {
   return (
     <div className="space-y-3">
       {/* Header */}
@@ -95,7 +101,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 /**
@@ -114,7 +120,7 @@ export function ListSkeleton({ items = 5 }: { items?: number }) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 /**
@@ -134,7 +140,7 @@ export function FormSkeleton({ fields = 4 }: { fields?: number }) {
         <Skeleton className="h-10 w-24" />
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -153,7 +159,7 @@ export function CardSkeleton({ className }: SkeletonContainerProps) {
         <Skeleton className="h-4 w-3/5" />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 /**
@@ -179,7 +185,7 @@ export function DetailPageSkeleton() {
         <CardSkeleton />
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -192,5 +198,5 @@ export function DashboardStatsSkeleton() {
         <StatCardSkeleton key={i} />
       ))}
     </div>
-  )
+  );
 }

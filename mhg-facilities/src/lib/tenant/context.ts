@@ -1,13 +1,20 @@
-import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
-import type { TenantContext, TenantSettings } from '@/types'
-import type { Tenant } from '@/types/database'
+import { headers } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
+import type { TenantContext, TenantSettings } from "@/types";
+import type { Tenant } from "@/types/database";
 
 // Partial tenant type for select queries
 type TenantSelectResult = Pick<
   Tenant,
-  'id' | 'slug' | 'name' | 'features' | 'branding' | 'max_users' | 'max_locations' | 'storage_limit_gb'
->
+  | "id"
+  | "slug"
+  | "name"
+  | "features"
+  | "branding"
+  | "max_users"
+  | "max_locations"
+  | "storage_limit_gb"
+>;
 
 // Default tenant settings
 const DEFAULT_SETTINGS: TenantSettings = {
@@ -22,8 +29,8 @@ const DEFAULT_SETTINGS: TenantSettings = {
     custom_domain: false,
   },
   branding: {
-    primary_color: '#3B82F6',
-    secondary_color: '#1E40AF',
+    primary_color: "#3B82F6",
+    secondary_color: "#1E40AF",
     logo_url: null,
     favicon_url: null,
   },
@@ -32,28 +39,30 @@ const DEFAULT_SETTINGS: TenantSettings = {
     max_locations: 3,
     storage_gb: 5,
   },
-}
+};
 
 export async function getTenantContext(): Promise<TenantContext | null> {
-  const headersList = await headers()
-  const host = headersList.get('host') ?? ''
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "";
 
   // Extract subdomain from host
   // e.g., mhg.facilities.app -> mhg
   // e.g., localhost:3000 -> null (no subdomain)
-  const parts = host.split('.')
-  const subdomain = parts.length > 2 ? parts[0] : null
+  const parts = host.split(".");
+  const subdomain = parts.length > 2 ? parts[0] : null;
 
   // Check if it's a known tenant subdomain (not www, app, localhost)
-  if (subdomain && !['www', 'app', 'localhost'].includes(subdomain)) {
-    const supabase = await createClient()
+  if (subdomain && !["www", "app", "localhost"].includes(subdomain)) {
+    const supabase = await createClient();
     const { data: tenant } = await supabase
-      .from('tenants')
-      .select('id, slug, name, features, branding, max_users, max_locations, storage_limit_gb')
-      .eq('slug', subdomain)
-      .eq('status', 'active')
-      .is('deleted_at', null)
-      .single<TenantSelectResult>()
+      .from("tenants")
+      .select(
+        "id, slug, name, features, branding, max_users, max_locations, storage_limit_gb",
+      )
+      .eq("slug", subdomain)
+      .eq("status", "active")
+      .is("deleted_at", null)
+      .single<TenantSelectResult>();
 
     if (tenant) {
       return {
@@ -61,51 +70,57 @@ export async function getTenantContext(): Promise<TenantContext | null> {
         slug: tenant.slug,
         name: tenant.name,
         settings: {
-          features: (tenant.features ?? DEFAULT_SETTINGS.features) as TenantSettings['features'],
-          branding: (tenant.branding ?? DEFAULT_SETTINGS.branding) as TenantSettings['branding'],
+          features: (tenant.features ??
+            DEFAULT_SETTINGS.features) as TenantSettings["features"],
+          branding: (tenant.branding ??
+            DEFAULT_SETTINGS.branding) as TenantSettings["branding"],
           limits: {
             max_users: tenant.max_users,
             max_locations: tenant.max_locations,
             storage_gb: tenant.storage_limit_gb,
           },
         },
-      }
+      };
     }
   }
 
   // Fallback: Get tenant from authenticated user
-  const supabase = await createClient()
-  const { data: { user: authUser } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
 
   if (!authUser) {
-    return null
+    return null;
   }
 
   // First check the users table for tenant_id (primary source)
-  let tenantId: string | null = null
+  let tenantId: string | null = null;
 
   const { data: dbUser } = await supabase
-    .from('users')
-    .select('tenant_id')
-    .eq('auth_user_id', authUser.id)
-    .is('deleted_at', null)
-    .single<{ tenant_id: string | null }>()
+    .from("users")
+    .select("tenant_id")
+    .eq("auth_user_id", authUser.id)
+    .is("deleted_at", null)
+    .single<{ tenant_id: string | null }>();
 
   if (dbUser?.tenant_id) {
-    tenantId = dbUser.tenant_id
+    tenantId = dbUser.tenant_id;
   } else if (authUser.user_metadata?.tenant_id) {
     // Fallback to user_metadata if not in users table
-    tenantId = authUser.user_metadata.tenant_id
+    tenantId = authUser.user_metadata.tenant_id;
   }
 
   if (tenantId) {
     const { data: tenant } = await supabase
-      .from('tenants')
-      .select('id, slug, name, features, branding, max_users, max_locations, storage_limit_gb')
-      .eq('id', tenantId)
-      .eq('status', 'active')
-      .is('deleted_at', null)
-      .single<TenantSelectResult>()
+      .from("tenants")
+      .select(
+        "id, slug, name, features, branding, max_users, max_locations, storage_limit_gb",
+      )
+      .eq("id", tenantId)
+      .eq("status", "active")
+      .is("deleted_at", null)
+      .single<TenantSelectResult>();
 
     if (tenant) {
       return {
@@ -113,32 +128,34 @@ export async function getTenantContext(): Promise<TenantContext | null> {
         slug: tenant.slug,
         name: tenant.name,
         settings: {
-          features: (tenant.features ?? DEFAULT_SETTINGS.features) as TenantSettings['features'],
-          branding: (tenant.branding ?? DEFAULT_SETTINGS.branding) as TenantSettings['branding'],
+          features: (tenant.features ??
+            DEFAULT_SETTINGS.features) as TenantSettings["features"],
+          branding: (tenant.branding ??
+            DEFAULT_SETTINGS.branding) as TenantSettings["branding"],
           limits: {
             max_users: tenant.max_users,
             max_locations: tenant.max_locations,
             storage_gb: tenant.storage_limit_gb,
           },
         },
-      }
+      };
     }
   }
 
-  return null
+  return null;
 }
 
 // Get tenant ID only (lighter query when full context not needed)
 export async function getTenantId(): Promise<string | null> {
-  const context = await getTenantContext()
-  return context?.id ?? null
+  const context = await getTenantContext();
+  return context?.id ?? null;
 }
 
 // Require tenant context (throws if not found)
 export async function requireTenantContext(): Promise<TenantContext> {
-  const context = await getTenantContext()
+  const context = await getTenantContext();
   if (!context) {
-    throw new Error('Tenant context required but not found')
+    throw new Error("Tenant context required but not found");
   }
-  return context
+  return context;
 }

@@ -1,13 +1,19 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { requireAuth } from '@/lib/auth/api-auth'
-import { VendorService } from '@/services/vendor.service'
-import { createVendorSchema, vendorFilterSchema } from '@/lib/validations/assets-vendors'
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAuth } from "@/lib/auth/api-auth";
+import { VendorService } from "@/services/vendor.service";
+import {
+  createVendorSchema,
+  vendorFilterSchema,
+} from "@/lib/validations/assets-vendors";
 
 // Helper to convert null to undefined
 function nullToUndefined<T extends Record<string, unknown>>(obj: T): T {
   return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [key, value === null ? undefined : value])
-  ) as T
+    Object.entries(obj).map(([key, value]) => [
+      key,
+      value === null ? undefined : value,
+    ]),
+  ) as T;
 }
 
 /**
@@ -17,42 +23,50 @@ function nullToUndefined<T extends Record<string, unknown>>(obj: T): T {
  */
 export async function GET(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
-    const searchParams = request.nextUrl.searchParams
+    const searchParams = request.nextUrl.searchParams;
 
     // Parse pagination params
-    const page = parseInt(searchParams.get('page') || '1', 10)
-    const pageSize = parseInt(searchParams.get('pageSize') || '50', 10)
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageSize = parseInt(searchParams.get("pageSize") || "50", 10);
 
     const rawFilters = {
-      is_active: searchParams.get('is_active') || undefined,
-      is_preferred: searchParams.get('is_preferred') || undefined,
-      service_category: searchParams.get('service_category') || undefined,
-      insurance_expiring_days: searchParams.get('insurance_expiring_days') || undefined,
-      contract_expiring_days: searchParams.get('contract_expiring_days') || undefined,
-      search: searchParams.get('search') || undefined,
+      is_active: searchParams.get("is_active") || undefined,
+      is_preferred: searchParams.get("is_preferred") || undefined,
+      service_category: searchParams.get("service_category") || undefined,
+      insurance_expiring_days:
+        searchParams.get("insurance_expiring_days") || undefined,
+      contract_expiring_days:
+        searchParams.get("contract_expiring_days") || undefined,
+      search: searchParams.get("search") || undefined,
       page,
       pageSize,
-    }
+    };
 
     // Validate filters
-    const validationResult = vendorFilterSchema.safeParse(rawFilters)
+    const validationResult = vendorFilterSchema.safeParse(rawFilters);
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid filter parameters', details: validationResult.error.issues },
-        { status: 400 }
-      )
+        {
+          error: "Invalid filter parameters",
+          details: validationResult.error.issues,
+        },
+        { status: 400 },
+      );
     }
 
-    const service = new VendorService()
-    const result = await service.getAllVendorsPaginated(validationResult.data)
+    const service = new VendorService();
+    const result = await service.getAllVendorsPaginated(validationResult.data);
 
-    return NextResponse.json(result)
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching vendors:', error)
-    return NextResponse.json({ error: 'Failed to fetch vendors' }, { status: 500 })
+    console.error("Error fetching vendors:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch vendors" },
+      { status: 500 },
+    );
   }
 }
 
@@ -62,41 +76,46 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
-    if (authError) return authError
+    const { error: authError } = await requireAuth();
+    if (authError) return authError;
 
-    const body = await request.json()
+    const body = await request.json();
 
     // Validate input
-    const validationResult = createVendorSchema.safeParse(body)
+    const validationResult = createVendorSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validationResult.error.issues },
-        { status: 400 }
-      )
+        { error: "Invalid input", details: validationResult.error.issues },
+        { status: 400 },
+      );
     }
 
-    const service = new VendorService()
+    const service = new VendorService();
     // Convert null values to undefined for service layer
-    const data = nullToUndefined(validationResult.data)
-    const vendor = await service.createVendor(data as Parameters<VendorService['createVendor']>[0])
+    const data = nullToUndefined(validationResult.data);
+    const vendor = await service.createVendor(
+      data as Parameters<VendorService["createVendor"]>[0],
+    );
 
-    return NextResponse.json({ vendor }, { status: 201 })
+    return NextResponse.json({ vendor }, { status: 201 });
   } catch (error) {
-    console.error('Error creating vendor:', error)
+    console.error("Error creating vendor:", error);
 
     if (error instanceof Error) {
-      if (error.message.includes('already exists')) {
-        return NextResponse.json({ error: error.message }, { status: 409 })
+      if (error.message.includes("already exists")) {
+        return NextResponse.json({ error: error.message }, { status: 409 });
       }
-      if (error.message.includes('Invalid email')) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error.message.includes("Invalid email")) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
-      if (error.message.includes('start date cannot be after')) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
+      if (error.message.includes("start date cannot be after")) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
     }
 
-    return NextResponse.json({ error: 'Failed to create vendor' }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to create vendor" },
+      { status: 500 },
+    );
   }
 }
