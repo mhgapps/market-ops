@@ -22,6 +22,7 @@ import {
   DollarSign,
   Shield,
   AlertTriangle,
+  TicketPlus,
 } from 'lucide-react'
 import { PageLoader } from '@/components/ui/loaders'
 import { format } from 'date-fns'
@@ -143,6 +144,16 @@ export default function AssetDetailPage({ params }: PageProps) {
         </div>
 
         <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              const params = new URLSearchParams({ asset_id: id })
+              if (asset?.location_id) params.set('location_id', asset.location_id)
+              router.push(`/tickets/new?${params.toString()}`)
+            }}
+          >
+            <TicketPlus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">New Ticket</span>
+          </Button>
           <Button
             variant="outline"
             onClick={() => setShowTransferModal(true)}

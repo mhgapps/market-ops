@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { TicketForm } from '@/components/tickets/ticket-form'
 import { useCreateTicket, useCheckDuplicates } from '@/hooks/use-tickets'
 import { useQuery } from '@tanstack/react-query'
@@ -24,8 +24,13 @@ interface DuplicateTicket {
 
 export default function NewTicketPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const createTicket = useCreateTicket()
   const checkDuplicates = useCheckDuplicates()
+
+  // Pre-fill from query params (e.g. coming from asset detail page)
+  const prefillAssetId = searchParams.get('asset_id') || undefined
+  const prefillLocationId = searchParams.get('location_id') || undefined
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
   const [duplicateTickets, setDuplicateTickets] = useState<DuplicateTicket[]>([])
   const [pendingData, setPendingData] = useState<CreateTicketData | null>(null)
@@ -187,6 +192,10 @@ export default function NewTicketPage() {
         categories={categoriesData || []}
         locations={locationsData || []}
         assets={assetsData || []}
+        defaultValues={{
+          ...(prefillAssetId && { asset_id: prefillAssetId }),
+          ...(prefillLocationId && { location_id: prefillLocationId }),
+        }}
         onSubmit={handleSubmit}
         onCancel={() => router.push('/tickets')}
         isSubmitting={createTicket.isPending}
