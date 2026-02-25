@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { z } from 'zod'
@@ -54,6 +54,20 @@ const passwordSchema = z.object({
 type Step = 'email' | 'password' | 'auto-login'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <Card>
+        <CardContent className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </CardContent>
+      </Card>
+    }>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
