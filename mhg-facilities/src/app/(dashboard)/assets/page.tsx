@@ -94,20 +94,31 @@ export default function AssetsPage() {
 
   const handleExportCSV = async () => {
     try {
-      const response = await api.get<{
-        data: Array<{
-          id: string;
-          name: string;
-          qr_code: string | null;
-          status: string;
-          serial_number: string | null;
-          model: string | null;
-          manufacturer: string | null;
-          category?: { name: string } | null;
-          location?: { name: string } | null;
-        }>;
-      }>("/api/assets?pageSize=10000");
-      const allAssets = response.data || [];
+      type ExportAsset = {
+        id: string;
+        name: string;
+        qr_code: string | null;
+        status: string;
+        serial_number: string | null;
+        model: string | null;
+        manufacturer: string | null;
+        category?: { name: string } | null;
+        location?: { name: string } | null;
+      };
+
+      // Fetch all pages (API max is 100 per page)
+      const allAssets: ExportAsset[] = [];
+      let currentPage = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await api.get<{ data: ExportAsset[]; total: number }>(
+          `/api/assets?pageSize=100&page=${currentPage}`
+        );
+        allAssets.push(...(response.data || []));
+        hasMore = allAssets.length < response.total;
+        currentPage++;
+      }
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
 
