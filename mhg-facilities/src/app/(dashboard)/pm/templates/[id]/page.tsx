@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Trash2, Save } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/loaders";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -47,6 +48,7 @@ function TemplateForm({
   const [estimatedHours, setEstimatedHours] = useState<number | "">(
     template.estimated_duration_hours || "",
   );
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = () => {
     onSave({
@@ -59,6 +61,17 @@ function TemplateForm({
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete template"
+        description="Are you sure you want to delete this template?"
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={onDelete}
+        loading={isDeleting}
+      />
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
@@ -75,7 +88,7 @@ function TemplateForm({
           <Button
             variant="destructive"
             size="sm"
-            onClick={onDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={isDeleting}
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -174,8 +187,6 @@ export default function PMTemplateDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this template?")) return;
-
     try {
       await deleteTemplate.mutateAsync(templateId);
       toast.success("Template deleted successfully");

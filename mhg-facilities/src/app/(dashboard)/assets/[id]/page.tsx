@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useAsset,
@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   TicketPlus,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/loaders";
 import { format } from "date-fns";
 
@@ -39,6 +40,7 @@ export default function AssetDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: asset, isLoading: assetLoading } = useAsset(id);
   const { data: transferData } = useAssetTransferHistory(id);
@@ -79,16 +81,10 @@ export default function AssetDetailPage({ params }: PageProps) {
     });
   };
 
-  const handleDelete = async () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this asset? This action cannot be undone.",
-      )
-    ) {
-      await deleteAsset.mutateAsync(id);
-      router.push("/assets");
-    }
-  };
+  const handleDelete = useCallback(async () => {
+    await deleteAsset.mutateAsync(id);
+    router.push("/assets");
+  }, [deleteAsset, id, router]);
 
   if (assetLoading) {
     return <PageLoader />;
@@ -182,7 +178,7 @@ export default function AssetDetailPage({ params }: PageProps) {
           </Button>
           <Button
             variant="outline"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             className="text-red-600 hover:text-red-700"
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -418,6 +414,17 @@ export default function AssetDetailPage({ params }: PageProps) {
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete asset"
+        description="Are you sure you want to delete this asset? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDelete}
+        loading={deleteAsset.isPending}
+      />
 
       {/* Transfer Modal */}
       {showTransferModal && locationsData && currentUser && (

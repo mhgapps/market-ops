@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useVendor,
@@ -31,6 +31,7 @@ import {
   Shield,
   AlertTriangle,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/loaders";
 import { format } from "date-fns";
 
@@ -42,6 +43,7 @@ export default function VendorDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const [showRatingForm, setShowRatingForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: vendor, isLoading: vendorLoading } = useVendor(id);
   const { data: ratingsData } = useVendorRatings(id);
@@ -59,16 +61,10 @@ export default function VendorDetailPage({ params }: PageProps) {
     },
   });
 
-  const handleDelete = async () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this vendor? This action cannot be undone.",
-      )
-    ) {
-      await deleteVendor.mutateAsync(id);
-      router.push("/vendors");
-    }
-  };
+  const handleDelete = useCallback(async () => {
+    await deleteVendor.mutateAsync(id);
+    router.push("/vendors");
+  }, [deleteVendor, id, router]);
 
   const handleSubmitRating = async (data: {
     rating: number;
@@ -169,7 +165,7 @@ export default function VendorDetailPage({ params }: PageProps) {
           </Button>
           <Button
             variant="outline"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             className="text-red-600 hover:text-red-700"
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -527,6 +523,17 @@ export default function VendorDetailPage({ params }: PageProps) {
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete vendor"
+        description="Are you sure you want to delete this vendor? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDelete}
+        loading={deleteVendor.isPending}
+      />
 
       {/* Rating Form Dialog */}
       <Dialog open={showRatingForm} onOpenChange={setShowRatingForm}>

@@ -50,6 +50,7 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/loaders";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -69,6 +70,9 @@ export default function TicketDetailPage({ params }: PageProps) {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<
+    string | null
+  >(null);
 
   // Subscribe to realtime updates for this specific ticket
   useTicketRealtime(id);
@@ -180,12 +184,17 @@ export default function TicketDetailPage({ params }: PageProps) {
   };
 
   const handleDeleteAttachment = async (attachmentId: string) => {
-    if (confirm("Are you sure you want to delete this attachment?")) {
-      try {
-        await deleteAttachment.mutateAsync(attachmentId);
-      } catch (error) {
-        console.error("Error deleting attachment:", error);
-      }
+    setDeletingAttachmentId(attachmentId);
+  };
+
+  const confirmDeleteAttachment = async () => {
+    if (!deletingAttachmentId) return;
+    try {
+      await deleteAttachment.mutateAsync(deletingAttachmentId);
+    } catch (error) {
+      console.error("Error deleting attachment:", error);
+    } finally {
+      setDeletingAttachmentId(null);
     }
   };
 
@@ -700,6 +709,17 @@ export default function TicketDetailPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deletingAttachmentId}
+        onOpenChange={(open) => !open && setDeletingAttachmentId(null)}
+        title="Delete attachment"
+        description="Are you sure you want to delete this attachment?"
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={confirmDeleteAttachment}
+        loading={deleteAttachment.isPending}
+      />
 
       {/* Modals */}
       <AssignModal

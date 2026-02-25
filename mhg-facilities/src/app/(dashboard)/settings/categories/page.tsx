@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import { FolderOpen, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageLoader } from "@/components/ui/loaders";
 import api from "@/lib/api-client";
 import type { Database, TicketPriority } from "@/types/database";
@@ -79,6 +80,9 @@ export default function CategoriesSettingsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<CategoryWithDefaults | null>(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
+    null,
+  );
   const [formData, setFormData] = useState<CreateCategoryData>({
     name: "",
     name_es: "",
@@ -200,15 +204,12 @@ export default function CategoriesSettingsPage() {
     updateMutation.mutate({ id: editingCategory.id, data: formData });
   };
 
-  const handleDeleteCategory = (id: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this category? This action cannot be undone.",
-      )
-    )
-      return;
-    deleteMutation.mutate(id);
-  };
+  const handleDeleteCategory = useCallback(() => {
+    if (!deletingCategoryId) return;
+    deleteMutation.mutate(deletingCategoryId, {
+      onSettled: () => setDeletingCategoryId(null),
+    });
+  }, [deletingCategoryId, deleteMutation]);
 
   const getPriorityBadge = (priority: TicketPriority) => {
     const variants: Record<TicketPriority, string> = {
@@ -456,6 +457,17 @@ export default function CategoriesSettingsPage() {
         </DialogContent>
       </Dialog>
 
+      <ConfirmDialog
+        open={!!deletingCategoryId}
+        onOpenChange={(open) => !open && setDeletingCategoryId(null)}
+        title="Delete category"
+        description="Are you sure you want to delete this category? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteCategory}
+        loading={deleteMutation.isPending}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>Ticket Categories</CardTitle>
@@ -509,7 +521,7 @@ export default function CategoriesSettingsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteCategory(category.id)}
+                          onClick={() => setDeletingCategoryId(category.id)}
                           disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
