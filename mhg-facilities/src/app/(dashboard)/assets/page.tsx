@@ -90,19 +90,10 @@ export default function AssetsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Assets</h1>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/assets/scan')}
-          >
-            <QrCode className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Scan QR</span>
-          </Button>
-          <Button onClick={() => router.push('/assets/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Add Asset</span>
-          </Button>
-        </div>
+        <Button onClick={() => router.push('/assets/new')}>
+          <Plus className="mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">Add Asset</span>
+        </Button>
       </div>
 
       {/* Stats Strip */}

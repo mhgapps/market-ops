@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Download, Printer, Copy, CheckCircle } from 'lucide-react'
 
 interface QRCodeDisplayProps {
@@ -28,7 +27,10 @@ export function QRCodeDisplay({
       if (!canvasRef.current) return
 
       try {
-        await QRCode.toCanvas(canvasRef.current, qrCode, {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+        const qrUrl = `${appUrl}/qr/${encodeURIComponent(qrCode)}`
+
+        await QRCode.toCanvas(canvasRef.current, qrUrl, {
           width: size,
           margin: 2,
           color: {
@@ -136,83 +138,56 @@ export function QRCodeDisplay({
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Asset QR Code</CardTitle>
-        <CardDescription>
-          Scan this QR code to quickly access asset information
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* QR Code Display */}
-        <div className="flex flex-col items-center justify-center space-y-3">
-          {error ? (
-            <div className="flex items-center justify-center w-64 h-64 border-2 border-red-300 rounded-lg bg-red-50">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          ) : (
-            <div className="border-2 border-gray-300 rounded-lg p-4 bg-white">
-              <canvas ref={canvasRef} />
-            </div>
-          )}
-
-          {/* QR Code Value */}
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2">
-              <code className="text-lg font-mono font-bold">{qrCode}</code>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleCopy}
-                className="h-8 w-8 p-0"
-              >
-                {copied ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {assetId && (
-              <p className="text-sm text-gray-600 mt-1">Asset ID: {assetId}</p>
-            )}
+    <div className="w-full space-y-4">
+      <div className="flex flex-col items-center justify-center space-y-3">
+        {error ? (
+          <div className="flex items-center justify-center w-64 h-64 border-2 border-destructive/30 rounded-lg bg-destructive/5">
+            <p className="text-sm text-destructive">{error}</p>
           </div>
-        </div>
+        ) : (
+          <div className="border rounded-lg p-4 bg-background">
+            <canvas ref={canvasRef} />
+          </div>
+        )}
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="flex items-center justify-center gap-2">
+          <code className="text-lg font-mono font-bold">{qrCode}</code>
           <Button
-            onClick={handleDownload}
-            variant="outline"
-            className="w-full"
-            disabled={!!error}
+            size="sm"
+            variant="ghost"
+            onClick={handleCopy}
+            className="min-h-[44px] min-w-[44px] p-0"
+            aria-label={copied ? 'Copied' : 'Copy QR code'}
           >
-            <Download className="mr-2 h-4 w-4" />
-            Download
-          </Button>
-          <Button
-            onClick={handlePrint}
-            variant="outline"
-            className="w-full"
-            disabled={!!error}
-          >
-            <Printer className="mr-2 h-4 w-4" />
-            Print
+            {copied ? (
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
           </Button>
         </div>
+      </div>
 
-        {/* Instructions */}
-        <div className="text-xs text-gray-600 space-y-1 mt-4 p-3 bg-gray-50 rounded-md">
-          <p className="font-medium">QR Code Usage:</p>
-          <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>Print and attach to the physical asset</li>
-            <li>Scan with mobile device camera to view asset details</li>
-            <li>Use for quick asset lookup during inspections</li>
-            <li>Download for inclusion in asset documentation</li>
-          </ul>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          onClick={handleDownload}
+          variant="outline"
+          className="w-full min-h-[44px]"
+          disabled={!!error}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Download
+        </Button>
+        <Button
+          onClick={handlePrint}
+          variant="outline"
+          className="w-full min-h-[44px]"
+          disabled={!!error}
+        >
+          <Printer className="mr-2 h-4 w-4" />
+          Print
+        </Button>
+      </div>
+    </div>
   )
 }
