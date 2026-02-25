@@ -158,6 +158,66 @@ export class NotificationService {
   }
 
   /**
+   * Send notification to managers/admins when a new ticket is created
+   */
+  async notifyNewTicketCreated(params: {
+    ticket: Ticket;
+    submitter: User;
+    locationName: string;
+  }): Promise<void> {
+    const { ticket, submitter, locationName } = params;
+
+    // Get all managers and admins
+    const [admins, managers] = await Promise.all([
+      this.getAdminUsers(),
+      this.getManagers(),
+    ]);
+
+    // Deduplicate by id
+    const recipientMap = new Map<string, User>();
+    for (const user of [...admins, ...managers]) {
+      recipientMap.set(user.id, user);
+    }
+
+    // Filter out the submitter and users without email or with email notifications disabled
+    const recipients = Array.from(recipientMap.values()).filter((user) => {
+      if (user.id === submitter.id) return false;
+      if (!user.email) return false;
+      const prefs = user.notification_preferences as {
+        email?: boolean;
+      } | null;
+      if (prefs && prefs.email === false) return false;
+      return true;
+    });
+
+    if (recipients.length === 0) return;
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const ticketUrl = `${baseUrl}/tickets/${ticket.id}`;
+
+    const emailPromises = recipients.map((user) =>
+      this.resendIAO.sendNewTicketEmail({
+        to: user.email!,
+        recipientName: user.full_name,
+        ticketNumber: String(ticket.ticket_number),
+        ticketTitle: ticket.title,
+        ticketDescription: ticket.description,
+        priority: ticket.priority,
+        locationName,
+        submittedBy: submitter.full_name,
+        ticketUrl,
+        isEmergency: ticket.is_emergency,
+      }),
+    );
+
+    await Promise.allSettled(emailPromises);
+
+    console.log(
+      `Sent new ticket notification emails to ${recipients.length} users for ticket ${ticket.id}`,
+    );
+  }
+
+  /**
    * Get all admin users for a tenant (for critical notifications)
    */
   async getAdminUsers(): Promise<User[]> {

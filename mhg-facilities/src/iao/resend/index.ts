@@ -25,7 +25,7 @@ export class ResendIAO {
   constructor() {
     this.apiKey = process.env.RESEND_API_KEY || "";
     this.fromEmail =
-      process.env.RESEND_FROM_EMAIL || "noreply@mhgfacilities.com";
+      process.env.RESEND_FROM_EMAIL || "MOPS <mops@msmhg.com>";
 
     if (!this.apiKey) {
       console.warn("RESEND_API_KEY not configured - emails will not be sent");
@@ -297,6 +297,124 @@ export class ResendIAO {
     return this.sendEmail({
       to,
       subject: `PM Task Due Soon: ${taskName}`,
+      html,
+    });
+  }
+
+  /**
+   * Send new ticket created notification to managers/admins
+   */
+  async sendNewTicketEmail(params: {
+    to: string;
+    recipientName: string;
+    ticketNumber: string;
+    ticketTitle: string;
+    ticketDescription: string | null;
+    priority: string;
+    locationName: string;
+    submittedBy: string;
+    ticketUrl: string;
+    isEmergency: boolean;
+  }): Promise<SendEmailResponse | null> {
+    const {
+      to,
+      recipientName,
+      ticketNumber,
+      ticketTitle,
+      ticketDescription,
+      priority,
+      locationName,
+      submittedBy,
+      ticketUrl,
+      isEmergency,
+    } = params;
+
+    const priorityColors: Record<string, string> = {
+      critical: "#dc2626",
+      high: "#f97316",
+      medium: "#3b82f6",
+      low: "#6b7280",
+    };
+    const priorityColor = priorityColors[priority] || "#6b7280";
+
+    const headerGradient = isEmergency
+      ? "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)"
+      : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+
+    const headerText = isEmergency
+      ? "EMERGENCY Ticket Submitted"
+      : "New Ticket Submitted";
+
+    const truncatedDescription =
+      ticketDescription && ticketDescription.length > 200
+        ? ticketDescription.slice(0, 200) + "..."
+        : ticketDescription;
+
+    const descriptionBlock = truncatedDescription
+      ? `<p style="margin: 10px 0 0 0; color: #374151; font-size: 14px;">${truncatedDescription}</p>`
+      : "";
+
+    const subject = isEmergency
+      ? `EMERGENCY: #${ticketNumber} - ${ticketTitle}`
+      : `New Ticket: #${ticketNumber} - ${ticketTitle}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: ${headerGradient}; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">${headerText}</h1>
+          </div>
+
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              Hi ${recipientName},
+            </p>
+
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              A new ${isEmergency ? "emergency " : ""}ticket has been submitted:
+            </p>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid ${isEmergency ? "#dc2626" : "#667eea"}; margin-bottom: 25px;">
+              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: ${isEmergency ? "#dc2626" : "#667eea"};">
+                #${ticketNumber} - ${ticketTitle}
+              </h2>
+              <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 14px;">
+                <strong>Priority:</strong> <span style="color: ${priorityColor}; font-weight: 600;">${priority.charAt(0).toUpperCase() + priority.slice(1)}</span>
+              </p>
+              <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 14px;">
+                <strong>Location:</strong> ${locationName}
+              </p>
+              <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                <strong>Submitted by:</strong> ${submittedBy}
+              </p>
+              ${descriptionBlock}
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${ticketUrl}" style="display: inline-block; background: ${isEmergency ? "#dc2626" : "#667eea"}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                View Ticket
+              </a>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+            <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 0;">
+              MHG Facilities Management System<br>
+              This is an automated notification. Please do not reply to this email.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    return this.sendEmail({
+      to,
+      subject,
       html,
     });
   }

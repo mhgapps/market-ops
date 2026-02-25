@@ -200,6 +200,17 @@ export class TicketService {
       is_emergency: data.is_emergency ?? false,
     });
 
+    // Notify managers/admins about new ticket (async, don't await)
+    this.notificationService
+      .notifyNewTicketCreated({
+        ticket,
+        submitter,
+        locationName: location.name,
+      })
+      .catch((err) =>
+        console.error("Failed to send new ticket notification:", err),
+      );
+
     return ticket;
   }
 

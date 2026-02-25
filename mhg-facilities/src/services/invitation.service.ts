@@ -1,7 +1,7 @@
 import { getPooledSupabaseClient } from "@/lib/supabase/server-pooled";
 import { getTenantContext } from "@/lib/tenant/context";
-import { sendEmail } from "@/lib/email/smtp";
 import { generateInvitationEmail } from "@/lib/email/templates/invitation";
+import { ResendIAO } from "@/iao/resend";
 import { InvitationDAO } from "@/dao/invitation.dao";
 import { UserService } from "@/services/user.service";
 import { TenantService } from "@/services/tenant.service";
@@ -38,6 +38,7 @@ export class InvitationService {
     private invitationDAO = new InvitationDAO(),
     private userService = new UserService(),
     private tenantService = new TenantService(),
+    private resendIAO = new ResendIAO(),
   ) {}
 
   /**
@@ -137,11 +138,10 @@ export class InvitationService {
         inviterName: inviterRecord?.full_name || "Your team",
       });
 
-      await sendEmail({
+      await this.resendIAO.sendEmail({
         to: email,
         subject: emailContent.subject,
         html: emailContent.html,
-        text: emailContent.text,
       });
     } catch (emailError) {
       console.error("Failed to send invitation email:", emailError);
@@ -334,11 +334,10 @@ export class InvitationService {
       inviterName: inviterRecord?.full_name || "Your team",
     });
 
-    await sendEmail({
+    await this.resendIAO.sendEmail({
       to: invitation.email,
       subject: emailContent.subject,
       html: emailContent.html,
-      text: emailContent.text,
     });
   }
 
