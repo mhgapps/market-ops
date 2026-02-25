@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { DeviceAuthService } from "@/services/device-auth.service";
+import { createClient } from "@/lib/supabase/server";
 
 const deviceLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -51,9 +52,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Set the session on the cookie-based Supabase client so auth
+    // cookies are written to the browser. Without this, the admin-
+    // generated session only exists in memory and the client has no
+    // auth after navigation.
+    const supabase = await createClient();
+    await supabase.auth.setSession({
+      access_token: result.session.access_token,
+      refresh_token: result.session.refresh_token,
+    });
+
     return NextResponse.json({
       success: true,
-      session: result.session,
     });
   } catch (error) {
     console.error("Error in POST /api/auth/device-login:", error);
