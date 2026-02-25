@@ -186,25 +186,6 @@ export async function signup(
 }
 
 /**
- * Request password reset email
- */
-export async function forgotPassword(email: string): Promise<AuthResponse> {
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
-  });
-
-  if (error) {
-    // Don't reveal if email exists or not for security
-    console.error("Password reset error:", error);
-  }
-
-  // Always return success to prevent email enumeration
-  return { success: true };
-}
-
-/**
  * Reset password with token
  */
 export async function resetPassword(

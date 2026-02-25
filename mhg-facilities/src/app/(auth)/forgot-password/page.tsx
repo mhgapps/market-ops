@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { forgotPassword } from "../actions";
+import api from "@/lib/api-client";
 
 // String constants for bilingual support
 const STRINGS = {
@@ -67,14 +67,9 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await forgotPassword(email);
-
-      if (response.error) {
-        toast.error(response.error);
-      } else {
-        setSubmittedEmail(email);
-        setIsSuccess(true);
-      }
+      await api.post("/api/auth/forgot-password", { email });
+      setSubmittedEmail(email);
+      setIsSuccess(true);
     } catch {
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
