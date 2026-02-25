@@ -146,6 +146,7 @@ export async function signup(
     // Create user record with manager role
     const userData: UserInsert = {
       tenant_id: tenantId,
+      auth_user_id: linkData.user.id,
       email,
       full_name: fullName,
       role: "manager",
@@ -284,6 +285,7 @@ export async function signup(
   // Create user data with proper typing
   const userData: UserInsert = {
     tenant_id: tenantId,
+    auth_user_id: linkData.user.id,
     email,
     full_name: fullName,
     role: "admin",

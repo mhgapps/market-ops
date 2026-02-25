@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { verifyEmail } from "../actions";
+import api from "@/lib/api-client";
 
 // String constants for bilingual support
 const STRINGS = {
@@ -25,8 +26,7 @@ const STRINGS = {
   VERIFYING_TITLE: "Verifying...",
   VERIFYING_DESCRIPTION: "Please wait while we verify your email",
   SUCCESS_TITLE: "Email verified!",
-  SUCCESS_DESCRIPTION:
-    "Your email has been verified. You can now sign in to your account.",
+  SUCCESS_DESCRIPTION: "Your email has been verified. Redirecting to your dashboard...",
   ERROR_TITLE: "Verification failed",
   ERROR_DESCRIPTION: "The verification link is invalid or has expired.",
   GO_TO_LOGIN: "Go to login",
@@ -64,12 +64,19 @@ function VerifyEmailContent() {
           setStatus("error");
         } else {
           setStatus("success");
-          // Redirect to login after a short delay
+          // Trust this device so they get auto-login next time
+          try {
+            await api.post("/api/auth/trust-device", {});
+          } catch {
+            // Non-critical
+          }
+          // Redirect to dashboard — session is already set from verifyOtp
           setTimeout(() => {
             if (isMounted) {
-              router.push("/login");
+              router.push("/dashboard");
+              router.refresh();
             }
-          }, 3000);
+          }, 1500);
         }
       } catch {
         if (isMounted) {
@@ -118,8 +125,8 @@ function VerifyEmailContent() {
         </CardHeader>
 
         <CardFooter>
-          <Link href="/login" className="w-full">
-            <Button className="w-full">{STRINGS.GO_TO_LOGIN}</Button>
+          <Link href="/dashboard" className="w-full">
+            <Button className="w-full">Go to dashboard</Button>
           </Link>
         </CardFooter>
       </Card>
