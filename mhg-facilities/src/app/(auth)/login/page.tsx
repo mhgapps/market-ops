@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -45,6 +45,8 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/dashboard'
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
@@ -78,7 +80,7 @@ export default function LoginPage() {
         toast.error(response.error)
       } else {
         toast.success(STRINGS.SUCCESS)
-        router.push('/dashboard')
+        router.push(redirectTo)
         router.refresh()
       }
     } catch {

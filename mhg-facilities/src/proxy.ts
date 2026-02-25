@@ -25,10 +25,12 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/reports') ||
     pathname.startsWith('/settings')
 
-  // If user is authenticated and trying to access auth routes, redirect to dashboard
+  // If user is authenticated and trying to access auth routes, redirect to destination
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    const redirectPath = url.searchParams.get('redirect')
+    url.pathname = redirectPath || '/dashboard'
+    url.searchParams.delete('redirect')
     return NextResponse.redirect(url)
   }
 
