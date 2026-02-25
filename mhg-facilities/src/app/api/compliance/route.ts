@@ -11,6 +11,13 @@ export async function GET(request: NextRequest) {
     if (authError) return authError
 
     const { searchParams } = new URL(request.url);
+    const service = new ComplianceDocumentService();
+
+    if (searchParams.get('stats') === 'true') {
+      const stats = await service.getComplianceStats();
+      return NextResponse.json({ stats });
+    }
+
     const filters = complianceFiltersSchema.parse({
       location_id: searchParams.get('location_id') || undefined,
       document_type_id: searchParams.get('document_type_id') || undefined,
@@ -18,7 +25,6 @@ export async function GET(request: NextRequest) {
       search: searchParams.get('search') || undefined,
     });
 
-    const service = new ComplianceDocumentService();
     const documents = await service.getAllDocuments( filters);
 
     return NextResponse.json({ documents });

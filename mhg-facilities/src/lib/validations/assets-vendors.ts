@@ -174,8 +174,7 @@ export const vendorFilterSchema = z.object({
  */
 
 export const createVendorRatingSchema = z.object({
-  ticket_id: uuid('Invalid ticket ID'),
-  rated_by: uuid('Invalid user ID'),
+  ticket_id: nullableUuid().optional(),
   rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
   response_time_rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
   quality_rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),

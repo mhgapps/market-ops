@@ -10,7 +10,7 @@ type VendorRatingInsert = Database['public']['Tables']['vendor_ratings']['Insert
 
 export interface CreateVendorRatingDTO {
   vendor_id: string
-  ticket_id: string
+  ticket_id?: string | null
   rated_by: string
   rating: number
   response_time_rating: number
@@ -40,10 +40,12 @@ export class VendorRatingService {
       throw new Error('Vendor not found')
     }
 
-    // Check if ticket already has a rating
-    const hasRating = await this.ratingDAO.hasRating(data.ticket_id)
-    if (hasRating) {
-      throw new Error('This ticket already has a vendor rating')
+    // Check if ticket already has a rating (only when ticket_id is provided)
+    if (data.ticket_id) {
+      const hasRating = await this.ratingDAO.hasRating(data.ticket_id)
+      if (hasRating) {
+        throw new Error('This ticket already has a vendor rating')
+      }
     }
 
     // Validate rating values (1-5)
@@ -54,7 +56,7 @@ export class VendorRatingService {
 
     const insertData: Partial<VendorRatingInsert> = {
       vendor_id: data.vendor_id,
-      ticket_id: data.ticket_id,
+      ticket_id: data.ticket_id ?? null,
       rated_by: data.rated_by,
       rating: data.rating,
       response_time_rating: data.response_time_rating,

@@ -57,8 +57,12 @@ interface AssetWithRelations extends Asset {
 
 interface AssetStats {
   total: number
-  by_status: Record<string, number>
-  warranty_expiring_30_days: number
+  active: number
+  under_maintenance: number
+  retired: number
+  transferred: number
+  disposed: number
+  warranty_expiring_soon: number
 }
 
 interface PaginatedResponse<T> {

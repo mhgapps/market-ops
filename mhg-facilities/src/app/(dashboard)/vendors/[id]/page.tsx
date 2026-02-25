@@ -73,8 +73,6 @@ export default function VendorDetailPage({ params }: PageProps) {
 
     await createRating.mutateAsync({
       vendorId: id,
-      ticket_id: 'placeholder-ticket-id', // TODO: Add ticket selection
-      rated_by: currentUser.id,
       rating: data.rating,
       response_time_rating: data.response_time_rating,
       quality_rating: data.quality_rating,

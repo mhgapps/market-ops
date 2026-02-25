@@ -85,8 +85,10 @@ export async function PATCH(
 
     const isOwnProfile = currentUser?.id === id
 
-    // Check admin role if updating someone else or changing role
-    if (!isOwnProfile || validation.data.role) {
+    const isActiveChange = validation.data.is_active !== undefined
+
+    // Check admin role if updating someone else, changing role, or changing active status
+    if (!isOwnProfile || validation.data.role || isActiveChange) {
       const { error: adminError } = await requireAdmin()
       if (adminError) return adminError
     }
@@ -99,7 +101,16 @@ export async function PATCH(
       )
     }
 
+    // Prevent users from deactivating themselves
+    if (isOwnProfile && validation.data.is_active === false) {
+      return NextResponse.json(
+        { error: 'You cannot deactivate your own account' },
+        { status: 403 }
+      )
+    }
+
     const userService = new UserService()
+    let updatedUser: Awaited<ReturnType<UserService['findById']>> | null = null
 
     // Update role via service if changing role (has validation logic)
     if (validation.data.role) {
@@ -107,15 +118,40 @@ export async function PATCH(
     }
 
     // Update profile fields via service
-    const updatedUser = await userService.updateProfile(id, {
-      fullName: validation.data.full_name,
-      phone: validation.data.phone,
-      locationId: validation.data.location_id,
-      languagePreference: validation.data.language_preference as 'en' | 'es' | undefined,
-      notificationPreferences: validation.data.notification_preferences as
-        | { email: boolean; sms: boolean; push: boolean }
-        | undefined,
-    })
+    const hasProfileUpdates =
+      validation.data.full_name !== undefined ||
+      validation.data.phone !== undefined ||
+      validation.data.location_id !== undefined ||
+      validation.data.language_preference !== undefined ||
+      validation.data.notification_preferences !== undefined
+
+    if (hasProfileUpdates) {
+      updatedUser = await userService.updateProfile(id, {
+        fullName: validation.data.full_name,
+        phone: validation.data.phone,
+        locationId: validation.data.location_id,
+        languagePreference: validation.data.language_preference as 'en' | 'es' | undefined,
+        notificationPreferences: validation.data.notification_preferences as
+          | { email: boolean; sms: boolean; push: boolean }
+          | undefined,
+      })
+    }
+
+    // Toggle active status if requested
+    if (validation.data.is_active !== undefined) {
+      updatedUser = validation.data.is_active
+        ? await userService.reactivateUser(id)
+        : await userService.deactivateUser(id)
+    }
+
+    // If only role changed, fetch latest record for response
+    if (!updatedUser) {
+      updatedUser = await userService.findById(id)
+    }
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     // Transform user for response
     const transformedUser = {

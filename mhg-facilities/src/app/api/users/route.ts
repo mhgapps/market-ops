@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
 
     // Check query parameters
     const { searchParams } = new URL(request.url)
+    const search = searchParams.get('search')?.trim().toLowerCase()
     const role = searchParams.get('role')
+    const status = searchParams.get('status')
     const locationId = searchParams.get('locationId')
     const activeOnly = searchParams.get('activeOnly') === 'true'
 
@@ -40,6 +42,27 @@ export async function GET(request: NextRequest) {
       // Get all users via UserDAO
       const userDAO = new (await import('@/dao/user.dao')).UserDAO()
       users = await userDAO.findAll()
+    }
+
+    if (status && !['all', 'active', 'inactive'].includes(status)) {
+      return NextResponse.json(
+        { error: 'Invalid status. Must be one of: all, active, inactive' },
+        { status: 400 }
+      )
+    }
+
+    if (status === 'active') {
+      users = users.filter((u) => u.is_active)
+    } else if (status === 'inactive') {
+      users = users.filter((u) => !u.is_active)
+    }
+
+    if (search) {
+      users = users.filter((u) => {
+        const name = (u.full_name || '').toLowerCase()
+        const email = (u.email || '').toLowerCase()
+        return name.includes(search) || email.includes(search)
+      })
     }
 
     // Transform users for response (remove sensitive data)

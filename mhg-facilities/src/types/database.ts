@@ -197,6 +197,7 @@ export interface Database {
           id: string
           tenant_id: string
           name: string
+          brand: string | null
           address: string | null
           city: string | null
           state: string | null
@@ -216,6 +217,7 @@ export interface Database {
           id?: string
           tenant_id: string
           name: string
+          brand?: string | null
           address?: string | null
           city?: string | null
           state?: string | null
@@ -235,6 +237,7 @@ export interface Database {
           id?: string
           tenant_id?: string
           name?: string
+          brand?: string | null
           address?: string | null
           city?: string | null
           state?: string | null

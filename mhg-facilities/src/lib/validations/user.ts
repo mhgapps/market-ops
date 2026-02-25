@@ -16,6 +16,7 @@ export const inviteUserSchema = z.object({
 export const updateUserSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters').optional(),
   role: z.enum(['admin', 'manager', 'staff', 'vendor', 'readonly']).optional(),
+  is_active: z.boolean().optional(),
   location_id: z.string().uuid('Location ID must be a valid UUID').nullable().optional(),
   phone: z.string().max(20).nullable().optional(),
   language_preference: z.enum(['en', 'es']).optional(),

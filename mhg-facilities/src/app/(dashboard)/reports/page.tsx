@@ -87,11 +87,17 @@ export default function ReportsPage() {
     if (!generatedReport) return;
 
     try {
+      const rows = getReportDataArray(generatedReport);
+      if (rows.length === 0) {
+        setError('No rows available to export for this report');
+        return;
+      }
+
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          data: generatedReport,
+          data: rows,
           filename: `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`,
           format: 'csv',
         }),

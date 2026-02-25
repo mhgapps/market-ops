@@ -26,10 +26,20 @@ import { useComplianceDocuments } from '@/hooks/use-compliance';
 
 export function ComplianceList() {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const { data: documents, isLoading, error } = useComplianceDocuments({
-    status: statusFilter as 'active' | 'expiring_soon' | 'expired' | 'pending_renewal' | 'conditional' | 'failed_inspection' | 'suspended' | undefined,
+    status:
+      statusFilter === 'all'
+        ? undefined
+        : (statusFilter as
+            | 'active'
+            | 'expiring_soon'
+            | 'expired'
+            | 'pending_renewal'
+            | 'conditional'
+            | 'failed_inspection'
+            | 'suspended'),
   });
 
   if (isLoading) {

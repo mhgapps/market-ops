@@ -203,7 +203,6 @@ export function useCreateVendorRating() {
     mutationFn: async ({
       vendorId,
       ticket_id,
-      rated_by,
       rating,
       response_time_rating,
       quality_rating,
@@ -211,8 +210,7 @@ export function useCreateVendorRating() {
       comments,
     }: {
       vendorId: string
-      ticket_id: string
-      rated_by: string
+      ticket_id?: string | null
       rating: number
       response_time_rating: number
       quality_rating: number
@@ -221,7 +219,6 @@ export function useCreateVendorRating() {
     }) => {
       const data = await api.post<{ rating: VendorRating }>(`/api/vendors/${vendorId}/ratings`, {
         ticket_id,
-        rated_by,
         rating,
         response_time_rating,
         quality_rating,

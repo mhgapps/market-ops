@@ -20,6 +20,7 @@ describe('LocationService', () => {
     id: 'location-1',
     tenant_id: 'test-tenant-id',
     name: 'Building A',
+    brand: null,
     address: '123 Main St',
     city: 'Test City',
     state: 'TS',

@@ -54,15 +54,15 @@ const navItems: NavItem[] = [
     icon: Calendar,
   },
   {
+    title: 'Assets',
+    href: '/assets',
+    icon: Wrench,
+  },
+  {
     title: 'Documents',
     href: '/compliance',
     icon: Shield,
     managerOnly: true,
-  },
-  {
-    title: 'Assets',
-    href: '/assets',
-    icon: Wrench,
   },
   {
     title: 'Vendors',
