@@ -11,6 +11,11 @@ export interface AssetWithRelations extends Asset {
     name: string
     default_lifespan_years: number | null
   } | null
+  asset_type?: {
+    id: string
+    name: string
+    category_id: string
+  } | null
   location?: {
     id: string
     name: string
@@ -24,6 +29,7 @@ export interface AssetWithRelations extends Asset {
 
 export interface AssetFilters {
   category_id?: string
+  asset_type_id?: string
   location_id?: string
   vendor_id?: string
   status?: string
@@ -58,6 +64,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         `
         *,
         category:asset_categories(id, name, default_lifespan_years),
+        asset_type:asset_types(id, name, category_id),
         location:locations(id, name, address),
         vendor:vendors(id, name)
       `
@@ -72,6 +79,9 @@ export class AssetDAO extends BaseDAO<'assets'> {
       }
       if (filters.location_id) {
         query = query.eq('location_id', filters.location_id)
+      }
+      if (filters.asset_type_id) {
+        query = query.eq('asset_type_id', filters.asset_type_id)
       }
       if (filters.vendor_id) {
         query = query.eq('vendor_id', filters.vendor_id)
@@ -126,6 +136,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         `
         *,
         category:asset_categories(id, name, default_lifespan_years),
+        asset_type:asset_types(id, name, category_id),
         location:locations(id, name, address),
         vendor:vendors(id, name)
       `
@@ -141,6 +152,10 @@ export class AssetDAO extends BaseDAO<'assets'> {
     if (filters?.location_id) {
       countQuery = countQuery.eq('location_id', filters.location_id)
       dataQuery = dataQuery.eq('location_id', filters.location_id)
+    }
+    if (filters?.asset_type_id) {
+      countQuery = countQuery.eq('asset_type_id', filters.asset_type_id)
+      dataQuery = dataQuery.eq('asset_type_id', filters.asset_type_id)
     }
     if (filters?.vendor_id) {
       countQuery = countQuery.eq('vendor_id', filters.vendor_id)
@@ -206,6 +221,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         `
         *,
         category:asset_categories(id, name, default_lifespan_years),
+        asset_type:asset_types(id, name, category_id),
         location:locations(id, name, address),
         vendor:vendors(id, name)
       `
@@ -274,6 +290,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         `
         *,
         category:asset_categories(id, name, default_lifespan_years),
+        asset_type:asset_types(id, name, category_id),
         location:locations(id, name, address),
         vendor:vendors(id, name)
       `
@@ -300,6 +317,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         `
         *,
         category:asset_categories(id, name, default_lifespan_years),
+        asset_type:asset_types(id, name, category_id),
         location:locations(id, name, address),
         vendor:vendors(id, name)
       `
@@ -349,6 +367,7 @@ export class AssetDAO extends BaseDAO<'assets'> {
         `
         *,
         category:asset_categories(id, name, default_lifespan_years),
+        asset_type:asset_types(id, name, category_id),
         location:locations(id, name, address),
         vendor:vendors(id, name)
       `

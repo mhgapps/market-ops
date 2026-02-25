@@ -89,6 +89,7 @@ export interface UpdateTicketInput {
 export interface CreateAssetInput {
   name: string
   category_id?: string
+  asset_type_id?: string
   location_id: string
   serial_number?: string
   model?: string
@@ -177,8 +178,10 @@ export interface AssetWithRelations {
   name: string
   status: string
   warranty_expiration: string | null
+  asset_type_id: string | null
   location: { id: string; name: string } | null
   category: { id: string; name: string } | null
+  asset_type: { id: string; name: string; category_id: string } | null
   vendor: { id: string; name: string } | null
   tickets?: { id: string; title: string; status: string }[]
 }

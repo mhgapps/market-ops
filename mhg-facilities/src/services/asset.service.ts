@@ -3,6 +3,7 @@ import { AssetDAO, type AssetWithRelations, type AssetFilters } from '@/dao/asse
 // Re-export types for consumers
 export type { AssetFilters, PaginatedResult } from '@/dao/asset.dao'
 import { AssetCategoryDAO } from '@/dao/asset-category.dao'
+import { AssetTypeDAO } from '@/dao/asset-type.dao'
 import type { Database } from '@/types/database'
 import { nanoid } from 'nanoid'
 
@@ -13,6 +14,7 @@ type AssetUpdate = Database['public']['Tables']['assets']['Update']
 export interface CreateAssetDTO {
   name: string
   category_id?: string
+  asset_type_id?: string
   location_id?: string
   serial_number?: string
   model?: string
@@ -32,21 +34,22 @@ export interface CreateAssetDTO {
 
 export interface UpdateAssetDTO {
   name?: string
-  category_id?: string
-  location_id?: string
-  serial_number?: string
-  model?: string
-  manufacturer?: string
-  purchase_date?: string
-  purchase_price?: number
-  warranty_expiration?: string
-  expected_lifespan_years?: number
-  vendor_id?: string
+  category_id?: string | null
+  asset_type_id?: string | null
+  location_id?: string | null
+  serial_number?: string | null
+  model?: string | null
+  manufacturer?: string | null
+  purchase_date?: string | null
+  purchase_price?: number | null
+  warranty_expiration?: string | null
+  expected_lifespan_years?: number | null
+  vendor_id?: string | null
   status?: string
-  notes?: string
-  manual_url?: string
-  spec_sheet_path?: string
-  photo_path?: string
+  notes?: string | null
+  manual_url?: string | null
+  spec_sheet_path?: string | null
+  photo_path?: string | null
 }
 
 /**
@@ -56,7 +59,8 @@ export interface UpdateAssetDTO {
 export class AssetService {
   constructor(
     private assetDAO = new AssetDAO(),
-    private categoryDAO = new AssetCategoryDAO()
+    private categoryDAO = new AssetCategoryDAO(),
+    private typeDAO = new AssetTypeDAO()
   ) {}
 
   /**
@@ -126,9 +130,29 @@ export class AssetService {
    * Create new asset
    */
   async createAsset(data: CreateAssetDTO): Promise<Asset> {
+    let categoryId = data.category_id ?? null
+    let assetTypeId = data.asset_type_id ?? null
+
+    // Validate asset type and ensure it matches category (if both provided)
+    if (assetTypeId) {
+      const assetType = await this.typeDAO.findById(assetTypeId)
+      if (!assetType) {
+        throw new Error('Asset type not found')
+      }
+
+      if (categoryId && assetType.category_id !== categoryId) {
+        throw new Error('Asset type does not belong to selected category')
+      }
+
+      // If category is omitted, infer it from the selected type
+      if (!categoryId) {
+        categoryId = assetType.category_id
+      }
+    }
+
     // Validate category exists if provided
-    if (data.category_id) {
-      const categoryExists = await this.categoryDAO.exists(data.category_id)
+    if (categoryId) {
+      const categoryExists = await this.categoryDAO.exists(categoryId)
       if (!categoryExists) {
         throw new Error('Category not found')
       }
@@ -147,8 +171,8 @@ export class AssetService {
 
     // Calculate expected lifespan if not provided
     let expectedLifespan = data.expected_lifespan_years
-    if (!expectedLifespan && data.category_id) {
-      const category = await this.categoryDAO.findById(data.category_id)
+    if (!expectedLifespan && categoryId) {
+      const category = await this.categoryDAO.findById(categoryId)
       if (category?.default_lifespan_years) {
         expectedLifespan = category.default_lifespan_years
       }
@@ -156,7 +180,8 @@ export class AssetService {
 
     const insertData: Partial<AssetInsert> = {
       name: data.name,
-      category_id: data.category_id ?? null,
+      category_id: categoryId,
+      asset_type_id: assetTypeId,
       location_id: data.location_id ?? null,
       serial_number: data.serial_number ?? null,
       model: data.model ?? null,
@@ -188,10 +213,35 @@ export class AssetService {
     }
 
     // Validate category exists if changing
-    if (data.category_id) {
+    if (data.category_id !== undefined && data.category_id !== null) {
       const categoryExists = await this.categoryDAO.exists(data.category_id)
       if (!categoryExists) {
         throw new Error('Category not found')
+      }
+    }
+
+    let nextCategoryId =
+      data.category_id !== undefined ? data.category_id : asset.category_id
+    let nextAssetTypeId =
+      data.asset_type_id !== undefined ? data.asset_type_id : asset.asset_type_id
+
+    // Validate asset type and enforce category compatibility
+    if (nextAssetTypeId) {
+      const assetType = await this.typeDAO.findById(nextAssetTypeId)
+      if (!assetType) {
+        throw new Error('Asset type not found')
+      }
+
+      if (nextCategoryId && assetType.category_id !== nextCategoryId) {
+        // If only category changed, clear type to avoid stale mismatched pair.
+        if (data.category_id !== undefined && data.asset_type_id === undefined) {
+          nextAssetTypeId = null
+        } else {
+          throw new Error('Asset type does not belong to selected category')
+        }
+      } else if (!nextCategoryId) {
+        // If category is cleared/omitted while a type exists, infer category from type.
+        nextCategoryId = assetType.category_id
       }
     }
 
@@ -205,7 +255,9 @@ export class AssetService {
 
     const updateData: Partial<AssetUpdate> = {}
     if (data.name !== undefined) updateData.name = data.name
-    if (data.category_id !== undefined) updateData.category_id = data.category_id
+    if (nextCategoryId !== asset.category_id) updateData.category_id = nextCategoryId
+    if (nextAssetTypeId !== asset.asset_type_id)
+      updateData.asset_type_id = nextAssetTypeId
     if (data.location_id !== undefined) updateData.location_id = data.location_id
     if (data.serial_number !== undefined) updateData.serial_number = data.serial_number
     if (data.model !== undefined) updateData.model = data.model

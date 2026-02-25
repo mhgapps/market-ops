@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { AssetForm } from '@/components/assets/asset-form'
 import { useAsset, useUpdateAsset } from '@/hooks/use-assets'
 import { useAssetCategories } from '@/hooks/use-asset-categories'
+import { useAssetTypes } from '@/hooks/use-asset-types'
 import { useLocations } from '@/hooks/use-locations'
 import { useVendors } from '@/hooks/use-vendors'
 import { Button } from '@/components/ui/button'
@@ -19,11 +20,13 @@ export default function EditAssetPage() {
 
   const { data: asset, isLoading: assetLoading } = useAsset(assetId)
   const { data: categoriesData } = useAssetCategories()
+  const { data: assetTypesData } = useAssetTypes()
   const { data: locationsData } = useLocations()
   const { data: vendorsData } = useVendors()
   const updateAsset = useUpdateAsset()
 
   const categories = categoriesData?.categories ?? []
+  const assetTypes = assetTypesData?.assetTypes ?? []
   const locations = locationsData ?? []
   const vendors = vendorsData?.data?.map((v: { id: string; name: string; service_categories?: string[] | null }) => ({
     id: v.id,
@@ -79,11 +82,13 @@ export default function EditAssetPage() {
 
       <AssetForm
         categories={categories}
+        assetTypes={assetTypes}
         locations={locations}
         vendors={vendors}
         defaultValues={{
           name: asset.name,
           category_id: asset.category_id,
+          asset_type_id: asset.asset_type_id,
           location_id: asset.location_id,
           serial_number: asset.serial_number,
           model: asset.model,

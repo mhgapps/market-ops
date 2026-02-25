@@ -35,6 +35,7 @@ describe('AssetDAO', () => {
     model: 'Model X',
     manufacturer: 'Test Manufacturer',
     category_id: 'category-1',
+    asset_type_id: null,
     location_id: 'location-1',
     vendor_id: null,
     status: 'active',

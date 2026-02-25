@@ -54,14 +54,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const service = new AssetService()
-    // Convert null to undefined for service layer
-    const updateData = Object.fromEntries(
-      Object.entries(validationResult.data).map(([key, value]) => [
-        key,
-        value === null ? undefined : value,
-      ])
-    )
-    const asset = await service.updateAsset(id, updateData)
+    const asset = await service.updateAsset(id, validationResult.data)
 
     return NextResponse.json({ asset })
   } catch (error) {

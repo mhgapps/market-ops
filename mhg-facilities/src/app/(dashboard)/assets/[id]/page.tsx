@@ -199,6 +199,13 @@ export default function AssetDetailPage({ params }: PageProps) {
                   </div>
                 )}
 
+                {asset.asset_type && (
+                  <div>
+                    <div className="text-sm text-gray-600">Type</div>
+                    <div className="font-medium">{asset.asset_type.name}</div>
+                  </div>
+                )}
+
                 {asset.location && (
                   <div>
                     <div className="text-sm text-gray-600">Location</div>

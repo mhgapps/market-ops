@@ -13,7 +13,7 @@ function nullToUndefined<T extends Record<string, unknown>>(obj: T): T {
 /**
  * GET /api/assets
  * Get all assets with optional filters and pagination
- * Query params: category_id, location_id, vendor_id, status, search, warranty_expiring_days, page, pageSize
+ * Query params: category_id, asset_type_id, location_id, vendor_id, status, search, warranty_expiring_days, page, pageSize
  */
 export async function GET(request: NextRequest) {
   try {
@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
 
     const rawFilters = {
       category_id: searchParams.get('category_id') || undefined,
+      asset_type_id: searchParams.get('asset_type_id') || undefined,
       location_id: searchParams.get('location_id') || undefined,
       vendor_id: searchParams.get('vendor_id') || undefined,
       status: searchParams.get('status') || undefined,

@@ -20,12 +20,29 @@ export const updateAssetCategorySchema = z.object({
 })
 
 /**
+ * Asset Type Validation Schemas
+ */
+
+export const createAssetTypeSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  category_id: uuid('Invalid category ID'),
+  description: z.string().max(500).optional(),
+})
+
+export const updateAssetTypeSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  category_id: uuid('Invalid category ID').optional(),
+  description: z.string().max(500).optional(),
+})
+
+/**
  * Asset Validation Schemas
  */
 
 export const createAssetSchema = z.object({
   name: z.string().min(1, 'Asset name is required').max(200),
   category_id: optionalUuid,
+  asset_type_id: optionalUuid,
   location_id: optionalUuid,
   serial_number: z.string().max(100).nullish().transform((val) => val || undefined),
   model: z.string().max(100).nullish().transform((val) => val || undefined),
@@ -44,6 +61,7 @@ export const createAssetSchema = z.object({
 export const updateAssetSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   category_id: nullableUuid().optional(),
+  asset_type_id: nullableUuid().optional(),
   location_id: nullableUuid().optional(),
   serial_number: z.string().max(100).nullish(),
   model: z.string().max(100).nullish(),
@@ -60,6 +78,7 @@ export const updateAssetSchema = z.object({
 
 export const assetFilterSchema = z.object({
   category_id: uuid().optional(),
+  asset_type_id: uuid().optional(),
   location_id: uuid().optional(),
   vendor_id: uuid().optional(),
   status: z.enum(['active', 'under_maintenance', 'retired', 'transferred', 'disposed']).optional(),
@@ -170,6 +189,8 @@ export const createVendorRatingSchema = z.object({
 
 export type CreateAssetCategoryInput = z.infer<typeof createAssetCategorySchema>
 export type UpdateAssetCategoryInput = z.infer<typeof updateAssetCategorySchema>
+export type CreateAssetTypeInput = z.infer<typeof createAssetTypeSchema>
+export type UpdateAssetTypeInput = z.infer<typeof updateAssetTypeSchema>
 
 export type CreateAssetInput = z.infer<typeof createAssetSchema>
 export type UpdateAssetInput = z.infer<typeof updateAssetSchema>

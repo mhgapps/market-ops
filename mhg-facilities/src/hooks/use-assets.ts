@@ -11,6 +11,7 @@ interface Asset {
   id: string
   name: string
   category_id: string | null
+  asset_type_id: string | null
   location_id: string | null
   serial_number: string | null
   model: string | null
@@ -37,6 +38,11 @@ interface AssetWithRelations extends Asset {
     id: string
     name: string
     default_lifespan_years: number | null
+  } | null
+  asset_type?: {
+    id: string
+    name: string
+    category_id: string
   } | null
   location?: {
     id: string
@@ -72,6 +78,7 @@ export function useAssets(filters?: AssetFilterInput) {
     queryFn: async () => {
       const params = new URLSearchParams()
       if (filters?.category_id) params.set('category_id', filters.category_id)
+      if (filters?.asset_type_id) params.set('asset_type_id', filters.asset_type_id)
       if (filters?.location_id) params.set('location_id', filters.location_id)
       if (filters?.vendor_id) params.set('vendor_id', filters.vendor_id)
       if (filters?.status) params.set('status', filters.status)

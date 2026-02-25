@@ -209,6 +209,7 @@ export default function AssetsPage() {
                   <TableRow>
                     <TableHead>Asset</TableHead>
                     <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead className="hidden lg:table-cell">Type</TableHead>
                     <TableHead className="hidden sm:table-cell">Location</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="hidden lg:table-cell">QR Code</TableHead>
@@ -219,6 +220,7 @@ export default function AssetsPage() {
                   {(assets as unknown as Array<Database['public']['Tables']['assets']['Row'] & {
                     location?: { name: string } | null
                     category?: { name: string } | null
+                    asset_type?: { name: string } | null
                   }>).map((asset) => (
                     <TableRow
                       key={asset.id}
@@ -243,6 +245,9 @@ export default function AssetsPage() {
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {asset.category?.name || '-'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {asset.asset_type?.name || '-'}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <div className="flex items-center gap-1 text-sm">

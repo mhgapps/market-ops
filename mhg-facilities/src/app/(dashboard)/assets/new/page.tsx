@@ -60,11 +60,29 @@ export default function NewAssetPage() {
     },
   })
 
-  const isLoading = categoriesLoading || locationsLoading || vendorsLoading
+  // Fetch asset types
+  const { data: assetTypesData, isLoading: assetTypesLoading } = useQuery({
+    queryKey: ['asset-types'],
+    queryFn: async () => {
+      const response = await api.get<{
+        assetTypes: Array<{
+          id: string
+          name: string
+          category_id: string
+          description: string | null
+        }>
+      }>('/api/asset-types')
+      return response.assetTypes
+    },
+  })
+
+  const isLoading =
+    categoriesLoading || locationsLoading || vendorsLoading || assetTypesLoading
 
   const handleSubmit = async (formData: {
     name: string
     category_id?: string | null
+    asset_type_id?: string | null
     location_id?: string | null
     serial_number?: string | null
     model?: string | null
@@ -83,6 +101,7 @@ export default function NewAssetPage() {
         name: formData.name,
         status: formData.status,
         ...(formData.category_id && { category_id: formData.category_id }),
+        ...(formData.asset_type_id && { asset_type_id: formData.asset_type_id }),
         ...(formData.location_id && { location_id: formData.location_id }),
         ...(formData.serial_number && { serial_number: formData.serial_number }),
         ...(formData.model && { model: formData.model }),
@@ -128,6 +147,7 @@ export default function NewAssetPage() {
       {/* Form */}
       <AssetForm
         categories={categoriesData || []}
+        assetTypes={assetTypesData || []}
         locations={locationsData || []}
         vendors={vendorsData || []}
         onSubmit={handleSubmit}

@@ -25,6 +25,36 @@ export interface AssetTransferInsert {
   notes?: string | null
 }
 
+export interface AssetTypeRow {
+  id: string
+  tenant_id: string
+  category_id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export interface AssetTypeInsert {
+  id?: string
+  tenant_id: string
+  category_id: string
+  name: string
+  description?: string | null
+  created_at?: string
+  updated_at?: string
+  deleted_at?: string | null
+}
+
+export interface AssetTypeUpdate {
+  category_id?: string
+  name?: string
+  description?: string | null
+  updated_at?: string
+  deleted_at?: string | null
+}
+
 export interface VendorRatingRow {
   id: string
   vendor_id: string | null
@@ -268,6 +298,11 @@ export interface OnCallScheduleUpdate {
 export type Database = BaseDatabase & {
   public: {
     Tables: BaseDatabase['public']['Tables'] & {
+      asset_types: {
+        Row: AssetTypeRow
+        Insert: AssetTypeInsert
+        Update: AssetTypeUpdate
+      }
       asset_transfers: {
         Row: AssetTransferRow
         Insert: AssetTransferInsert

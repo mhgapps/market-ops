@@ -257,6 +257,7 @@ export interface Database {
           tenant_id: string
           name: string
           category_id: string | null
+          asset_type_id: string | null
           location_id: string | null
           serial_number: string | null
           model: string | null
@@ -281,6 +282,7 @@ export interface Database {
           tenant_id: string
           name: string
           category_id?: string | null
+          asset_type_id?: string | null
           location_id?: string | null
           serial_number?: string | null
           model?: string | null
@@ -305,6 +307,7 @@ export interface Database {
           tenant_id?: string
           name?: string
           category_id?: string | null
+          asset_type_id?: string | null
           location_id?: string | null
           serial_number?: string | null
           model?: string | null

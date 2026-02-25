@@ -52,9 +52,27 @@ export default function NewTicketPage() {
   const { data: assetsData, isLoading: assetsLoading } = useQuery({
     queryKey: ['assets'],
     queryFn: async () => {
-      const response = await api.get<{ assets: Database['public']['Tables']['assets']['Row'][] }>('/api/assets')
+      const allAssets: Database['public']['Tables']['assets']['Row'][] = []
+      let page = 1
+      let totalPages = 1
+
+      do {
+        const response = await api.get<{
+          data?: Database['public']['Tables']['assets']['Row'][]
+          assets?: Database['public']['Tables']['assets']['Row'][]
+          totalPages?: number
+        }>('/api/assets', {
+          // Keep this in sync with assetFilterSchema max pageSize (100)
+          params: { page, pageSize: 100 },
+        })
+
+        allAssets.push(...(response.data ?? response.assets ?? []))
+        totalPages = response.totalPages ?? 1
+        page += 1
+      } while (page <= totalPages)
+
       // Transform to match expected type
-      return response.assets.map(asset => ({
+      return allAssets.map(asset => ({
         id: asset.id,
         name: asset.name,
         serial_number: asset.serial_number,

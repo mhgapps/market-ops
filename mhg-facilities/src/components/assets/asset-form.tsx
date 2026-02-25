@@ -31,6 +31,7 @@ import { Spinner } from '@/components/ui/loaders'
 const assetFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
   category_id: z.string().nullable().optional(),
+  asset_type_id: z.string().nullable().optional(),
   location_id: z.string().nullable().optional(),
   serial_number: z.string().max(100).nullable().optional(),
   model: z.string().max(100).nullable().optional(),
@@ -53,6 +54,13 @@ interface AssetCategory {
   default_lifespan_years?: number | null
 }
 
+interface AssetType {
+  id: string
+  name: string
+  category_id: string
+  description?: string | null
+}
+
 interface Location {
   id: string
   name: string
@@ -67,6 +75,7 @@ interface Vendor {
 
 interface AssetFormProps {
   categories: AssetCategory[]
+  assetTypes: AssetType[]
   locations: Location[]
   vendors: Vendor[]
   defaultValues?: Partial<AssetFormValues>
@@ -78,6 +87,7 @@ interface AssetFormProps {
 
 export function AssetForm({
   categories,
+  assetTypes,
   locations,
   vendors,
   defaultValues,
@@ -91,6 +101,7 @@ export function AssetForm({
     defaultValues: {
       name: '',
       category_id: null,
+      asset_type_id: null,
       location_id: null,
       serial_number: null,
       model: null,
@@ -107,11 +118,20 @@ export function AssetForm({
   })
 
   const selectedCategoryId = form.watch('category_id')
+  const selectedAssetTypeId = form.watch('asset_type_id')
 
   // Memoize category lookup to prevent recalculation on every render
   const selectedCategory = useMemo(
     () => categories.find((cat) => cat.id === selectedCategoryId),
     [categories, selectedCategoryId]
+  )
+
+  const filteredAssetTypes = useMemo(
+    () =>
+      selectedCategoryId
+        ? assetTypes.filter((type) => type.category_id === selectedCategoryId)
+        : [],
+    [assetTypes, selectedCategoryId]
   )
 
   // Auto-set lifespan from category default if not already set
@@ -120,6 +140,16 @@ export function AssetForm({
       form.setValue('expected_lifespan_years', selectedCategory.default_lifespan_years)
     }
   }, [selectedCategory?.default_lifespan_years, form])
+
+  // Clear type if it no longer matches the selected category
+  useEffect(() => {
+    if (!selectedAssetTypeId || assetTypes.length === 0) return
+
+    const selectedType = assetTypes.find((type) => type.id === selectedAssetTypeId)
+    if (!selectedType || selectedType.category_id !== selectedCategoryId) {
+      form.setValue('asset_type_id', null)
+    }
+  }, [assetTypes, form, selectedAssetTypeId, selectedCategoryId])
 
   return (
     <Card>
@@ -198,24 +228,76 @@ export function AssetForm({
               />
             </div>
 
-            {/* Row 2: Category + Location */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Row 2: Category + Type + Location */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="category_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <Select
+                      onValueChange={(value) => {
+                        const nextCategoryId = value === '__none__' ? null : value
+                        const previousCategoryId = form.getValues('category_id')
+
+                        field.onChange(nextCategoryId)
+
+                        // Category changed: force user to re-select a matching type.
+                        if (nextCategoryId !== previousCategoryId) {
+                          form.setValue('asset_type_id', null)
+                        }
+                      }}
+                      value={field.value || '__none__'}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="__none__">No Category</SelectItem>
                         {categories.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
                             {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="asset_type_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <Select
+                      onValueChange={(value) =>
+                        field.onChange(value === '__none__' ? null : value)
+                      }
+                      value={field.value || '__none__'}
+                      disabled={!selectedCategoryId}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              selectedCategoryId
+                                ? 'Select a type...'
+                                : 'Select category first...'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">No Type</SelectItem>
+                        {filteredAssetTypes.map((assetType) => (
+                          <SelectItem key={assetType.id} value={assetType.id}>
+                            {assetType.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -231,13 +313,19 @@ export function AssetForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Location</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <Select
+                      onValueChange={(value) =>
+                        field.onChange(value === '__none__' ? null : value)
+                      }
+                      value={field.value || '__none__'}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a location..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="__none__">No Location</SelectItem>
                         {locations.map((location) => (
                           <SelectItem key={location.id} value={location.id}>
                             {location.name}
