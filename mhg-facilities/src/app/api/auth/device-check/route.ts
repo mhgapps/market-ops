@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { DeviceAuthService } from "@/services/device-auth.service";
+import { getPooledSupabaseClient } from "@/lib/supabase/server-pooled";
+
+const MHG_EMAIL_DOMAIN = "markethospitalitygroup.com";
 
 const deviceCheckSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -25,6 +28,31 @@ export async function POST(request: NextRequest) {
     }
 
     const { email } = validation.data;
+
+    // For MHG domain emails, check if user is registered
+    if (email.toLowerCase().endsWith(`@${MHG_EMAIL_DOMAIN}`)) {
+      const supabase = await getPooledSupabaseClient();
+      const { data: mhgTenant } = await supabase
+        .from("tenants")
+        .select("id")
+        .eq("slug", "mhg")
+        .is("deleted_at", null)
+        .single();
+
+      if (mhgTenant) {
+        const { data: existingUser } = await supabase
+          .from("users")
+          .select("id")
+          .eq("tenant_id", (mhgTenant as { id: string }).id)
+          .eq("email", email.toLowerCase())
+          .is("deleted_at", null)
+          .single();
+
+        if (!existingUser) {
+          return NextResponse.json({ trusted: false, registered: false });
+        }
+      }
+    }
 
     // Read device_token from cookies
     const deviceToken = request.cookies.get("device_token")?.value;

@@ -99,10 +99,15 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      const { trusted } = await api.post<{ trusted: boolean }>(
-        "/api/auth/device-check",
-        { email },
-      );
+      const { trusted, registered } = await api.post<{
+        trusted: boolean;
+        registered?: boolean;
+      }>("/api/auth/device-check", { email });
+
+      if (registered === false) {
+        router.push("/signup?email=" + encodeURIComponent(email));
+        return;
+      }
 
       if (trusted) {
         setStep("auto-login");
@@ -237,7 +242,7 @@ function LoginForm() {
             </div>
           </CardContent>
 
-          <CardFooter className="pt-2">
+          <CardFooter className="flex flex-col gap-4 pt-2">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -248,6 +253,16 @@ function LoginForm() {
                 STRINGS.CONTINUE
               )}
             </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/signup"
+                className="text-primary hover:underline font-medium"
+              >
+                Sign up
+              </Link>
+            </p>
           </CardFooter>
         </form>
       </Card>
@@ -316,7 +331,7 @@ function LoginForm() {
           </div>
         </CardContent>
 
-        <CardFooter className="pt-2">
+        <CardFooter className="flex flex-col gap-4 pt-2">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
@@ -327,6 +342,16 @@ function LoginForm() {
               STRINGS.SIGN_IN
             )}
           </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="text-primary hover:underline font-medium"
+            >
+              Sign up
+            </Link>
+          </p>
         </CardFooter>
       </form>
     </Card>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -95,12 +95,24 @@ type FormErrors = {
 };
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const emailFromUrl = searchParams.get("email") || "";
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isMHGEmail, setIsMHGEmail] = useState(false);
+  const [isMHGEmail, setIsMHGEmail] = useState(
+    emailFromUrl.toLowerCase().endsWith(`@${MHG_EMAIL_DOMAIN}`),
+  );
 
   function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
     const email = e.target.value;
@@ -224,6 +236,7 @@ export default function SignupPage() {
               autoComplete="email"
               disabled={isLoading}
               aria-invalid={!!errors.email}
+              defaultValue={emailFromUrl}
               onChange={handleEmailChange}
             />
             {errors.email && (
