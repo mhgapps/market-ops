@@ -1,8 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getPooledSupabaseClient } from "@/lib/supabase/server-pooled";
 import { redirect } from "next/navigation";
 import type { Database } from "@/types/database";
+import { ResendIAO } from "@/iao/resend";
+import { generateSignupConfirmationEmail } from "@/lib/email/templates/signup-confirmation";
 
 // Type-safe insert types
 type TenantInsert = Database["public"]["Tables"]["tenants"]["Insert"];
@@ -72,8 +75,11 @@ export async function signup(
 
   // Check if this is an MHG domain email - join existing tenant as manager
   if (isMHGEmail(email)) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const adminClient = await getPooledSupabaseClient();
+
     // Look up existing MHG tenant
-    const { data: mhgTenant } = await supabase
+    const { data: mhgTenant } = await adminClient
       .from("tenants")
       .select("id")
       .eq("slug", MHG_TENANT_SLUG)
@@ -87,7 +93,7 @@ export async function signup(
     const tenantId = (mhgTenant as { id: string }).id;
 
     // Check if email already exists in this tenant
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await adminClient
       .from("users")
       .select("id")
       .eq("tenant_id", tenantId)
@@ -99,28 +105,42 @@ export async function signup(
       return { error: "An account with this email already exists" };
     }
 
-    // Create auth user with MHG tenant_id
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          tenant_id: tenantId,
-          full_name: fullName,
+    // Create auth user and generate verification link without Supabase sending its default email
+    const { data: linkData, error: linkError } =
+      await adminClient.auth.admin.generateLink({
+        type: "signup",
+        email,
+        password,
+        options: {
+          data: {
+            tenant_id: tenantId,
+            full_name: fullName,
+          },
+          redirectTo: `${appUrl}/verify-email`,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/verify-email`,
-      },
-    });
+      });
 
-    if (authError) {
-      if (authError.message.includes("User already registered")) {
+    if (linkError) {
+      if (linkError.message.includes("already been registered")) {
         return { error: "An account with this email already exists" };
       }
-      return { error: authError.message };
+      return { error: linkError.message };
     }
 
-    if (!authData.user) {
+    if (!linkData?.user) {
       return { error: "Failed to create user. Please try again." };
+    }
+
+    // Send branded verification email via Resend
+    if (linkData.properties?.action_link) {
+      const { subject, html } = generateSignupConfirmationEmail({
+        recipientName: fullName,
+        recipientEmail: email,
+        verificationLink: linkData.properties.action_link,
+      });
+
+      const resend = new ResendIAO();
+      await resend.sendEmail({ to: email, subject, html });
     }
 
     // Create user record with manager role
@@ -138,7 +158,7 @@ export async function signup(
       },
     };
 
-    const { error: userError } = await supabase
+    const { error: userError } = await adminClient
       .from("users")
       .insert(userData as never);
 
@@ -215,33 +235,50 @@ export async function signup(
 
   const tenantId = (tenant as { id: string }).id;
 
-  // Create the auth user with tenant_id in metadata
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        tenant_id: tenantId,
-        full_name: fullName,
-      },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/verify-email`,
-    },
-  });
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const adminClient = await getPooledSupabaseClient();
 
-  if (authError) {
+  // Create auth user and generate verification link without Supabase sending its default email
+  const { data: linkData, error: linkError } =
+    await adminClient.auth.admin.generateLink({
+      type: "signup",
+      email,
+      password,
+      options: {
+        data: {
+          tenant_id: tenantId,
+          full_name: fullName,
+        },
+        redirectTo: `${appUrl}/verify-email`,
+      },
+    });
+
+  if (linkError) {
     // Rollback: delete the tenant if auth signup fails
     await supabase.from("tenants").delete().eq("id", tenantId);
 
-    if (authError.message.includes("User already registered")) {
+    if (linkError.message.includes("already been registered")) {
       return { error: "An account with this email already exists" };
     }
-    return { error: authError.message };
+    return { error: linkError.message };
   }
 
-  if (!authData.user) {
+  if (!linkData?.user) {
     // Rollback: delete the tenant if no user created
     await supabase.from("tenants").delete().eq("id", tenantId);
     return { error: "Failed to create user. Please try again." };
+  }
+
+  // Send branded verification email via Resend
+  if (linkData.properties?.action_link) {
+    const { subject, html } = generateSignupConfirmationEmail({
+      recipientName: fullName,
+      recipientEmail: email,
+      verificationLink: linkData.properties.action_link,
+    });
+
+    const resend = new ResendIAO();
+    await resend.sendEmail({ to: email, subject, html });
   }
 
   // Create user data with proper typing
@@ -260,7 +297,7 @@ export async function signup(
   };
 
   // Create the user record in our users table
-  const { error: userError } = await supabase
+  const { error: userError } = await adminClient
     .from("users")
     .insert(userData as never);
 
