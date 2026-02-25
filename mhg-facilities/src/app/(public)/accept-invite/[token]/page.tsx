@@ -42,8 +42,6 @@ export default function AcceptInvitePage({
   const [accountCreated, setAccountCreated] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
-    password: '',
-    confirmPassword: '',
   })
 
   useEffect(() => {
@@ -68,29 +66,16 @@ export default function AcceptInvitePage({
     e.preventDefault()
     setError(null)
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long')
-      return
-    }
-
     setSubmitting(true)
 
     try {
       const response = await api.post<AcceptResponse>(
         `/api/invitations/${resolvedParams.token}`,
-        {
-          full_name: formData.fullName,
-          password: formData.password,
-        }
+        { full_name: formData.fullName }
       )
 
       if (response.session) {
-        router.push('/dashboard')
+        router.push('/set-password')
       } else {
         setAccountCreated(true)
       }
@@ -138,13 +123,12 @@ export default function AcceptInvitePage({
           <CardHeader>
             <CardTitle>Account Created</CardTitle>
             <CardDescription>
-              Your account has been created successfully. Please check your email
-              to verify your address, then log in with your new credentials.
+              Please set your password to complete your account setup.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full min-h-[44px]">
-              <Link href="/login">Go to Login</Link>
+              <Link href="/set-password">Set Password</Link>
             </Button>
           </CardContent>
         </Card>
@@ -195,37 +179,8 @@ export default function AcceptInvitePage({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                required
-                placeholder="At least 8 characters"
-                minLength={8}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-                required
-                placeholder="Re-enter your password"
-              />
-            </div>
-
             <Button type="submit" className="w-full min-h-[44px]" disabled={submitting}>
-              {submitting ? 'Creating Account...' : 'Accept Invitation'}
+              {submitting ? 'Joining...' : 'Join Team'}
             </Button>
           </form>
         </CardContent>

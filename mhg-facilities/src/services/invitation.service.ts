@@ -19,7 +19,6 @@ interface InviteUserInput {
 
 interface AcceptInvitationInput {
   token: string
-  password: string
   full_name: string
 }
 
@@ -173,7 +172,7 @@ export class InvitationService {
    * Accept an invitation and create user account (public endpoint, no tenant context required)
    */
   async acceptInvitation(input: AcceptInvitationInput): Promise<{ user: Record<string, unknown>; session: unknown }> {
-    const { token, password, full_name } = input
+    const { token, full_name } = input
 
     // Get invitation
     const invitation = await this.getInvitationByToken(token)
@@ -183,22 +182,20 @@ export class InvitationService {
 
     const supabase = await getPooledSupabaseClient()
 
-    // Create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Create auth user without password via admin API
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: invitation.email,
-      password,
-      options: {
-        data: {
-          full_name,
-          tenant_id: invitation.tenant_id,
-        },
+      email_confirm: true,
+      user_metadata: {
+        full_name,
+        tenant_id: invitation.tenant_id,
       },
     })
 
     if (authError) throw new Error(authError.message)
     if (!authData.user) throw new Error('Failed to create user account')
 
-    // Create user in users table, including location_id if present on the invitation
+    // Create user in users table with must_set_password flag
     const userInsert: Record<string, unknown> = {
       tenant_id: invitation.tenant_id,
       auth_user_id: authData.user.id,
@@ -206,6 +203,7 @@ export class InvitationService {
       full_name,
       role: invitation.role,
       is_active: true,
+      must_set_password: true,
       language_preference: 'en',
       notification_preferences: { email: true, sms: false, push: false },
     }
@@ -242,9 +240,24 @@ export class InvitationService {
       )
     }
 
+    // Generate a session via magic link so the user is logged in immediately
+    let session = null
+    const { data: linkData } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: invitation.email,
+    })
+
+    if (linkData?.properties?.hashed_token) {
+      const { data: otpData } = await supabase.auth.verifyOtp({
+        token_hash: linkData.properties.hashed_token,
+        type: 'magiclink',
+      })
+      session = otpData?.session ?? null
+    }
+
     return {
       user,
-      session: authData.session,
+      session,
     }
   }
 

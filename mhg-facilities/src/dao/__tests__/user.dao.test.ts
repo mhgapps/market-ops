@@ -30,10 +30,12 @@ describe('UserDAO', () => {
   const mockUser: User = {
     id: 'user-1',
     tenant_id: 'test-tenant-id',
+    auth_user_id: 'auth-uuid-1',
     email: 'test@example.com',
     full_name: 'Test User',
     role: 'user' as UserRole,
     is_active: true,
+    must_set_password: false,
     language_preference: 'en',
     phone: null,
     location_id: null,

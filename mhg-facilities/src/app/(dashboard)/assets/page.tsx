@@ -23,8 +23,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, QrCode, MapPin } from 'lucide-react'
+import { Plus, Search, QrCode, MapPin, Download } from 'lucide-react'
 import { PageLoader } from '@/components/ui/loaders'
+import api from '@/lib/api-client'
 import type { Database } from '@/types/database'
 import { TableLoadingOverlay } from '@/components/ui/table-loading-overlay'
 
@@ -81,6 +82,40 @@ export default function AssetsPage() {
     }
   }
 
+  const handleExportCSV = async () => {
+    try {
+      const response = await api.get<{ data: Array<{ id: string; name: string; qr_code: string | null; status: string; serial_number: string | null; model: string | null; manufacturer: string | null; category?: { name: string } | null; location?: { name: string } | null }> }>('/api/assets?pageSize=10000')
+      const allAssets = response.data || []
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+
+      const csvRows = [
+        ['Asset Name', 'QR Code', 'URL', 'Location', 'Category', 'Status', 'Serial Number', 'Model', 'Manufacturer'].join(','),
+        ...allAssets.map(a => [
+          `"${(a.name || '').replace(/"/g, '""')}"`,
+          a.qr_code || '',
+          a.qr_code ? `${appUrl}/qr/${encodeURIComponent(a.qr_code)}` : '',
+          `"${(a.location?.name || '').replace(/"/g, '""')}"`,
+          `"${(a.category?.name || '').replace(/"/g, '""')}"`,
+          a.status || '',
+          a.serial_number || '',
+          `"${(a.model || '').replace(/"/g, '""')}"`,
+          `"${(a.manufacturer || '').replace(/"/g, '""')}"`,
+        ].join(','))
+      ]
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `assets-labels-${new Date().toISOString().split('T')[0]}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Failed to export CSV:', err)
+    }
+  }
+
   if (isLoading && !data) {
     return <PageLoader />
   }
@@ -90,10 +125,16 @@ export default function AssetsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Assets</h1>
-        <Button onClick={() => router.push('/assets/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">Add Asset</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Export for Labels</span>
+          </Button>
+          <Button onClick={() => router.push('/assets/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Add Asset</span>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Strip */}

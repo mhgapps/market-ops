@@ -105,6 +105,7 @@ export interface Database {
         Row: {
           id: string
           tenant_id: string
+          auth_user_id: string | null
           email: string
           full_name: string
           role: UserRole
@@ -112,6 +113,7 @@ export interface Database {
           location_id: string | null
           language_preference: 'en' | 'es'
           is_active: boolean
+          must_set_password: boolean
           deactivated_at: string | null
           notification_preferences: Json
           created_at: string
@@ -121,6 +123,7 @@ export interface Database {
         Insert: {
           id?: string
           tenant_id: string
+          auth_user_id?: string | null
           email: string
           full_name: string
           role?: UserRole
@@ -128,6 +131,7 @@ export interface Database {
           location_id?: string | null
           language_preference?: 'en' | 'es'
           is_active?: boolean
+          must_set_password?: boolean
           deactivated_at?: string | null
           notification_preferences?: Json
           created_at?: string
@@ -137,6 +141,7 @@ export interface Database {
         Update: {
           id?: string
           tenant_id?: string
+          auth_user_id?: string | null
           email?: string
           full_name?: string
           role?: UserRole
@@ -144,6 +149,7 @@ export interface Database {
           location_id?: string | null
           language_preference?: 'en' | 'es'
           is_active?: boolean
+          must_set_password?: boolean
           deactivated_at?: string | null
           notification_preferences?: Json
           created_at?: string

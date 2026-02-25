@@ -294,6 +294,49 @@ export interface OnCallScheduleUpdate {
   deleted_at?: string | null
 }
 
+export interface TrustedDeviceRow {
+  id: string
+  tenant_id: string
+  user_id: string
+  auth_user_id: string
+  device_token_hash: string
+  device_name: string | null
+  ip_address: string | null
+  trusted_at: string
+  expires_at: string
+  last_used_at: string
+  revoked_at: string | null
+  deleted_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TrustedDeviceInsert {
+  id?: string
+  tenant_id: string
+  user_id: string
+  auth_user_id: string
+  device_token_hash: string
+  device_name?: string | null
+  ip_address?: string | null
+  trusted_at?: string
+  expires_at?: string
+  last_used_at?: string
+  revoked_at?: string | null
+  deleted_at?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface TrustedDeviceUpdate {
+  device_name?: string | null
+  ip_address?: string | null
+  last_used_at?: string
+  revoked_at?: string | null
+  deleted_at?: string | null
+  updated_at?: string
+}
+
 // Extended Database type with additional tables
 export type Database = BaseDatabase & {
   public: {
@@ -352,6 +395,11 @@ export type Database = BaseDatabase & {
         Row: OnCallScheduleRow
         Insert: OnCallScheduleInsert
         Update: OnCallScheduleUpdate
+      }
+      trusted_devices: {
+        Row: TrustedDeviceRow
+        Insert: TrustedDeviceInsert
+        Update: TrustedDeviceUpdate
       }
     }
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { InvitationService } from '@/services/invitation.service'
+import { DeviceAuthService } from '@/services/device-auth.service'
 import { acceptInviteSchema } from '@/lib/validations/user'
 
 /**
@@ -43,8 +44,11 @@ export async function GET(
 
 /**
  * POST /api/invitations/[token]
- * Accept an invitation and create account
- * Public endpoint (no auth required)
+ * Accept an invitation and create account (passwordless).
+ * Public endpoint (no auth required).
+ *
+ * Creates the user without a password, sets must_set_password flag,
+ * trusts the current device, and returns a session.
  */
 export async function POST(
   request: NextRequest,
@@ -54,7 +58,7 @@ export async function POST(
     const { token } = await params
     const body = await request.json()
 
-    // Validate request body
+    // Validate request body (password no longer required)
     const validation = acceptInviteSchema.safeParse({
       token,
       ...body,
@@ -70,22 +74,56 @@ export async function POST(
     const invitationService = new InvitationService()
     const { user, session } = await invitationService.acceptInvitation({
       token,
-      password: validation.data.password,
       full_name: validation.data.full_name,
     })
 
-    return NextResponse.json(
+    const userRecord = user as { id: string; email: string; full_name: string; role: string; tenant_id: string; auth_user_id: string }
+
+    // Trust the device automatically for the new user
+    const deviceAuthService = new DeviceAuthService()
+    const userAgent = request.headers.get('user-agent') || ''
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      '0.0.0.0'
+
+    let rawToken: string | null = null
+    if (userRecord.auth_user_id) {
+      rawToken = await deviceAuthService.trustDevice({
+        userId: userRecord.id,
+        tenantId: userRecord.tenant_id,
+        authUserId: userRecord.auth_user_id,
+        userAgent,
+        ip,
+      })
+    }
+
+    const response = NextResponse.json(
       {
         user: {
-          id: user.id,
-          email: user.email,
-          fullName: user.full_name,
-          role: user.role,
+          id: userRecord.id,
+          email: userRecord.email,
+          fullName: userRecord.full_name,
+          role: userRecord.role,
+          mustSetPassword: true,
         },
         session,
       },
       { status: 201 }
     )
+
+    // Set the device_token cookie if trust succeeded
+    if (rawToken) {
+      response.cookies.set('device_token', rawToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 180 * 24 * 60 * 60, // 180 days in seconds
+        path: '/',
+      })
+    }
+
+    return response
   } catch (error) {
     console.error('Error in POST /api/invitations/[token]:', error)
 

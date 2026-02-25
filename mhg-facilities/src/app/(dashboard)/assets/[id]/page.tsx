@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { TransferModal } from '@/components/assets/transfer-modal'
-import { QRCodeDisplay } from '@/components/assets/qr-code-display'
 import {
   MapPin,
   Calendar,
@@ -365,16 +364,6 @@ export default function AssetDetailPage({ params }: PageProps) {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* QR Code */}
-          {asset.qr_code && (
-            <QRCodeDisplay
-              qrCode={asset.qr_code}
-              assetName={asset.name}
-              assetId={asset.id}
-              size={200}
-            />
-          )}
-
           {/* Metadata */}
           <Card>
             <CardHeader>

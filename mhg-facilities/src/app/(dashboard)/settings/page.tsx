@@ -7,6 +7,7 @@ import {
   Users,
   MapPin,
   BarChart3,
+  Smartphone,
   ChevronRight,
 } from 'lucide-react';
 
@@ -29,6 +30,12 @@ export default function SettingsPage() {
       description: 'Configure email, SMS, and push notification preferences',
       icon: Bell,
       href: '/settings/notifications',
+    },
+    {
+      title: 'Trusted Devices',
+      description: 'Manage devices that can sign in without a password',
+      icon: Smartphone,
+      href: '/settings/devices',
     },
     {
       title: 'Categories',

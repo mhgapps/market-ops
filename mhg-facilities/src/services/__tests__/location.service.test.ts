@@ -40,6 +40,7 @@ describe('LocationService', () => {
   const mockUser: User = {
     id: 'user-1',
     tenant_id: 'test-tenant-id',
+    auth_user_id: 'auth-uuid-1',
     email: 'test@example.com',
     full_name: 'Test User',
     role: 'staff',
@@ -47,6 +48,7 @@ describe('LocationService', () => {
     location_id: null,
     language_preference: 'en',
     is_active: true,
+    must_set_password: false,
     deactivated_at: null,
     notification_preferences: { email: true, sms: false, push: true },
     created_at: '2024-01-01T00:00:00Z',
