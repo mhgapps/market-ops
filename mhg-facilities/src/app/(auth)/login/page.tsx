@@ -237,7 +237,7 @@ function LoginForm() {
             </div>
           </CardContent>
 
-          <CardFooter>
+          <CardFooter className="pt-2">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -316,7 +316,7 @@ function LoginForm() {
           </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="pt-2">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
               <>
