@@ -134,13 +134,13 @@ export function Sidebar() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.png"
-            alt="MHG Facilities"
+            alt="MarketOps"
             width={32}
             height={32}
             className="w-8 h-8"
           />
           <span className="font-semibold text-foreground truncate">
-            MHG Facilities
+            MarketOps
           </span>
         </Link>
       </div>

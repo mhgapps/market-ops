@@ -1,7 +1,7 @@
 {
-  "name": "MHG Facilities",
-  "short_name": "Facilities",
-  "description": "Facilities management platform for MHG",
+  "name": "MarketOps",
+  "short_name": "MarketOps",
+  "description": "Operations management platform for Market Hospitality Group",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

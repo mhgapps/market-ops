@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Standardized skeleton loaders for MHG Facilities
+ * Standardized skeleton loaders for MarketOps
  *
  * All skeletons use consistent styling with:
  * - bg-muted for background

@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Standardized loader components for MHG Facilities
+ * Standardized loader components for MarketOps
  *
  * Usage:
  * - PageLoader: Full-page loading state (centered in viewport)

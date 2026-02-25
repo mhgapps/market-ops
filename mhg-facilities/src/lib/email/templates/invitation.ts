@@ -25,7 +25,7 @@ export function generateInvitationEmail(data: InvitationEmailData): {
     inviterName,
   } = data;
 
-  const subject = `You've been invited to join ${tenantName} on MHG Facilities`;
+  const subject = `You've been invited to join ${tenantName} on MarketOps`;
 
   const html = `
 <!DOCTYPE html>
@@ -43,7 +43,7 @@ export function generateInvitationEmail(data: InvitationEmailData): {
           <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">MHG Facilities</h1>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">MarketOps</h1>
             </td>
           </tr>
 
@@ -57,11 +57,11 @@ export function generateInvitationEmail(data: InvitationEmailData): {
               </p>
 
               <p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-                <strong>${inviterName}</strong> has invited you to join <strong>${tenantName}</strong> on MHG Facilities as a <strong>${role}</strong>.
+                <strong>${inviterName}</strong> has invited you to join <strong>${tenantName}</strong> on MarketOps as a <strong>${role}</strong>.
               </p>
 
               <p style="margin: 0 0 24px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-                MHG Facilities is a comprehensive platform for managing facility operations, maintenance, and assets. Click the button below to accept your invitation and create your account.
+                MarketOps is a comprehensive platform for managing facility operations, maintenance, and assets. Click the button below to accept your invitation and create your account.
               </p>
 
               <!-- CTA Button -->
@@ -103,7 +103,7 @@ export function generateInvitationEmail(data: InvitationEmailData): {
                 This email was sent to <strong>${recipientEmail}</strong>
               </p>
               <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
-                © 2026 MHG Facilities. All rights reserved.
+                © 2026 MarketOps. All rights reserved.
               </p>
             </td>
           </tr>
@@ -116,13 +116,13 @@ export function generateInvitationEmail(data: InvitationEmailData): {
   `;
 
   const text = `
-You've been invited to join ${tenantName} on MHG Facilities
+You've been invited to join ${tenantName} on MarketOps
 
 Hi${recipientName ? ` ${recipientName}` : ""},
 
-${inviterName} has invited you to join ${tenantName} on MHG Facilities as a ${role}.
+${inviterName} has invited you to join ${tenantName} on MarketOps as a ${role}.
 
-MHG Facilities is a comprehensive platform for managing facility operations, maintenance, and assets.
+MarketOps is a comprehensive platform for managing facility operations, maintenance, and assets.
 
 To accept your invitation and create your account, visit:
 ${inviteLink}
@@ -133,7 +133,7 @@ If you didn't expect this invitation, you can safely ignore this email.
 
 This email was sent to ${recipientEmail}
 
-© 2026 MHG Facilities. All rights reserved.
+© 2026 MarketOps. All rights reserved.
   `.trim();
 
   return { subject, html, text };

@@ -128,7 +128,7 @@ export class ResendIAO {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 
             <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 0;">
-              MHG Facilities Management System<br>
+              MarketOps<br>
               This is an automated notification. Please do not reply to this email.
             </p>
           </div>
@@ -215,7 +215,7 @@ export class ResendIAO {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 
             <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 0;">
-              MHG Facilities Management System<br>
+              MarketOps<br>
               This is an automated notification. Please do not reply to this email.
             </p>
           </div>
@@ -286,7 +286,7 @@ export class ResendIAO {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 
             <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 0;">
-              MHG Facilities Management System<br>
+              MarketOps<br>
               This is an automated notification. Please do not reply to this email.
             </p>
           </div>
@@ -404,7 +404,7 @@ export class ResendIAO {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 
             <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 0;">
-              MHG Facilities Management System<br>
+              MarketOps<br>
               This is an automated notification. Please do not reply to this email.
             </p>
           </div>
@@ -489,7 +489,7 @@ export class ResendIAO {
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 
             <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 0;">
-              MHG Facilities Management System<br>
+              MarketOps<br>
               This is an automated notification. Please do not reply to this email.
             </p>
           </div>

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "MHG Facilities - Authentication",
+  title: "MarketOps - Authentication",
   description: "Sign in to manage your facilities",
 };
 
 // String constants for bilingual support (EN/ES extraction ready)
 export const AUTH_STRINGS = {
-  APP_NAME: "MHG Facilities",
+  APP_NAME: "MarketOps",
   APP_TAGLINE: "Streamline your facility management",
 } as const;
 
@@ -41,7 +41,7 @@ export default function AuthLayout({
       {/* Footer */}
       <footer className="py-4 text-center text-sm text-muted-foreground">
         <p>
-          &copy; {new Date().getFullYear()} MHG Facilities. All rights reserved.
+          &copy; {new Date().getFullYear()} MarketOps. All rights reserved.
         </p>
       </footer>
     </div>

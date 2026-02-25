@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MHG Facilities",
-  description: "Facilities management platform for MHG",
+  title: "MarketOps",
+  description: "Operations management platform for Market Hospitality Group",
   manifest: "/manifest.json",
 };
 
