@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { TicketForm } from '@/components/tickets/ticket-form'
 import { useCreateTicket, useCheckDuplicates } from '@/hooks/use-tickets'
@@ -23,6 +24,14 @@ interface DuplicateTicket {
 }
 
 export default function NewTicketPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <NewTicketForm />
+    </Suspense>
+  )
+}
+
+function NewTicketForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const createTicket = useCreateTicket()
