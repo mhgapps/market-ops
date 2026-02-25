@@ -69,13 +69,22 @@ export const changePasswordSchema = z
     path: ["confirm_password"],
   });
 
-export const acceptInviteSchema = z.object({
-  token: z.string().min(1, "Token is required"),
-  full_name: z
-    .string()
-    .min(1, "Name is required")
-    .max(100, "Name must be less than 100 characters"),
-});
+export const acceptInviteSchema = z
+  .object({
+    token: z.string().min(1, "Token is required"),
+    full_name: z
+      .string()
+      .min(1, "Name is required")
+      .max(100, "Name must be less than 100 characters"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirm_password: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
 
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;

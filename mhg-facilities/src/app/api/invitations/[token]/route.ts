@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { InvitationService } from "@/services/invitation.service";
 import { DeviceAuthService } from "@/services/device-auth.service";
 import { acceptInviteSchema } from "@/lib/validations/user";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/invitations/[token]
@@ -49,11 +50,11 @@ export async function GET(
 
 /**
  * POST /api/invitations/[token]
- * Accept an invitation and create account (passwordless).
+ * Accept an invitation, create account with password, and log in.
  * Public endpoint (no auth required).
  *
- * Creates the user without a password, sets must_set_password flag,
- * trusts the current device, and returns a session.
+ * Creates the user with password, trusts the current device,
+ * sets session cookies, and returns user data.
  */
 export async function POST(
   request: NextRequest,
@@ -63,7 +64,7 @@ export async function POST(
     const { token } = await params;
     const body = await request.json();
 
-    // Validate request body (password no longer required)
+    // Validate request body
     const validation = acceptInviteSchema.safeParse({
       token,
       ...body,
@@ -80,7 +81,21 @@ export async function POST(
     const { user, session } = await invitationService.acceptInvitation({
       token,
       full_name: validation.data.full_name,
+      password: validation.data.password,
     });
+
+    // Set Supabase session cookies so the user is authenticated immediately
+    if (session) {
+      const typedSession = session as {
+        access_token: string;
+        refresh_token: string;
+      };
+      const cookieClient = await createClient();
+      await cookieClient.auth.setSession({
+        access_token: typedSession.access_token,
+        refresh_token: typedSession.refresh_token,
+      });
+    }
 
     const userRecord = user as {
       id: string;
@@ -117,7 +132,7 @@ export async function POST(
           email: userRecord.email,
           fullName: userRecord.full_name,
           role: userRecord.role,
-          mustSetPassword: true,
+          mustSetPassword: false,
         },
         session,
       },

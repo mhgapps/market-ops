@@ -13,6 +13,13 @@ interface AuthResponse {
   success?: boolean;
 }
 
+const MHG_EMAIL_DOMAIN = "markethospitalitygroup.com";
+const MHG_TENANT_SLUG = "mhg";
+
+function isMHGEmail(email: string): boolean {
+  return email.toLowerCase().endsWith(`@${MHG_EMAIL_DOMAIN}`);
+}
+
 /**
  * Generate a URL-friendly slug from a company name
  */
@@ -62,6 +69,87 @@ export async function signup(
   fullName: string,
 ): Promise<AuthResponse> {
   const supabase = await createClient();
+
+  // Check if this is an MHG domain email - join existing tenant as manager
+  if (isMHGEmail(email)) {
+    // Look up existing MHG tenant
+    const { data: mhgTenant } = await supabase
+      .from("tenants")
+      .select("id")
+      .eq("slug", MHG_TENANT_SLUG)
+      .is("deleted_at", null)
+      .single();
+
+    if (!mhgTenant) {
+      return { error: "Organization not found. Please contact your administrator." };
+    }
+
+    const tenantId = (mhgTenant as { id: string }).id;
+
+    // Check if email already exists in this tenant
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("email", email.toLowerCase())
+      .is("deleted_at", null)
+      .single();
+
+    if (existingUser) {
+      return { error: "An account with this email already exists" };
+    }
+
+    // Create auth user with MHG tenant_id
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          tenant_id: tenantId,
+          full_name: fullName,
+        },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/verify-email`,
+      },
+    });
+
+    if (authError) {
+      if (authError.message.includes("User already registered")) {
+        return { error: "An account with this email already exists" };
+      }
+      return { error: authError.message };
+    }
+
+    if (!authData.user) {
+      return { error: "Failed to create user. Please try again." };
+    }
+
+    // Create user record with manager role
+    const userData: UserInsert = {
+      tenant_id: tenantId,
+      email,
+      full_name: fullName,
+      role: "manager",
+      is_active: true,
+      language_preference: "en",
+      notification_preferences: {
+        email: true,
+        sms: false,
+        push: false,
+      },
+    };
+
+    const { error: userError } = await supabase
+      .from("users")
+      .insert(userData as never);
+
+    if (userError) {
+      console.error("User record creation error:", userError);
+    }
+
+    return { success: true };
+  }
+
+  // --- Existing flow for non-MHG emails (creates new tenant as admin) ---
 
   // Generate a unique slug for the tenant
   const baseSlug = generateSlug(tenantName);

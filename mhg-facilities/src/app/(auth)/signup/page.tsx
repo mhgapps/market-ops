@@ -51,13 +51,12 @@ const STRINGS = {
   ERROR_PASSWORDS_DONT_MATCH: "Passwords do not match",
 } as const;
 
+const MHG_EMAIL_DOMAIN = "markethospitalitygroup.com";
+
 // Zod schema for form validation
 const signupSchema = z
   .object({
-    tenantName: z
-      .string()
-      .min(1, STRINGS.ERROR_TENANT_NAME_REQUIRED)
-      .min(2, STRINGS.ERROR_TENANT_NAME_MIN),
+    tenantName: z.string(),
     fullName: z
       .string()
       .min(1, STRINGS.ERROR_FULL_NAME_REQUIRED)
@@ -72,7 +71,20 @@ const signupSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: STRINGS.ERROR_PASSWORDS_DONT_MATCH,
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => {
+      const isMHG = data.email
+        .toLowerCase()
+        .endsWith(`@${MHG_EMAIL_DOMAIN}`);
+      if (isMHG) return true;
+      return data.tenantName.length >= 2;
+    },
+    {
+      message: STRINGS.ERROR_TENANT_NAME_MIN,
+      path: ["tenantName"],
+    },
+  );
 
 type FormErrors = {
   tenantName?: string;
@@ -88,6 +100,12 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isMHGEmail, setIsMHGEmail] = useState(false);
+
+  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const email = e.target.value;
+    setIsMHGEmail(email.toLowerCase().endsWith(`@${MHG_EMAIL_DOMAIN}`));
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,9 +118,14 @@ export default function SignupPage() {
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
+    // MHG employees join existing org - company name not needed
+    const effectiveTenantName = isMHGEmail
+      ? "Market Hospitality Group"
+      : tenantName;
+
     // Validate with Zod
     const result = signupSchema.safeParse({
-      tenantName,
+      tenantName: effectiveTenantName,
       fullName,
       email,
       password,
@@ -122,7 +145,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const response = await signup(tenantName, email, password, fullName);
+      const response = await signup(effectiveTenantName, email, password, fullName);
 
       if (response.error) {
         toast.error(response.error);
@@ -146,21 +169,34 @@ export default function SignupPage() {
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="tenantName">{STRINGS.TENANT_NAME_LABEL}</Label>
-            <Input
-              id="tenantName"
-              name="tenantName"
-              type="text"
-              placeholder={STRINGS.TENANT_NAME_PLACEHOLDER}
-              autoComplete="organization"
-              disabled={isLoading}
-              aria-invalid={!!errors.tenantName}
-            />
-            {errors.tenantName && (
-              <p className="text-sm text-destructive">{errors.tenantName}</p>
-            )}
-          </div>
+          {!isMHGEmail && (
+            <div className="space-y-2">
+              <Label htmlFor="tenantName">{STRINGS.TENANT_NAME_LABEL}</Label>
+              <Input
+                id="tenantName"
+                name="tenantName"
+                type="text"
+                placeholder={STRINGS.TENANT_NAME_PLACEHOLDER}
+                autoComplete="organization"
+                disabled={isLoading}
+                aria-invalid={!!errors.tenantName}
+              />
+              {errors.tenantName && (
+                <p className="text-sm text-destructive">{errors.tenantName}</p>
+              )}
+            </div>
+          )}
+
+          {isMHGEmail && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <p className="text-sm font-medium text-primary">
+                Market Hospitality Group
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                You&apos;ll be added to the MHG team as a manager
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="fullName">{STRINGS.FULL_NAME_LABEL}</Label>
@@ -188,6 +224,7 @@ export default function SignupPage() {
               autoComplete="email"
               disabled={isLoading}
               aria-invalid={!!errors.email}
+              onChange={handleEmailChange}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email}</p>

@@ -21,6 +21,7 @@ interface InviteUserInput {
 interface AcceptInvitationInput {
   token: string;
   full_name: string;
+  password: string;
 }
 
 /**
@@ -196,7 +197,7 @@ export class InvitationService {
   async acceptInvitation(
     input: AcceptInvitationInput,
   ): Promise<{ user: Record<string, unknown>; session: unknown }> {
-    const { token, full_name } = input;
+    const { token, full_name, password } = input;
 
     // Get invitation
     const invitation = await this.getInvitationByToken(token);
@@ -206,10 +207,11 @@ export class InvitationService {
 
     const supabase = await getPooledSupabaseClient();
 
-    // Create auth user without password via admin API
+    // Create auth user with password via admin API
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         email: invitation.email,
+        password,
         email_confirm: true,
         user_metadata: {
           full_name,
@@ -220,7 +222,7 @@ export class InvitationService {
     if (authError) throw new Error(authError.message);
     if (!authData.user) throw new Error("Failed to create user account");
 
-    // Create user in users table with must_set_password flag
+    // Create user in users table (password already set on auth user)
     const userInsert: Record<string, unknown> = {
       tenant_id: invitation.tenant_id,
       auth_user_id: authData.user.id,
@@ -228,7 +230,7 @@ export class InvitationService {
       full_name,
       role: invitation.role,
       is_active: true,
-      must_set_password: true,
+      must_set_password: false,
       language_preference: "en",
       notification_preferences: { email: true, sms: false, push: false },
     };

@@ -85,22 +85,17 @@ export default function AcceptInvitePage({
     setSubmitting(true);
 
     try {
-      // Step 1: Accept the invitation (creates account + session)
+      // Accept invitation, set password, and trust device in one request
       const response = await api.post<AcceptResponse>(
         `/api/invitations/${resolvedParams.token}`,
-        { full_name: formData.fullName },
+        {
+          full_name: formData.fullName,
+          password: formData.password,
+          confirm_password: formData.confirmPassword,
+        },
       );
 
       if (response.session) {
-        // Step 2: Set the password
-        await api.post("/api/auth/set-password", {
-          password: formData.password,
-          confirm_password: formData.confirmPassword,
-        });
-
-        // Step 3: Trust the device
-        await api.post("/api/auth/trust-device", {});
-
         toast.success("Account set up! Welcome to MarketOps.");
         router.push("/dashboard");
       } else {
