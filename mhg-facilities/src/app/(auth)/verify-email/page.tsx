@@ -52,6 +52,22 @@ function VerifyEmailContent() {
   useEffect(() => {
     let isMounted = true;
 
+    async function handleHashSession() {
+      // Supabase redirects with #access_token=... in the hash after email verification.
+      // The Supabase client auto-detects this and sets the session from the hash.
+      // We just need to trust the device and redirect to dashboard.
+      setStatus("success");
+      try {
+        await api.post("/api/auth/trust-device", {});
+      } catch {
+        // Non-critical
+      }
+      if (isMounted) {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    }
+
     async function verifyEmailToken(verificationToken: string) {
       if (!isMounted) return;
       setStatus("verifying");
@@ -64,13 +80,11 @@ function VerifyEmailContent() {
           setStatus("error");
         } else {
           setStatus("success");
-          // Trust this device so they get auto-login next time
           try {
             await api.post("/api/auth/trust-device", {});
           } catch {
             // Non-critical
           }
-          // Redirect to dashboard — session is already set from verifyOtp
           setTimeout(() => {
             if (isMounted) {
               router.push("/dashboard");
@@ -85,7 +99,14 @@ function VerifyEmailContent() {
       }
     }
 
-    // If there's a token_hash and type, this is a verification callback
+    // Check for session tokens in hash fragment (Supabase redirect after verification)
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token=")) {
+      handleHashSession();
+      return;
+    }
+
+    // Fallback: token_hash or token in query params
     if (tokenHash && type === "email") {
       verifyEmailToken(tokenHash);
     } else if (token) {
