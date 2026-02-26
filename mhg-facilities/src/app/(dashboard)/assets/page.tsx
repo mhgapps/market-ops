@@ -104,6 +104,10 @@ export default function AssetsPage() {
         manufacturer: string | null;
         category?: { name: string } | null;
         location?: { name: string } | null;
+        vendors?: Array<{
+          name: string;
+          is_primary: boolean;
+        }>;
       };
 
       // Fetch all pages (API max is 100 per page)
@@ -129,23 +133,28 @@ export default function AssetsPage() {
           "URL",
           "Location",
           "Category",
+          "Primary Vendor",
           "Status",
           "Serial Number",
           "Model",
           "Manufacturer",
         ].join(","),
-        ...allAssets.map((a) =>
-          [
+        ...allAssets.map((a) => {
+          const primaryVendor =
+            a.vendors?.find((v) => v.is_primary)?.name || "";
+          return [
             `"${(a.name || "").replace(/"/g, '""')}"`,
             a.qr_code || "",
             a.qr_code ? `${appUrl}/qr/${encodeURIComponent(a.qr_code)}` : "",
             `"${(a.location?.name || "").replace(/"/g, '""')}"`,
             `"${(a.category?.name || "").replace(/"/g, '""')}"`,
+            `"${primaryVendor.replace(/"/g, '""')}"`,
             a.status || "",
             a.serial_number || "",
             `"${(a.model || "").replace(/"/g, '""')}"`,
             `"${(a.manufacturer || "").replace(/"/g, '""')}"`,
-          ].join(","),
+          ].join(",");
+        },
         ),
       ];
 
@@ -297,6 +306,9 @@ export default function AssetsPage() {
                         Location
                       </TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="hidden xl:table-cell">
+                        Primary Vendor
+                      </TableHead>
                       <TableHead className="hidden lg:table-cell">
                         QR Code
                       </TableHead>
@@ -310,6 +322,13 @@ export default function AssetsPage() {
                           location?: { name: string } | null;
                           category?: { name: string } | null;
                           asset_type?: { name: string } | null;
+                          vendors?: Array<{
+                            id: string;
+                            vendor_id: string;
+                            name: string;
+                            is_primary: boolean;
+                            notes: string | null;
+                          }>;
                         }
                       >
                     ).map((asset) => (
@@ -350,6 +369,10 @@ export default function AssetsPage() {
                           <Badge className={getStatusColor(asset.status)}>
                             {asset.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell">
+                          {asset.vendors?.find((v) => v.is_primary)?.name ||
+                            "-"}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           {asset.qr_code && (

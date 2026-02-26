@@ -309,7 +309,6 @@ export interface Database {
           purchase_price: number | null;
           warranty_expiration: string | null;
           expected_lifespan_years: number | null;
-          vendor_id: string | null;
           status: AssetStatus;
           qr_code: string | null;
           manual_url: string | null;
@@ -334,7 +333,6 @@ export interface Database {
           purchase_price?: number | null;
           warranty_expiration?: string | null;
           expected_lifespan_years?: number | null;
-          vendor_id?: string | null;
           status?: AssetStatus;
           qr_code?: string | null;
           manual_url?: string | null;
@@ -359,7 +357,6 @@ export interface Database {
           purchase_price?: number | null;
           warranty_expiration?: string | null;
           expected_lifespan_years?: number | null;
-          vendor_id?: string | null;
           status?: AssetStatus;
           qr_code?: string | null;
           manual_url?: string | null;

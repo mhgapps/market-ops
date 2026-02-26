@@ -36,6 +36,34 @@ export const updateAssetTypeSchema = z.object({
 });
 
 /**
+ * Asset Vendor Entry Schemas
+ */
+
+export const assetVendorEntrySchema = z.object({
+  vendor_id: uuid("Invalid vendor ID"),
+  is_primary: z.boolean(),
+  notes: z.string().max(500).nullish(),
+});
+
+export const assetVendorsArraySchema = z
+  .array(assetVendorEntrySchema)
+  .refine(
+    (vendors) => {
+      if (vendors.length === 0) return true;
+      const primaryCount = vendors.filter((v) => v.is_primary).length;
+      return primaryCount === 1;
+    },
+    { message: "Exactly one vendor must be marked as primary" },
+  )
+  .refine(
+    (vendors) => {
+      const vendorIds = vendors.map((v) => v.vendor_id);
+      return new Set(vendorIds).size === vendorIds.length;
+    },
+    { message: "Duplicate vendor IDs are not allowed" },
+  );
+
+/**
  * Asset Validation Schemas
  */
 
@@ -83,7 +111,7 @@ export const createAssetSchema = z.object({
     .max(50)
     .nullish()
     .transform((val) => val || undefined),
-  vendor_id: optionalUuid,
+  vendors: assetVendorsArraySchema.optional(),
   status: z
     .enum(["active", "under_maintenance", "retired", "transferred", "disposed"])
     .optional(),
@@ -113,7 +141,7 @@ export const updateAssetSchema = z.object({
     .nullish(),
   expected_lifespan_years: z.number().int().positive().nullish(),
   notes: z.string().max(1000).nullish(),
-  vendor_id: nullableUuid().optional(),
+  vendors: assetVendorsArraySchema.optional(),
   status: z
     .enum(["active", "under_maintenance", "retired", "transferred", "disposed"])
     .optional(),
@@ -292,3 +320,5 @@ export type UpdateVendorInput = z.infer<typeof updateVendorSchema>;
 export type VendorFilterInput = z.infer<typeof vendorFilterSchema>;
 
 export type CreateVendorRatingInput = z.infer<typeof createVendorRatingSchema>;
+
+export type AssetVendorEntryInput = z.infer<typeof assetVendorEntrySchema>;

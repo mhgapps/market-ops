@@ -25,9 +25,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/loaders";
+import { AssetVendorManager } from "@/components/assets/asset-vendor-manager";
 
-// Schema for form - allows null/undefined/empty string for optional fields
-// Note: status values must match database enum asset_status
 const assetFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   category_id: z.string().nullable().optional(),
@@ -50,7 +49,15 @@ const assetFormSchema = z.object({
     .nullable()
     .optional(),
   notes: z.string().max(1000).nullable().optional(),
-  vendor_id: z.string().nullable().optional(),
+  vendors: z
+    .array(
+      z.object({
+        vendor_id: z.string(),
+        is_primary: z.boolean(),
+        notes: z.string().nullish(),
+      }),
+    )
+    .optional(),
   status: z.enum([
     "active",
     "under_maintenance",
@@ -126,7 +133,7 @@ export function AssetForm({
       warranty_expiration: null,
       expected_lifespan_years: null,
       notes: null,
-      vendor_id: null,
+      vendors: [],
       status: "active",
       ...defaultValues,
     },
@@ -429,6 +436,32 @@ export function AssetForm({
               </div>
             </div>
 
+            {/* Vendors Section */}
+            <div className="space-y-4">
+              <div className="border-b pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Vendors / Suppliers
+                </h3>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="vendors"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <AssetVendorManager
+                        vendors={vendors}
+                        selectedVendors={field.value || []}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Financial & Warranty Section */}
             <div className="space-y-4">
               <div className="border-b pb-2">
@@ -438,34 +471,6 @@ export function AssetForm({
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="vendor_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vendor/Supplier</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select vendor..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {vendors.map((vendor) => (
-                            <SelectItem key={vendor.id} value={vendor.id}>
-                              {vendor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="purchase_date"

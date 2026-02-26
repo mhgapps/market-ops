@@ -25,7 +25,6 @@ interface Asset {
   warranty_expiration: string | null;
   expected_lifespan_years: number | null;
   qr_code: string | null;
-  vendor_id: string | null;
   status:
     | "active"
     | "under_maintenance"
@@ -58,10 +57,13 @@ interface AssetWithRelations extends Asset {
     name: string;
     address: string | null;
   } | null;
-  vendor?: {
+  vendors: Array<{
     id: string;
+    vendor_id: string;
     name: string;
-  } | null;
+    is_primary: boolean;
+    notes: string | null;
+  }>;
 }
 
 interface AssetStats {

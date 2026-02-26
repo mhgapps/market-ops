@@ -21,10 +21,13 @@ export interface AssetWithRelations extends Asset {
     name: string;
     address: string | null;
   } | null;
-  vendor?: {
+  vendors: Array<{
     id: string;
+    vendor_id: string;
     name: string;
-  } | null;
+    is_primary: boolean;
+    notes: string | null;
+  }>;
 }
 
 export interface AssetFilters {
@@ -60,6 +63,19 @@ export class AssetDAO extends BaseDAO<"assets"> {
   ): Promise<AssetWithRelations[]> {
     const { supabase, tenantId } = await this.getClient();
 
+    // If filtering by vendor_id, find matching asset IDs first
+    let vendorAssetIds: string[] | null = null;
+    if (filters?.vendor_id) {
+      const { data: vendorLinks, error: vendorError } = await supabase
+        .from("asset_vendors")
+        .select("asset_id")
+        .eq("vendor_id", filters.vendor_id)
+        .is("deleted_at", null);
+      if (vendorError) throw new Error(vendorError.message);
+      vendorAssetIds = (vendorLinks ?? []).map((r: { asset_id: string }) => r.asset_id);
+      if (vendorAssetIds.length === 0) return [];
+    }
+
     let query = supabase
       .from("assets")
       .select(
@@ -67,8 +83,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         asset_type:asset_types(id, name, category_id),
-        location:locations(id, name, address),
-        vendor:vendors(id, name)
+        location:locations(id, name, address)
       `,
       )
       .eq("tenant_id", tenantId)
@@ -85,8 +100,8 @@ export class AssetDAO extends BaseDAO<"assets"> {
       if (filters.asset_type_id) {
         query = query.eq("asset_type_id", filters.asset_type_id);
       }
-      if (filters.vendor_id) {
-        query = query.eq("vendor_id", filters.vendor_id);
+      if (vendorAssetIds) {
+        query = query.in("id", vendorAssetIds);
       }
       if (filters.status) {
         query = query.eq("status", filters.status);
@@ -112,7 +127,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
     const { data, error } = await query;
 
     if (error) throw new Error(error.message);
-    return (data as AssetWithRelations[]) ?? [];
+    return this.enrichWithVendors((data as AssetWithRelations[]) ?? []);
   }
 
   /**
@@ -129,6 +144,21 @@ export class AssetDAO extends BaseDAO<"assets"> {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    // If filtering by vendor_id, find matching asset IDs first
+    let vendorAssetIds: string[] | null = null;
+    if (filters?.vendor_id) {
+      const { data: vendorLinks, error: vendorError } = await supabase
+        .from("asset_vendors")
+        .select("asset_id")
+        .eq("vendor_id", filters.vendor_id)
+        .is("deleted_at", null);
+      if (vendorError) throw new Error(vendorError.message);
+      vendorAssetIds = (vendorLinks ?? []).map((r: { asset_id: string }) => r.asset_id);
+      if (vendorAssetIds.length === 0) {
+        return { data: [], total: 0, page, pageSize, totalPages: 0 };
+      }
+    }
+
     // Build base query conditions for both count and data queries
     let countQuery = supabase
       .from("assets")
@@ -143,8 +173,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         asset_type:asset_types(id, name, category_id),
-        location:locations(id, name, address),
-        vendor:vendors(id, name)
+        location:locations(id, name, address)
       `,
       )
       .eq("tenant_id", tenantId)
@@ -163,9 +192,9 @@ export class AssetDAO extends BaseDAO<"assets"> {
       countQuery = countQuery.eq("asset_type_id", filters.asset_type_id);
       dataQuery = dataQuery.eq("asset_type_id", filters.asset_type_id);
     }
-    if (filters?.vendor_id) {
-      countQuery = countQuery.eq("vendor_id", filters.vendor_id);
-      dataQuery = dataQuery.eq("vendor_id", filters.vendor_id);
+    if (vendorAssetIds) {
+      countQuery = countQuery.in("id", vendorAssetIds);
+      dataQuery = dataQuery.in("id", vendorAssetIds);
     }
     if (filters?.status) {
       countQuery = countQuery.eq("status", filters.status);
@@ -204,8 +233,12 @@ export class AssetDAO extends BaseDAO<"assets"> {
     const total = countResult.count ?? 0;
     const totalPages = Math.ceil(total / pageSize);
 
+    const enrichedData = await this.enrichWithVendors(
+      (dataResult.data ?? []) as AssetWithRelations[],
+    );
+
     return {
-      data: (dataResult.data ?? []) as AssetWithRelations[],
+      data: enrichedData,
       total,
       page,
       pageSize,
@@ -226,8 +259,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         asset_type:asset_types(id, name, category_id),
-        location:locations(id, name, address),
-        vendor:vendors(id, name)
+        location:locations(id, name, address)
       `,
       )
       .eq("id", id)
@@ -239,7 +271,9 @@ export class AssetDAO extends BaseDAO<"assets"> {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
-    return data as AssetWithRelations;
+
+    const enriched = await this.enrichWithVendors([data as AssetWithRelations]);
+    return enriched[0] ?? null;
   }
 
   /**
@@ -295,8 +329,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         asset_type:asset_types(id, name, category_id),
-        location:locations(id, name, address),
-        vendor:vendors(id, name)
+        location:locations(id, name, address)
       `,
       )
       .eq("tenant_id", tenantId)
@@ -306,7 +339,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
       .order("warranty_expiration", { ascending: true });
 
     if (error) throw new Error(error.message);
-    return (data as AssetWithRelations[]) ?? [];
+    return this.enrichWithVendors((data as AssetWithRelations[]) ?? []);
   }
 
   /**
@@ -322,8 +355,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         asset_type:asset_types(id, name, category_id),
-        location:locations(id, name, address),
-        vendor:vendors(id, name)
+        location:locations(id, name, address)
       `,
       )
       .eq("tenant_id", tenantId)
@@ -335,7 +367,9 @@ export class AssetDAO extends BaseDAO<"assets"> {
       if (error.code === "PGRST116") return null;
       throw new Error(error.message);
     }
-    return data as AssetWithRelations;
+
+    const enriched = await this.enrichWithVendors([data as AssetWithRelations]);
+    return enriched[0] ?? null;
   }
 
   /**
@@ -372,8 +406,7 @@ export class AssetDAO extends BaseDAO<"assets"> {
         *,
         category:asset_categories(id, name, default_lifespan_years),
         asset_type:asset_types(id, name, category_id),
-        location:locations(id, name, address),
-        vendor:vendors(id, name)
+        location:locations(id, name, address)
       `,
       )
       .eq("tenant_id", tenantId)
@@ -385,7 +418,53 @@ export class AssetDAO extends BaseDAO<"assets"> {
       .limit(50);
 
     if (error) throw new Error(error.message);
-    return (data as AssetWithRelations[]) ?? [];
+    return this.enrichWithVendors((data as AssetWithRelations[]) ?? []);
+  }
+
+  private async enrichWithVendors(
+    assets: AssetWithRelations[],
+  ): Promise<AssetWithRelations[]> {
+    if (assets.length === 0) return assets;
+
+    const supabase = await this.getClient().then((c) => c.supabase);
+    const assetIds = assets.map((a) => a.id);
+
+    const { data: vendorLinks, error } = await supabase
+      .from("asset_vendors")
+      .select("*, vendor:vendors(id, name)")
+      .in("asset_id", assetIds)
+      .is("deleted_at", null);
+
+    if (error) throw new Error(error.message);
+
+    const vendorsByAssetId = new Map<
+      string,
+      AssetWithRelations["vendors"]
+    >();
+    for (const link of (vendorLinks ?? []) as Array<{
+      id: string;
+      asset_id: string;
+      is_primary: boolean;
+      notes: string | null;
+      vendor: { id: string; name: string };
+    }>) {
+      if (!vendorsByAssetId.has(link.asset_id)) {
+        vendorsByAssetId.set(link.asset_id, []);
+      }
+      vendorsByAssetId.get(link.asset_id)!.push({
+        id: link.id,
+        vendor_id: link.vendor.id,
+        name: link.vendor.name,
+        is_primary: link.is_primary,
+        notes: link.notes,
+      });
+    }
+
+    for (const asset of assets) {
+      asset.vendors = vendorsByAssetId.get(asset.id) ?? [];
+    }
+
+    return assets;
   }
 
   /**

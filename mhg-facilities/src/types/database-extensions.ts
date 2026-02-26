@@ -337,6 +337,32 @@ export interface TrustedDeviceUpdate {
   updated_at?: string;
 }
 
+export interface AssetVendorRow {
+  id: string;
+  asset_id: string;
+  vendor_id: string;
+  is_primary: boolean;
+  notes: string | null;
+  created_at: string;
+  deleted_at: string | null;
+}
+
+export interface AssetVendorInsert {
+  id?: string;
+  asset_id: string;
+  vendor_id: string;
+  is_primary?: boolean;
+  notes?: string | null;
+  created_at?: string;
+  deleted_at?: string | null;
+}
+
+export interface AssetVendorUpdate {
+  is_primary?: boolean;
+  notes?: string | null;
+  deleted_at?: string | null;
+}
+
 // Extended Database type with additional tables
 export type Database = BaseDatabase & {
   public: {
@@ -400,6 +426,11 @@ export type Database = BaseDatabase & {
         Row: TrustedDeviceRow;
         Insert: TrustedDeviceInsert;
         Update: TrustedDeviceUpdate;
+      };
+      asset_vendors: {
+        Row: AssetVendorRow;
+        Insert: AssetVendorInsert;
+        Update: AssetVendorUpdate;
       };
     };
   };

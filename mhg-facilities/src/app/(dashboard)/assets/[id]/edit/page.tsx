@@ -107,7 +107,18 @@ export default function EditAssetPage() {
           warranty_expiration: asset.warranty_expiration,
           expected_lifespan_years: asset.expected_lifespan_years,
           notes: asset.notes,
-          vendor_id: asset.vendor_id,
+          vendors:
+            asset.vendors?.map(
+              (v: {
+                vendor_id: string;
+                is_primary: boolean;
+                notes: string | null;
+              }) => ({
+                vendor_id: v.vendor_id,
+                is_primary: v.is_primary,
+                notes: v.notes,
+              }),
+            ) ?? [],
           status: asset.status,
         }}
         onSubmit={handleSubmit}

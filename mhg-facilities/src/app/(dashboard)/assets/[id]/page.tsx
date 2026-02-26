@@ -259,15 +259,44 @@ export default function AssetDetailPage({ params }: PageProps) {
                   </div>
                 )}
 
-                {asset.vendor && (
-                  <div>
-                    <div className="text-sm text-gray-600">Vendor/Supplier</div>
-                    <div className="font-medium">{asset.vendor.name}</div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
+
+          {/* Vendors */}
+          {asset.vendors && asset.vendors.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Vendors / Suppliers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {asset.vendors.map((v: { id: string; name: string; is_primary: boolean; notes: string | null }) => (
+                    <div
+                      key={v.id}
+                      className="flex items-start justify-between border-b pb-3 last:border-0 last:pb-0"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{v.name}</span>
+                          {v.is_primary && (
+                            <Badge variant="secondary" className="text-xs">
+                              Primary
+                            </Badge>
+                          )}
+                        </div>
+                        {v.notes && (
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {v.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Purchase & Warranty */}
           <Card>

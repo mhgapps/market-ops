@@ -95,7 +95,11 @@ export default function NewAssetPage() {
     warranty_expiration?: string | null;
     expected_lifespan_years?: number | null;
     notes?: string | null;
-    vendor_id?: string | null;
+    vendors?: Array<{
+      vendor_id: string;
+      is_primary: boolean;
+      notes?: string | null;
+    }>;
     status:
       | "active"
       | "under_maintenance"
@@ -131,7 +135,8 @@ export default function NewAssetPage() {
           expected_lifespan_years: formData.expected_lifespan_years,
         }),
         ...(formData.notes && { notes: formData.notes }),
-        ...(formData.vendor_id && { vendor_id: formData.vendor_id }),
+        ...(formData.vendors &&
+          formData.vendors.length > 0 && { vendors: formData.vendors }),
       };
 
       const asset = await createAsset.mutateAsync(

@@ -8,6 +8,7 @@ import {
 export type { AssetFilters, PaginatedResult } from "@/dao/asset.dao";
 import { AssetCategoryDAO } from "@/dao/asset-category.dao";
 import { AssetTypeDAO } from "@/dao/asset-type.dao";
+import { AssetVendorDAO } from "@/dao/asset-vendor.dao";
 import type { Database } from "@/types/database";
 import { nanoid } from "nanoid";
 
@@ -27,10 +28,9 @@ export interface CreateAssetDTO {
   purchase_price?: number;
   warranty_expiration?: string;
   expected_lifespan_years?: number;
-  vendor_id?: string;
+  vendors?: Array<{ vendor_id: string; is_primary: boolean; notes?: string | null }>;
   status?: string;
   notes?: string;
-  // File paths (uploaded separately)
   manual_url?: string;
   spec_sheet_path?: string;
   photo_path?: string;
@@ -48,7 +48,7 @@ export interface UpdateAssetDTO {
   purchase_price?: number | null;
   warranty_expiration?: string | null;
   expected_lifespan_years?: number | null;
-  vendor_id?: string | null;
+  vendors?: Array<{ vendor_id: string; is_primary: boolean; notes?: string | null }>;
   status?: string;
   notes?: string | null;
   manual_url?: string | null;
@@ -65,6 +65,7 @@ export class AssetService {
     private assetDAO = new AssetDAO(),
     private categoryDAO = new AssetCategoryDAO(),
     private typeDAO = new AssetTypeDAO(),
+    private vendorDAO = new AssetVendorDAO(),
   ) {}
 
   /**
@@ -196,7 +197,6 @@ export class AssetService {
       purchase_price: data.purchase_price ?? null,
       warranty_expiration: data.warranty_expiration ?? null,
       expected_lifespan_years: expectedLifespan ?? null,
-      vendor_id: data.vendor_id ?? null,
       status:
         (data.status as Database["public"]["Enums"]["asset_status"]) ??
         "active",
@@ -207,7 +207,24 @@ export class AssetService {
       photo_path: data.photo_path ?? null,
     };
 
-    return this.assetDAO.create(insertData);
+    const asset = await this.assetDAO.create(insertData);
+
+    if (data.vendors && data.vendors.length > 0) {
+      const primaryCount = data.vendors.filter((v) => v.is_primary).length;
+      if (primaryCount !== 1) {
+        throw new Error("Exactly one vendor must be marked as primary");
+      }
+      await this.vendorDAO.bulkCreate(
+        data.vendors.map((v) => ({
+          asset_id: asset.id,
+          vendor_id: v.vendor_id,
+          is_primary: v.is_primary,
+          notes: v.notes ?? null,
+        })),
+      );
+    }
+
+    return asset;
   }
 
   /**
@@ -289,7 +306,6 @@ export class AssetService {
       updateData.warranty_expiration = data.warranty_expiration;
     if (data.expected_lifespan_years !== undefined)
       updateData.expected_lifespan_years = data.expected_lifespan_years;
-    if (data.vendor_id !== undefined) updateData.vendor_id = data.vendor_id;
     if (data.status !== undefined)
       updateData.status =
         data.status as Database["public"]["Enums"]["asset_status"];
@@ -299,7 +315,23 @@ export class AssetService {
       updateData.spec_sheet_path = data.spec_sheet_path;
     if (data.photo_path !== undefined) updateData.photo_path = data.photo_path;
 
-    return this.assetDAO.update(id, updateData);
+    const updatedAsset = await this.assetDAO.update(id, updateData);
+
+    if (data.vendors !== undefined) {
+      await this.vendorDAO.softDeleteAllForAsset(id);
+      if (data.vendors.length > 0) {
+        await this.vendorDAO.bulkCreate(
+          data.vendors.map((v) => ({
+            asset_id: id,
+            vendor_id: v.vendor_id,
+            is_primary: v.is_primary,
+            notes: v.notes ?? null,
+          })),
+        );
+      }
+    }
+
+    return updatedAsset;
   }
 
   /**
