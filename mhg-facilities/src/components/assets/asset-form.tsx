@@ -31,7 +31,7 @@ const assetFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   category_id: z.string().nullable().optional(),
   asset_type_id: z.string().nullable().optional(),
-  location_id: z.string().nullable().optional(),
+  location_id: z.string().min(1, "Location is required"),
   serial_number: z.string().max(100).nullable().optional(),
   model: z.string().max(100).nullable().optional(),
   manufacturer: z.string().max(100).nullable().optional(),
@@ -124,7 +124,7 @@ export function AssetForm({
       name: "",
       category_id: null,
       asset_type_id: null,
-      location_id: null,
+      location_id: "",
       serial_number: null,
       model: null,
       manufacturer: null,
@@ -344,12 +344,10 @@ export function AssetForm({
                 name="location_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Location *</FormLabel>
                     <Select
-                      onValueChange={(value) =>
-                        field.onChange(value === "__none__" ? null : value)
-                      }
-                      value={field.value || "__none__"}
+                      onValueChange={field.onChange}
+                      value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -357,7 +355,6 @@ export function AssetForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="__none__">No Location</SelectItem>
                         {locations.map((location) => (
                           <SelectItem key={location.id} value={location.id}>
                             {location.name}

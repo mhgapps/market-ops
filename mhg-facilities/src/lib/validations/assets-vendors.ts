@@ -71,7 +71,7 @@ export const createAssetSchema = z.object({
   name: z.string().min(1, "Asset name is required").max(200),
   category_id: optionalUuid,
   asset_type_id: optionalUuid,
-  location_id: optionalUuid,
+  location_id: uuid("Location is required"),
   serial_number: z
     .string()
     .max(100)

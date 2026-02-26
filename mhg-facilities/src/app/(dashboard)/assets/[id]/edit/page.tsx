@@ -98,7 +98,7 @@ export default function EditAssetPage() {
           name: asset.name,
           category_id: asset.category_id,
           asset_type_id: asset.asset_type_id,
-          location_id: asset.location_id,
+          location_id: asset.location_id ?? "",
           serial_number: asset.serial_number,
           model: asset.model,
           manufacturer: asset.manufacturer,
