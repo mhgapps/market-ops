@@ -172,14 +172,6 @@ function DashboardOverview() {
         )}
       </div>
 
-      {/* Mobile Quick Action Button */}
-      <div className="fixed bottom-4 right-4 md:hidden">
-        <Button asChild size="lg" className="rounded-full h-14 w-14 shadow-lg">
-          <Link href="/tickets/new">
-            <Plus className="h-6 w-6" />
-          </Link>
-        </Button>
-      </div>
     </div>
   );
 }

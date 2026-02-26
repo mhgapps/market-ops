@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   Ticket,
   Calendar,
-  Shield,
+  Wrench,
   MoreHorizontal,
 } from "lucide-react";
 
@@ -15,7 +15,7 @@ const bottomNavItems = [
   { title: "Home", href: "/dashboard", icon: LayoutDashboard },
   { title: "Tickets", href: "/tickets", icon: Ticket },
   { title: "PM", href: "/pm", icon: Calendar },
-  { title: "Docs", href: "/compliance", icon: Shield },
+  { title: "Assets", href: "/assets", icon: Wrench },
 ];
 
 interface BottomNavProps {

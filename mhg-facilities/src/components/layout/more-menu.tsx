@@ -12,7 +12,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import {
-  Wrench,
+  Shield,
   Settings,
   Building2,
   DollarSign,
@@ -32,9 +32,10 @@ interface MenuItem {
 // Items NOT in bottom nav (the "more" items)
 const moreMenuItems: MenuItem[] = [
   {
-    title: "Assets",
-    href: "/assets",
-    icon: Wrench,
+    title: "Documents",
+    href: "/compliance",
+    icon: Shield,
+    managerOnly: true,
   },
   {
     title: "Vendors",

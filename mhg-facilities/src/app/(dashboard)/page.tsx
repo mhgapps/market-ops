@@ -104,19 +104,6 @@ function StatsSkeleton() {
   );
 }
 
-// Mobile FAB Button - needs to be a client component for proper hydration
-function MobileFAB() {
-  return (
-    <div className="fixed bottom-4 right-4 md:hidden">
-      <Button asChild size="lg" className="rounded-full h-14 w-14 shadow-lg">
-        <Link href="/tickets/new">
-          <Plus className="h-6 w-6" />
-        </Link>
-      </Button>
-    </div>
-  );
-}
-
 // Main Dashboard Page - Server Component
 export default async function DashboardPage() {
   const data = await fetchDashboardData();
@@ -161,8 +148,6 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Mobile Quick Action Button */}
-      <MobileFAB />
     </div>
   );
 }
