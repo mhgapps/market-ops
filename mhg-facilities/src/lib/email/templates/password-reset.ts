@@ -41,10 +41,10 @@ export function generatePasswordResetEmail(data: PasswordResetEmailData): {
     <tr>
       <td style="padding: 40px 20px;">
         <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" width="600" align="center"><tr><td><![endif]-->
-        <table role="presentation" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" bgcolor="#ffffff">
+        <table role="presentation" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb;" bgcolor="#ffffff">
           <!-- Header -->
           <tr>
-            <td bgcolor="#667eea" style="padding: 40px 40px 20px; text-align: center; background-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+            <td bgcolor="#111827" style="padding: 40px 40px 20px; text-align: center; background-color: #111827; border-radius: 8px 8px 0 0;">
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">MarketOps</h1>
             </td>
           </tr>
@@ -52,9 +52,9 @@ export function generatePasswordResetEmail(data: PasswordResetEmailData): {
           <!-- Content -->
           <tr>
             <td style="padding: 40px;">
-              <h2 style="margin: 0 0 20px; color: #1a1a1a; font-size: 24px; font-weight: 600;">Reset your password</h2>
+              <h2 style="margin: 0 0 20px; color: #111827; font-size: 24px; font-weight: 600;">Reset your password</h2>
 
-              <p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+              <p style="margin: 0 0 16px; color: #4b5563; font-size: 16px; line-height: 1.6;">
                 We received a request to reset the password for your MarketOps account. Click the button below to choose a new password.
               </p>
 
@@ -63,13 +63,13 @@ export function generatePasswordResetEmail(data: PasswordResetEmailData): {
                 <tr>
                   <td style="text-align: center;">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetLink}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="13%" strokecolor="#667eea" fillcolor="#667eea">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetLink}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="13%" strokecolor="#111827" fillcolor="#111827">
                       <w:anchorlock/>
                       <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;">Reset Password</center>
                     </v:roundrect>
                     <![endif]-->
                     <!--[if !mso]><!-->
-                    <a href="${resetLink}" style="display: inline-block; padding: 14px 32px; background-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                    <a href="${resetLink}" style="display: inline-block; padding: 14px 32px; background-color: #111827; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600;">
                       Reset Password
                     </a>
                     <!--<![endif]-->
@@ -81,7 +81,7 @@ export function generatePasswordResetEmail(data: PasswordResetEmailData): {
               <p style="margin: 0 0 24px; color: #6b7280; font-size: 14px; line-height: 1.6;">
                 If the button doesn't work, copy and paste this link into your browser:
               </p>
-              <p style="margin: 0 0 24px; color: #667eea; font-size: 14px; word-break: break-all;">
+              <p style="margin: 0 0 24px; color: #111827; font-size: 14px; word-break: break-all;">
                 ${resetLink}
               </p>
 

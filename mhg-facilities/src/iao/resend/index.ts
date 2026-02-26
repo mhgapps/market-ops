@@ -97,21 +97,21 @@ export class ResendIAO {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">New Ticket Assigned</h1>
+          <div style="background-color: #111827; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Ticket Assigned</h1>
           </div>
 
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px; margin-bottom: 20px;">
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               Hi ${assigneeName},
             </p>
 
-            <p style="font-size: 16px; margin-bottom: 20px;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               ${assignedBy} has assigned you a new ticket:
             </p>
 
-            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin-bottom: 25px;">
-              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #667eea;">
+            <div style="background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e5e7eb; border-left: 4px solid #111827; margin-bottom: 25px;">
+              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #111827;">
                 ${ticketTitle}
               </h2>
               <p style="margin: 0; color: #6b7280; font-size: 14px;">
@@ -120,7 +120,7 @@ export class ResendIAO {
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${ticketUrl}" style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+              <a href="${ticketUrl}" style="display: inline-block; background: #111827; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                 View Ticket
               </a>
             </div>
@@ -175,21 +175,21 @@ export class ResendIAO {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">Ticket Status Updated</h1>
+          <div style="background-color: #111827; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Ticket Status Updated</h1>
           </div>
 
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px; margin-bottom: 20px;">
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               Hi ${recipientName},
             </p>
 
-            <p style="font-size: 16px; margin-bottom: 20px;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               ${changedBy} has updated the status of a ticket:
             </p>
 
-            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin-bottom: 25px;">
-              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #667eea;">
+            <div style="background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e5e7eb; border-left: 4px solid #111827; margin-bottom: 25px;">
+              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #111827;">
                 ${ticketTitle}
               </h2>
               <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">
@@ -207,7 +207,7 @@ export class ResendIAO {
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${ticketUrl}" style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+              <a href="${ticketUrl}" style="display: inline-block; background: #111827; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                 View Ticket
               </a>
             </div>
@@ -252,21 +252,21 @@ export class ResendIAO {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ PM Task Due Soon</h1>
+          <div style="background-color: #111827; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">PM Task Due Soon</h1>
           </div>
 
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px; margin-bottom: 20px;">
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               Hi ${recipientName},
             </p>
 
-            <p style="font-size: 16px; margin-bottom: 20px;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               This is a reminder that you have a preventive maintenance task due soon:
             </p>
 
-            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 25px;">
-              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #f59e0b;">
+            <div style="background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e5e7eb; border-left: 4px solid #f59e0b; margin-bottom: 25px;">
+              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #111827;">
                 ${taskName}
               </h2>
               <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 14px;">
@@ -278,7 +278,7 @@ export class ResendIAO {
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${scheduleUrl}" style="display: inline-block; background: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+              <a href="${scheduleUrl}" style="display: inline-block; background: #111827; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                 View PM Schedule
               </a>
             </div>
@@ -337,9 +337,9 @@ export class ResendIAO {
     };
     const priorityColor = priorityColors[priority] || "#6b7280";
 
-    const headerGradient = isEmergency
-      ? "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)"
-      : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+    const headerBackground = isEmergency
+      ? "#dc2626"
+      : "#111827";
 
     const headerText = isEmergency
       ? "EMERGENCY Ticket Submitted"
@@ -366,21 +366,21 @@ export class ResendIAO {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: ${headerGradient}; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">${headerText}</h1>
+          <div style="background-color: ${headerBackground}; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">${headerText}</h1>
           </div>
 
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px; margin-bottom: 20px;">
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               Hi ${recipientName},
             </p>
 
-            <p style="font-size: 16px; margin-bottom: 20px;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               A new ${isEmergency ? "emergency " : ""}ticket has been submitted:
             </p>
 
-            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid ${isEmergency ? "#dc2626" : "#667eea"}; margin-bottom: 25px;">
-              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: ${isEmergency ? "#dc2626" : "#667eea"};">
+            <div style="background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e5e7eb; border-left: 4px solid ${isEmergency ? "#dc2626" : "#111827"}; margin-bottom: 25px;">
+              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: ${isEmergency ? "#dc2626" : "#111827"};">
                 #${ticketNumber} - ${ticketTitle}
               </h2>
               <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 14px;">
@@ -396,7 +396,7 @@ export class ResendIAO {
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${ticketUrl}" style="display: inline-block; background: ${isEmergency ? "#dc2626" : "#667eea"}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+              <a href="${ticketUrl}" style="display: inline-block; background: ${isEmergency ? "#dc2626" : "#111827"}; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                 View Ticket
               </a>
             </div>
@@ -449,21 +449,21 @@ export class ResendIAO {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">🚨 Compliance Document Expiring</h1>
+          <div style="background-color: #111827; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Compliance Document Expiring</h1>
           </div>
 
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px; margin-bottom: 20px;">
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               Hi ${recipientName},
             </p>
 
-            <p style="font-size: 16px; margin-bottom: 20px;">
+            <p style="font-size: 16px; color: #4b5563; margin-bottom: 20px;">
               A compliance document is expiring in <strong>${daysUntilExpiration} days</strong>:
             </p>
 
-            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #dc2626; margin-bottom: 25px;">
-              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #dc2626;">
+            <div style="background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e5e7eb; border-left: 4px solid #dc2626; margin-bottom: 25px;">
+              <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #111827;">
                 ${documentName}
               </h2>
               <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 14px;">
@@ -476,12 +476,12 @@ export class ResendIAO {
 
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 15px; margin-bottom: 25px;">
               <p style="margin: 0; font-size: 14px; color: #991b1b;">
-                ⚠️ Please renew this document before it expires to maintain compliance.
+                Please renew this document before it expires to maintain compliance.
               </p>
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${documentUrl}" style="display: inline-block; background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+              <a href="${documentUrl}" style="display: inline-block; background: #111827; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                 View Document
               </a>
             </div>
