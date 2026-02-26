@@ -165,7 +165,7 @@ export function PMCalendar({ assetId: _assetId }: PMCalendarProps) {
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card
           className={`${overdueCount > 0 ? "border-red-200 bg-red-50" : ""}`}
         >
@@ -379,7 +379,7 @@ export function PMCalendar({ assetId: _assetId }: PMCalendarProps) {
               {upcomingTasks.map((task) => (
                 <div
                   key={task.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                  className={`flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg border transition-colors ${
                     task.isOverdue
                       ? "border-red-200 bg-red-50"
                       : task.isDueToday

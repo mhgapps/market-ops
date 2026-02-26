@@ -400,7 +400,7 @@ export default function AssetsPage() {
 
                 {/* Pagination */}
                 {totalCount > 0 && (
-                  <div className="flex items-center justify-between border-t px-4 py-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t px-4 py-4">
                     <span className="text-sm text-muted-foreground">
                       Showing {(page - 1) * pageSize + 1} to{" "}
                       {Math.min(page * pageSize, totalCount)} of {totalCount}

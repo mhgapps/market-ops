@@ -72,7 +72,7 @@ function TemplateForm({
         loading={isDeleting}
       />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/pm/templates">
@@ -80,7 +80,7 @@ function TemplateForm({
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Edit Template</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Edit Template</h1>
             <p className="text-muted-foreground">{template.name}</p>
           </div>
         </div>

@@ -85,7 +85,7 @@ export function StatusTimeline({
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
-                    <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                    <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:justify-between sm:space-x-4 pt-1.5">
                       <div>
                         <p
                           className={cn(
@@ -106,11 +106,12 @@ export function StatusTimeline({
                           </p>
                         )}
                       </div>
-                      <div className="whitespace-nowrap text-right text-xs text-gray-500">
+                      <div className="whitespace-nowrap sm:text-right text-xs text-gray-500 mt-1 sm:mt-0">
                         <time dateTime={change.changed_at}>
                           {format(new Date(change.changed_at), "MMM d, yyyy")}
                         </time>
-                        <br />
+                        <span className="sm:hidden"> </span>
+                        <br className="hidden sm:block" />
                         <time dateTime={change.changed_at}>
                           {format(new Date(change.changed_at), "h:mm a")}
                         </time>

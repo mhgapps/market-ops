@@ -92,13 +92,13 @@ export function ComplianceList() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Document Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Location</TableHead>
+              <TableHead className="hidden sm:table-cell">Type</TableHead>
+              <TableHead className="hidden sm:table-cell">Location</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Expiration</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -118,8 +118,8 @@ export function ComplianceList() {
               filteredDocuments.map((doc) => (
                 <TableRow key={doc.id}>
                   <TableCell className="font-medium">{doc.name}</TableCell>
-                  <TableCell>{doc.document_type_name || "N/A"}</TableCell>
-                  <TableCell>{doc.location_name || "All Locations"}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{doc.document_type_name || "N/A"}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{doc.location_name || "All Locations"}</TableCell>
                   <TableCell>
                     <StatusBadge status={doc.status} />
                   </TableCell>

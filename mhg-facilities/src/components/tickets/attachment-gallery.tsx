@@ -136,7 +136,7 @@ export function AttachmentGallery({
                   </div>
                 </div>
               ) : (
-                <div className="flex h-48 w-full items-center justify-center bg-gray-100">
+                <div className="relative flex h-48 w-full items-center justify-center bg-gray-100">
                   <Icon className="h-16 w-16 text-gray-400" />
                   <div className="absolute right-2 top-2">
                     <Badge className={config.badgeClass}>
@@ -184,11 +184,11 @@ export function AttachmentGallery({
                   )}
                   {canDelete && onDelete && (
                     <Button
-                      size="sm"
+                      size="icon-sm"
                       variant="destructive"
                       onClick={() => onDelete(attachment.id)}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>

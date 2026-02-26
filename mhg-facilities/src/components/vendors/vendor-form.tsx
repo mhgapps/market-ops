@@ -340,7 +340,7 @@ export const VendorForm = forwardRef<VendorFormHandle, VendorFormProps>(
                           {commonServiceCategories.map((category) => (
                             <div
                               key={category}
-                              className="flex items-center space-x-2"
+                              className="flex items-center space-x-2 min-h-[44px]"
                             >
                               <Checkbox
                                 id={`category-${category}`}

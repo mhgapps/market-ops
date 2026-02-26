@@ -202,7 +202,7 @@ export default function ReportsPage() {
               </Button>
 
               {generatedReport && (
-                <>
+                <div className="flex flex-wrap gap-2">
                   <Button onClick={handleExportCSV} variant="outline">
                     <Download className="mr-2 h-4 w-4" />
                     Export CSV
@@ -215,7 +215,7 @@ export default function ReportsPage() {
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Export Excel
                   </Button>
-                </>
+                </div>
               )}
             </div>
 

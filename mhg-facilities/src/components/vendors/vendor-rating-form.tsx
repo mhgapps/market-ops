@@ -68,7 +68,7 @@ function StarRating({ value, onChange, label, description }: StarRatingProps) {
             type="button"
             onClick={() => onChange(star)}
             className={cn(
-              "transition-colors rounded p-1",
+              "transition-colors rounded p-2",
               "hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500",
             )}
           >
@@ -261,18 +261,19 @@ export function VendorRatingForm({
             )}
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end pt-4">
               {onCancel && (
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={onCancel}
                   disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
               )}
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 Submit Rating
               </Button>

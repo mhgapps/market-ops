@@ -29,8 +29,8 @@ export default async function CompliancePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Documents</h1>
         <Button asChild>
           <Link href="/compliance/new">
             <Plus className="mr-2 h-4 w-4" />

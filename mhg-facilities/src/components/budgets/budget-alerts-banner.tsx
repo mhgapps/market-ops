@@ -99,7 +99,7 @@ export function BudgetAlertsBanner({
           <Button
             variant="link"
             size="sm"
-            className="px-2 h-auto py-0 ml-1"
+            className="px-2 min-h-[40px] ml-1"
             style={{ color: colors.text }}
             onClick={onViewDetails}
           >
@@ -110,7 +110,7 @@ export function BudgetAlertsBanner({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-2 right-2 h-6 w-6"
+        className="absolute top-2 right-2 h-10 w-10"
         onClick={() => setDismissed(true)}
       >
         <X className="h-4 w-4" style={{ color: colors.text }} />

@@ -460,7 +460,7 @@ export function PMScheduleForm({
               )}
             />
 
-            <div className="grid gap-3 grid-cols-2">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               {showDayOfWeek && (
                 <FormField
                   control={form.control}
@@ -567,7 +567,7 @@ export function PMScheduleForm({
           <h4 className="text-sm font-medium text-muted-foreground border-b pb-1">
             Assignment & Cost
           </h4>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <FormField
               control={form.control}
               name="assigned_to"
@@ -665,18 +665,19 @@ export function PMScheduleForm({
         </div>
 
         {/* Form Actions */}
-        <div className="flex justify-end gap-3 border-t pt-4">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end border-t pt-4">
           {onCancel && (
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
           )}
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting && <Spinner size="sm" className="mr-2" />}
             {mode === "create" ? "Create Schedule" : "Save Changes"}
           </Button>

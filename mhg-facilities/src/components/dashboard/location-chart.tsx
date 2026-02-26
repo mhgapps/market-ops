@@ -42,7 +42,7 @@ export function LocationChart({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 40)}>
           <BarChart data={chartData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis type="number" className="text-xs text-muted-foreground" />
@@ -50,7 +50,8 @@ export function LocationChart({
               type="category"
               dataKey="name"
               className="text-xs text-muted-foreground"
-              width={100}
+              width={70}
+              tickFormatter={(v: string) => v.length > 10 ? v.slice(0, 10) + "\u2026" : v}
             />
             <Tooltip
               contentStyle={{

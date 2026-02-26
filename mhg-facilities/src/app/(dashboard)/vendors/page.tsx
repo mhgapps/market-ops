@@ -340,6 +340,7 @@ export default function VendorsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="min-h-[40px]"
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(`/vendors/${vendor.id}`);
@@ -355,7 +356,7 @@ export default function VendorsPage() {
 
                 {/* Pagination */}
                 {totalCount > 0 && (
-                  <div className="flex items-center justify-between border-t px-4 py-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t px-4 py-4">
                     <span className="text-sm text-muted-foreground">
                       Showing {(page - 1) * pageSize + 1} to{" "}
                       {Math.min(page * pageSize, totalCount)} of {totalCount}
@@ -364,6 +365,7 @@ export default function VendorsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1}
                       >
@@ -372,6 +374,7 @@ export default function VendorsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => setPage((p) => p + 1)}
                         disabled={page * pageSize >= totalCount}
                       >

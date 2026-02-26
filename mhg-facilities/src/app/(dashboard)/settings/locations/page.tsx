@@ -250,6 +250,7 @@ export default function LocationsPage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="min-h-[40px]"
                               onClick={() =>
                                 router.push(
                                   `/settings/locations/${location.id}`,
@@ -262,6 +263,7 @@ export default function LocationsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="min-h-[40px]"
                                 onClick={() =>
                                   router.push(
                                     `/settings/locations/${location.id}/edit`,

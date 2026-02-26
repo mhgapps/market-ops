@@ -37,6 +37,7 @@ export function TicketTrendChart({
             <XAxis
               dataKey="date"
               className="text-xs text-muted-foreground"
+              interval="preserveStartEnd"
               tickFormatter={(value) => {
                 const date = new Date(value);
                 return `${date.getMonth() + 1}/${date.getDate()}`;
@@ -59,7 +60,7 @@ export function TicketTrendChart({
               dataKey="count"
               stroke="var(--primary)"
               strokeWidth={2}
-              dot={{ fill: "var(--primary)" }}
+              dot={false}
             />
           </LineChart>
         </ResponsiveContainer>

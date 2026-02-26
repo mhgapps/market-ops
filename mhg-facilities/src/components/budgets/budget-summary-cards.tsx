@@ -61,9 +61,9 @@ export function BudgetSummaryCards({
     <div className="space-y-4">
       {/* Stats Strip */}
       <Card className="p-0 overflow-hidden">
-        <div className="flex flex-wrap md:flex-nowrap divide-y md:divide-y-0 md:divide-x divide-border">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
           {/* Total Budget */}
-          <div className="flex flex-col gap-1 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors">
+          <div className="flex flex-col gap-1 hover:bg-accent transition-colors rounded-md p-2">
             <span className="text-sm text-muted-foreground">Total Budget</span>
             <span className="text-xl font-bold">
               {formatCurrency(summary.total_budget)}
@@ -76,7 +76,7 @@ export function BudgetSummaryCards({
 
           {/* Total Spent */}
           <div
-            className={`flex flex-col gap-1 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${isOverBudget ? "bg-red-50" : ""}`}
+            className={`flex flex-col gap-1 hover:bg-accent transition-colors rounded-md p-2 ${isOverBudget ? "bg-red-50" : ""}`}
           >
             <span className="text-sm text-muted-foreground">Total Spent</span>
             <span
@@ -98,7 +98,7 @@ export function BudgetSummaryCards({
 
           {/* Remaining */}
           <div
-            className={`flex flex-col gap-1 px-4 py-3 flex-1 min-w-[50%] md:min-w-0 hover:bg-accent transition-colors ${remainingIsNegative ? "bg-red-50" : ""}`}
+            className={`flex flex-col gap-1 hover:bg-accent transition-colors rounded-md p-2 ${remainingIsNegative ? "bg-red-50" : ""}`}
           >
             <span className="text-sm text-muted-foreground">Remaining</span>
             <span

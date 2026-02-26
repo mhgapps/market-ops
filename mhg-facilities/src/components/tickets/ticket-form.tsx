@@ -115,7 +115,7 @@ export function TicketForm({
   return (
     <Form {...form}>
       <Card>
-        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between space-y-0">
           <div className="space-y-1.5">
             <CardTitle>
               {mode === "create" ? "Create New Ticket" : "Edit Ticket"}
@@ -379,18 +379,19 @@ export function TicketForm({
             />
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end pt-4">
               {onCancel && (
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={onCancel}
                   disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
               )}
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {mode === "create" ? "Create Ticket" : "Update Ticket"}
               </Button>

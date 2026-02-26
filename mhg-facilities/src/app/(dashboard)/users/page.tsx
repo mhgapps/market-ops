@@ -244,6 +244,7 @@ export default function UsersPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="min-h-[40px]"
                                   onClick={() => setEditingUser(user)}
                                 >
                                   Edit
@@ -252,6 +253,7 @@ export default function UsersPage() {
                                   <Button
                                     variant="outline"
                                     size="sm"
+                                    className="min-h-[40px]"
                                     onClick={() =>
                                       deactivateUser.mutate(user.id)
                                     }

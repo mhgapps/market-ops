@@ -316,12 +316,13 @@ export default function TicketDetailPage({ params }: PageProps) {
                 <Button
                   size="sm"
                   variant="ghost"
+                  className="min-h-[40px] min-w-[40px]"
                   onClick={saveTitle}
                   disabled={updateTicket.isPending}
                 >
                   <Check className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={cancelEditingTitle}>
+                <Button size="sm" variant="ghost" className="min-h-[40px] min-w-[40px]" onClick={cancelEditingTitle}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -332,7 +333,7 @@ export default function TicketDetailPage({ params }: PageProps) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-h-[40px] min-w-[40px]"
                     onClick={startEditingTitle}
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -410,7 +411,7 @@ export default function TicketDetailPage({ params }: PageProps) {
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-red-700">
                       Emergency not yet contained
                     </span>
@@ -498,7 +499,7 @@ export default function TicketDetailPage({ params }: PageProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <span className="text-amber-700">
                         Emergency contained, awaiting resolution
                       </span>

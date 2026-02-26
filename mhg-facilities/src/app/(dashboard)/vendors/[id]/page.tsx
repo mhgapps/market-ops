@@ -421,7 +421,7 @@ export default function VendorDetailPage({ params }: PageProps) {
                           {rating.rating}/5
                         </span>
                       </div>
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-600">
                         <div>Response: {rating.response_time_rating}/5</div>
                         <div>Quality: {rating.quality_rating}/5</div>
                         <div>Cost: {rating.cost_rating}/5</div>

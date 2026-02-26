@@ -98,7 +98,7 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/pm">
@@ -106,7 +106,7 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
               Schedule Details
             </h1>
           </div>
@@ -279,10 +279,10 @@ export default function PMDetailPage({ params }: PMDetailPageProps) {
               {schedule.completions.map((completion) => (
                 <div
                   key={completion.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
+                  className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg border"
                 >
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                     <div>
                       <p className="text-sm font-medium">
                         Scheduled:{" "}

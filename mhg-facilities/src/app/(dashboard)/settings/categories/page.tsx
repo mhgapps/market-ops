@@ -236,9 +236,9 @@ export default function CategoriesSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
             <FolderOpen className="h-8 w-8" />
             Categories
           </h1>
@@ -477,61 +477,65 @@ export default function CategoriesSettingsPage() {
         </CardHeader>
         <CardContent>
           {categories && categories.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Default Priority</TableHead>
-                  <TableHead>Escalation</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell className="font-medium">
-                      {category.name}
-                      {category.name_es && (
-                        <span className="text-muted-foreground text-sm ml-2">
-                          ({category.name_es})
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {category.description || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={getPriorityBadge(category.default_priority)}
-                      >
-                        {category.default_priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{category.escalation_hours}h</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditCategory(category)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeletingCategoryId(category.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="hidden sm:table-cell">Description</TableHead>
+                    <TableHead>Default Priority</TableHead>
+                    <TableHead className="hidden sm:table-cell">Escalation</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {categories.map((category) => (
+                    <TableRow key={category.id}>
+                      <TableCell className="font-medium">
+                        {category.name}
+                        {category.name_es && (
+                          <span className="text-muted-foreground text-sm ml-2">
+                            ({category.name_es})
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground">
+                        {category.description || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={getPriorityBadge(category.default_priority)}
+                        >
+                          {category.default_priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">{category.escalation_hours}h</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="min-h-[40px]"
+                            onClick={() => handleEditCategory(category)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="min-h-[40px]"
+                            onClick={() => setDeletingCategoryId(category.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               No categories found. Create your first category to get started.

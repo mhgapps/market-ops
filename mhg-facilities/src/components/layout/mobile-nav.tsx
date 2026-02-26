@@ -130,7 +130,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="left" className="w-72 p-0">
+      <SheetContent side="left" className="w-72 p-0 flex flex-col">
         <SheetHeader className="flex flex-row items-center justify-between h-16 px-6 border-b border-border">
           <SheetTitle className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -149,7 +149,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8"
+            className="h-10 w-10"
             aria-label="Close menu"
           >
             <X className="h-4 w-4" />
@@ -168,7 +168,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent",
@@ -182,7 +182,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         </nav>
 
         {/* User section at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card">
+        <div className="mt-auto border-t border-border bg-card">
           {/* User info */}
           <div className="flex items-center gap-3 p-4 border-b border-border">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">

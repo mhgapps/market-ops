@@ -81,7 +81,7 @@ export function CommentForm({
         />
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting} size="sm">
+          <Button type="submit" disabled={isSubmitting} size="sm" className="min-h-[44px] min-w-[44px]">
             {isSubmitting ? "Posting..." : "Post"}
           </Button>
         </div>

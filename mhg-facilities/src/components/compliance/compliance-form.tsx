@@ -254,8 +254,8 @@ export function ComplianceForm({
           )}
         />
 
-        <div className="flex justify-end pt-4">
-          <Button type="submit" disabled={isSubmitting}>
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end pt-4">
+          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? "Saving..." : "Save Document"}
           </Button>
         </div>

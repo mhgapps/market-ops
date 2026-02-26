@@ -51,10 +51,7 @@ export function StatusPieChart({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) =>
-                `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`
-              }
-              outerRadius={80}
+              outerRadius="70%"
               fill="var(--chart-3)"
               dataKey="value"
             >

@@ -123,7 +123,6 @@ export function AssetVendorManager({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
                 onClick={() => toggleNotes(entry.vendor_id)}
                 title="Add notes"
               >
@@ -140,7 +139,7 @@ export function AssetVendorManager({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                className="text-muted-foreground hover:text-destructive"
                 onClick={() => handleRemove(entry.vendor_id)}
               >
                 <X className="h-4 w-4" />

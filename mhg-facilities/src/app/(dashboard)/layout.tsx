@@ -14,7 +14,7 @@ export default function DashboardLayout({
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Desktop sidebar */}
       <Sidebar />
 

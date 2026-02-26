@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth, useIsAdmin } from "@/hooks/use-auth";
 import {
@@ -15,6 +16,8 @@ import {
   Settings,
   Building2,
   DollarSign,
+  LogOut,
+  User,
   type LucideIcon,
 } from "lucide-react";
 
@@ -60,8 +63,22 @@ interface MoreMenuProps {
 
 export function MoreMenu({ isOpen, onClose }: MoreMenuProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const isAdmin = useIsAdmin();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   // Filter items based on user role
   const filteredItems = moreMenuItems.filter((item) => {
@@ -104,6 +121,43 @@ export function MoreMenu({ isOpen, onClose }: MoreMenuProps) {
             );
           })}
         </nav>
+
+        {/* Divider + User section */}
+        <div className="border-t border-border">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-sm font-semibold text-primary">
+                {user?.fullName?.charAt(0)?.toUpperCase() ?? "U"}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {user?.fullName ?? "User"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.email ?? user?.role ?? "staff"}
+              </p>
+            </div>
+          </div>
+          <div className="p-2 space-y-1">
+            <Link
+              href="/settings/profile"
+              onClick={onClose}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors min-h-[44px]"
+            >
+              <User className="w-5 h-5" />
+              <span>Profile</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full disabled:opacity-50 min-h-[44px]"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+            </button>
+          </div>
+        </div>
       </DrawerContent>
     </Drawer>
   );

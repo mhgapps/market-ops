@@ -587,18 +587,19 @@ export function AssetForm({
             />
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-3 border-t pt-4">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end border-t pt-4">
               {onCancel && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onCancel}
                   disabled={isSubmitting}
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
               )}
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {mode === "create" ? "Create Asset" : "Save Changes"}
               </Button>

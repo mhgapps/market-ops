@@ -112,7 +112,7 @@ export function StatusActions({
           onValueChange={(value) => handleStatusChange(value as TicketStatus)}
           disabled={loading || dialogState.isSubmitting}
         >
-          <SelectTrigger id="status-select" className="w-[180px]">
+          <SelectTrigger id="status-select" className="w-full sm:w-[180px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

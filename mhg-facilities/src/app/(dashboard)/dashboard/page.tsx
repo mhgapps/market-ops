@@ -76,7 +76,7 @@ function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       {/* Quick Action */}
       <div className="flex items-center justify-between">
         <div>

@@ -16,7 +16,7 @@ export function KanbanColumn({ status, count, children }: KanbanColumnProps) {
   const config = statusColors[status];
 
   return (
-    <div className="flex flex-col min-w-[280px] max-w-[320px] flex-1">
+    <div className="flex flex-col min-w-[85vw] sm:min-w-[280px] max-w-[320px] flex-1">
       {/* Column Header */}
       <div className="flex items-center gap-2 px-2 py-3 mb-2">
         {/* Status dot */}
